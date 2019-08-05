@@ -16,7 +16,7 @@ class Micro::Service::PipelineTest < Minitest::Test
       end
     end
 
-    class Add2 < Micro::Service::Base
+    class Add2 < Micro::Service::Strict::Base
       attribute :numbers
 
       def call!
@@ -24,7 +24,7 @@ class Micro::Service::PipelineTest < Minitest::Test
       end
     end
 
-    class Double < Micro::Service::Base
+    class Double < Micro::Service::Strict::Base
       attribute :numbers
 
       def call!
@@ -73,5 +73,10 @@ class Micro::Service::PipelineTest < Minitest::Test
     assert(pipeline.failure?)
     assert_instance_of(Micro::Service::Result, pipeline)
     pipeline.on_failure { |value| assert_equal('relation must contain only numbers', value) }
+  end
+
+  def test_invalid_services_error
+    err = assert_raises(ArgumentError) { Micro::Service::Pipeline[Hash] }
+    assert_equal('argument must be a collection of `Micro::Service::Base` classes', err.message)
   end
 end
