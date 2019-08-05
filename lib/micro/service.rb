@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-require 'micro/service/version'
+require 'micro/attributes'
 
-module Micro
-  module Service
-  end
-end
+require 'micro/service/version'
+require 'micro/service/result'
+require 'micro/service/base'
