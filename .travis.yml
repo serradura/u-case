@@ -1,7 +1,29 @@
----
-sudo: false
+
 language: ruby
-cache: bundler
+
+sudo: false
+
 rvm:
-  - 2.6.1
-before_install: gem install bundler -v 1.17.3
+- 2.2.0
+- 2.3.0
+- 2.4.0
+- 2.5.0
+- 2.6.0
+
+cache: bundler
+
+before_install:
+  - gem uninstall -v '>= 2' -i $(rvm gemdir)@global -ax bundler || true
+  - gem install bundler -v '< 2'
+
+install: bundle install --jobs=3 --retry=3
+
+before_script:
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - "./cc-test-reporter before-build"
+
+script: "rake"
+
+after_success:
+  - "./cc-test-reporter after-build -t simplecov"
