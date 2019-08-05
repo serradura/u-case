@@ -1,3 +1,8 @@
+[![Gem](https://img.shields.io/gem/v/u-service.svg?style=flat-square)](https://rubygems.org/gems/u-service)
+[![Build Status](https://travis-ci.com/serradura/u-service.svg?branch=master)](https://travis-ci.com/serradura/u-service)
+[![Maintainability](https://api.codeclimate.com/v1/badges/a30b18528a317435c2ee/maintainability)](https://codeclimate.com/github/serradura/u-service/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/a30b18528a317435c2ee/test_coverage)](https://codeclimate.com/github/serradura/u-service/test_coverage)
+
 μ-service (Micro::Service)
 ==========================
 
