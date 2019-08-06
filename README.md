@@ -9,7 +9,7 @@
 Create simple and powerful service objects.
 
 - [μ-service (Micro::Service)](#%ce%bc-service-microservice)
-  - [Required Ruby](#required-ruby)
+  - [Required Ruby version](#required-ruby-version)
   - [Installation](#installation)
   - [Usage](#usage)
     - [How to create a basic Service Object?](#how-to-create-a-basic-service-object)
@@ -22,7 +22,7 @@ Create simple and powerful service objects.
   - [License](#license)
   - [Code of Conduct](#code-of-conduct)
 
-## Required Ruby
+## Required Ruby version
 
 > \>= 2.2.0
 
