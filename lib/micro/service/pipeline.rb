@@ -15,9 +15,7 @@ module Micro
       end
 
       def call(arg={})
-        initial_result = Micro::Service::Result::Success(value: arg)
-
-        @services.reduce(initial_result) do |result, service|
+        @services.reduce(initial_result(arg)) do |result, service|
           break result if result.failure?
           service.call(result.value)
         end
@@ -31,6 +29,11 @@ module Micro
               raise ArgumentError, INVALID_COLLECTION
             end
           end
+        end
+
+        def initial_result(arg)
+          return arg if arg.is_a?(Micro::Service::Result)
+          Micro::Service::Result::Success(value: arg)
         end
     end
   end
