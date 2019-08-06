@@ -15,11 +15,10 @@ module Micro
       end
 
       def call(arg={})
-        first_result = Micro::Service::Result::Success(arg, type: nil)
+        initial_result = Micro::Service::Result::Success(value: arg)
 
-        @services.reduce(first_result) do |result, service|
+        @services.reduce(initial_result) do |result, service|
           break result if result.failure?
-
           service.call(result.value)
         end
       end

@@ -43,28 +43,34 @@ class Micro::Service::ResultTest < Minitest::Test
 
   def test_success_factory
     err = assert_raises(ArgumentError) do
-      Micro::Service::Result::Success(:value)
+      Micro::Service::Result::Success()
     end
 
-    assert_equal('missing keyword: type', err.message)
+    assert_equal('missing keyword: value', err.message)
 
     # ---
 
-    result = Micro::Service::Result::Success(:value, type: nil)
+    result = Micro::Service::Result::Success(value: :value, type: :foo)
 
     assert(result.success?)
+    assert_equal(:foo, result.type)
     assert_instance_of(Micro::Service::Result, result)
   end
 
   def test_failure_factory
     err = assert_raises(ArgumentError) do
-      Micro::Service::Result::Failure(:value)
+      Micro::Service::Result::Failure()
     end
 
-    result = Micro::Service::Result::Failure(:value, type: nil)
+    assert_equal('missing keyword: value', err.message)
+
+  # ---
+
+    result = Micro::Service::Result::Failure(value: :value, type: :bar)
 
     assert(result.failure?)
-    assert_equal('missing keyword: type', err.message)
+    assert_equal(:bar, result.type)
+    assert_instance_of(Micro::Service::Result, result)
   end
 
   def test_value
@@ -82,7 +88,7 @@ class Micro::Service::ResultTest < Minitest::Test
   def test_success_hook
     counter = 0
     number = rand(1..1_000_000)
-    result = Micro::Service::Result::Success(number, type: :valid)
+    result = Micro::Service::Result::Success(value: number, type: :valid)
 
     result
       .on_failure { raise }
@@ -97,7 +103,7 @@ class Micro::Service::ResultTest < Minitest::Test
   def test_failure_hook
     counter = 0
     number = rand(1..1_000_000)
-    result = Micro::Service::Result::Failure(number, type: :valid)
+    result = Micro::Service::Result::Failure(value: number, type: :valid)
 
     result
       .on_success { raise }

@@ -7,9 +7,7 @@ class Micro::Service::PipelineTest < Minitest::Test
 
       def call!
         if relation.all? { |value| String(value) =~ /\d+/ }
-          Success do
-            { numbers: relation.map(&:to_i) }
-          end
+          Success(numbers: relation.map(&:to_i))
         else
           Failure('relation must contain only numbers')
         end

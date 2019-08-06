@@ -9,11 +9,11 @@ class Micro::Service::Result::HelpersTest < Minitest::Test
     end
 
     def success
-      Success(@data)
+      Success(data: @data)
     end
 
     def failure
-      Failure(@data)
+      Failure(data: @data)
     end
   end
 
@@ -50,7 +50,7 @@ class Micro::Service::Result::HelpersTest < Minitest::Test
 
     assert(result1.success?)
     assert_instance_of(Micro::Service::Result, result1)
-    result1.on_success { |value| assert_equal('Serradura', value.name) }
+    result1.on_success { |value| assert_equal('Serradura', value[:data].name) }
 
     assert(result2.success?)
     assert_instance_of(Micro::Service::Result, result2)
@@ -68,7 +68,7 @@ class Micro::Service::Result::HelpersTest < Minitest::Test
 
     assert(result1.failure?)
     assert_instance_of(Micro::Service::Result, result1)
-    result1.on_failure { |value| assert_equal('Serradura', value.name) }
+    result1.on_failure { |value| assert_equal('Serradura', value[:data].name) }
 
     assert(result2.failure?)
     assert_instance_of(Micro::Service::Result, result2)

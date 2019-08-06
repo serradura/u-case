@@ -5,11 +5,11 @@ module Micro
     class Result
       include Micro::Attributes.with(:initialize)
 
-      def self.Success(value, type:)
+      def self.Success(value:, type: nil)
         self.new(success: true, type: type, value: value)
       end
 
-      def self.Failure(value, type:)
+      def self.Failure(value:, type: nil)
         self.new(success: false, type: type, value: value)
       end
 
@@ -44,14 +44,14 @@ module Micro
       module Helpers
         private
 
-          def Success(value=nil, type: nil)
-            yielded_value = yield if block_given?
-            Result::Success(yielded_value || value, type: type)
+          def Success(arg=nil)
+            value, type = block_given? ? [yield, arg] : [arg, nil]
+            Result::Success(value: value, type: type)
           end
 
-          def Failure(value=nil, type: nil)
-            yielded_value = yield if block_given?
-            Result::Failure(yielded_value || value, type: type)
+          def Failure(arg=nil)
+            value, type = block_given? ? [yield, arg] : [arg, nil]
+            Result::Failure(value: value, type: type)
           end
       end
     end
