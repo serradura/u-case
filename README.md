@@ -200,7 +200,7 @@ Double.call({})
 
 ### How to validate Service Object attributes?
 
-Note: To do this your application must have the (activemodel >= 3.2)(https://rubygems.org/gems/activemodel) as a dependency.
+Note: To do this your application must have the [activemodel >= 3.2](https://rubygems.org/gems/activemodel) as a dependency.
 
 ```ruby
 #
@@ -213,9 +213,9 @@ class Multiply < Micro::Service::Base
   validates :a, :b, presence: true, numericality: true
 
   def call!
-    return Success(number: a * b) if valid?
+    return Failure(errors: self.errors) unless valid?
 
-    Failure(errors: self.errors)
+    Success(number: a * b)
   end
 end
 
