@@ -14,7 +14,7 @@ class Micro::Service::PipelineTest < Minitest::Test
       end
     end
 
-    class Add2 < Micro::Service::Strict::Base
+    class Add2 < Micro::Service::Strict
       attribute :numbers
 
       def call!
@@ -22,7 +22,7 @@ class Micro::Service::PipelineTest < Minitest::Test
       end
     end
 
-    class Double < Micro::Service::Strict::Base
+    class Double < Micro::Service::Strict
       attribute :numbers
 
       def call!
@@ -95,7 +95,7 @@ class Micro::Service::PipelineTest < Minitest::Test
       end
     end
 
-    class Run < Micro::Service::Strict::Base
+    class Run < Micro::Service::Strict
       attribute :job
 
       def call!

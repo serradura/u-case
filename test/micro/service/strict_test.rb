@@ -1,7 +1,7 @@
 require 'test_helper'
 
-class Micro::Service::Strict::BaseTest < Minitest::Test
-  class Multiply < Micro::Service::Strict::Base
+class Micro::Service::StrictTest < Minitest::Test
+  class Multiply < Micro::Service::Strict
     attributes :a, :b
 
     def call!
@@ -13,7 +13,7 @@ class Micro::Service::Strict::BaseTest < Minitest::Test
     end
   end
 
-  class Double < Micro::Service::Strict::Base
+  class Double < Micro::Service::Strict
     attributes :number
 
     def call!
@@ -51,7 +51,7 @@ class Micro::Service::Strict::BaseTest < Minitest::Test
     assert_instance_of(Micro::Service::Result, result)
   end
 
-  class Foo < Micro::Service::Strict::Base
+  class Foo < Micro::Service::Strict
   end
 
   def test_template_method
@@ -60,7 +60,7 @@ class Micro::Service::Strict::BaseTest < Minitest::Test
     assert_raises(NotImplementedError) { Foo.new({}).call }
   end
 
-  class LoremIpsum < Micro::Service::Strict::Base
+  class LoremIpsum < Micro::Service::Strict
     attributes :text
 
     def call!
@@ -70,10 +70,10 @@ class Micro::Service::Strict::BaseTest < Minitest::Test
 
   def test_result_error
     err1 = assert_raises(TypeError) { LoremIpsum.call(text: 'lorem ipsum') }
-    assert_equal('Micro::Service::Strict::BaseTest::LoremIpsum#call! must return a Micro::Service::Result instance', err1.message)
+    assert_equal('Micro::Service::StrictTest::LoremIpsum#call! must return a Micro::Service::Result instance', err1.message)
 
     err2 = assert_raises(TypeError) { LoremIpsum.new(text: 'ipsum indolor').call }
-    assert_equal('Micro::Service::Strict::BaseTest::LoremIpsum#call! must return a Micro::Service::Result instance', err2.message)
+    assert_equal('Micro::Service::StrictTest::LoremIpsum#call! must return a Micro::Service::Result instance', err2.message)
   end
 
   def test_keywords_validation
