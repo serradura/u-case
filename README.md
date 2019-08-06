@@ -9,6 +9,7 @@
 Create simple and powerful service objects.
 
 - [μ-service (Micro::Service)](#%ce%bc-service-microservice)
+  - [Required Ruby](#required-ruby)
   - [Installation](#installation)
   - [Usage](#usage)
     - [How to create a basic Service Object?](#how-to-create-a-basic-service-object)
@@ -20,6 +21,10 @@ Create simple and powerful service objects.
   - [Contributing](#contributing)
   - [License](#license)
   - [Code of Conduct](#code-of-conduct)
+
+## Required Ruby
+
+> \>= 2.2.0
 
 ## Installation
 
@@ -54,21 +59,21 @@ class Multiply < Micro::Service::Base
   end
 end
 
-#=============================#
-# Build a service to call it. #
-#=============================#
-
-result = Multiply.new(a: 2, b: 3).call
-p result.success? # true
-p result.value    # 6
-
-#----------------------------#
-# Use the .call class method #
-#----------------------------#
+#====================#
+# Calling a service  #
+#====================#
 
 result = Multiply.call(a: 2, b: 2)
 p result.success? # true
 p result.value    # 4
+
+#----------------------------#
+# Calling a service instance #
+#----------------------------#
+
+result = Multiply.new(a: 2, b: 3).call
+p result.success? # true
+p result.value    # 6
 
 #===========================#
 # Verify the result failure #
@@ -107,9 +112,9 @@ Double
 # The output when is a success:
 # 9
 
-#============================#
-# Raising an erro if failure #
-#============================#
+#=============================#
+# Raising an error if failure #
+#=============================#
 
 Double
   .call(number: -1)
