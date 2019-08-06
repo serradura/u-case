@@ -23,7 +23,7 @@ before_script:
   - chmod +x ./cc-test-reporter
   - "./cc-test-reporter before-build"
 
-script: "rake"
+script: "./.travis.sh"
 
 after_success:
   - "./cc-test-reporter after-build -t simplecov"
