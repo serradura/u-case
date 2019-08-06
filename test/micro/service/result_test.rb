@@ -12,8 +12,8 @@ class Micro::Service::ResultTest < Minitest::Test
     assert_equal(
       result,
       result
-      .on_failure { raise }
-      .on_success { assert(true) }
+        .on_failure { raise }
+        .on_success { assert(true) }
     )
 
     # ---
