@@ -5,15 +5,22 @@ module Micro
     class Result
       include Micro::Attributes.with(:initialize)
 
+      attributes :success, :type, :value
+
+      INVALID_TYPE =  "#{self.name}#type must be nil or a symbol".freeze
+
+      def self.Type(arg)
+        return arg if arg.nil? || arg.is_a?(Symbol)
+        raise TypeError, INVALID_TYPE
+      end
+
       def self.Success(value:, type: nil)
-        self.new(success: true, type: type, value: value)
+        self.new(success: true, type: Type(type), value: value)
       end
 
       def self.Failure(value:, type: nil)
-        self.new(success: false, type: type, value: value)
+        self.new(success: false, type: Type(type), value: value)
       end
-
-      attributes :success, :type, :value
 
       def success?
         success

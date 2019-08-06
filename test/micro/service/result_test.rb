@@ -42,11 +42,17 @@ class Micro::Service::ResultTest < Minitest::Test
   end
 
   def test_success_factory
-    err = assert_raises(ArgumentError) do
+    err1 = assert_raises(ArgumentError) do
       Micro::Service::Result::Success()
     end
 
-    assert_equal('missing keyword: value', err.message)
+    assert_equal('missing keyword: value', err1.message)
+
+    err2 = assert_raises(TypeError) do
+      Micro::Service::Result::Success(value: 1, type: 2)
+    end
+
+    assert_equal('Micro::Service::Result#type must be nil or a symbol', err2.message)
 
     # ---
 
@@ -58,11 +64,17 @@ class Micro::Service::ResultTest < Minitest::Test
   end
 
   def test_failure_factory
-    err = assert_raises(ArgumentError) do
+    err1 = assert_raises(ArgumentError) do
       Micro::Service::Result::Failure()
     end
 
-    assert_equal('missing keyword: value', err.message)
+    assert_equal('missing keyword: value', err1.message)
+
+    err2 = assert_raises(TypeError) do
+      Micro::Service::Result::Failure(value: 1, type: 2)
+    end
+
+    assert_equal('Micro::Service::Result#type must be nil or a symbol', err2.message)
 
   # ---
 
