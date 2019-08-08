@@ -12,7 +12,7 @@ Create simple and powerful service objects.
   - [Required Ruby version](#required-ruby-version)
   - [Installation](#installation)
   - [Usage](#usage)
-    - [How to create a basic Service Object?](#how-to-create-a-basic-service-object)
+    - [How to create a Service Object?](#how-to-create-a-service-object)
     - [How to use the Service Object result hooks?](#how-to-use-the-service-object-result-hooks)
     - [How to create a pipeline of Service Objects?](#how-to-create-a-pipeline-of-service-objects)
     - [What is a strict Service Object?](#what-is-a-strict-service-object)
@@ -44,7 +44,7 @@ Or install it yourself as:
 
 ## Usage
 
-### How to create a basic Service Object?
+### How to create a Service Object?
 
 ```ruby
 class Multiply < Micro::Service::Base
@@ -66,6 +66,10 @@ end
 result = Multiply.call(a: 2, b: 2)
 p result.success? # true
 p result.value    # 4
+
+# Note:
+# The result of a Micro::Service#call
+# is an instance of Micro::Service::Result
 
 #----------------------------#
 # Calling a service instance #
@@ -164,10 +168,13 @@ Add2ToAllNumbers = Micro::Service::Pipeline[
   Steps::Add2
 ]
 
-DoubleAllNumbers = Micro::Service::Pipeline[
-  Steps::ConvertToNumbers,
-  Steps::Double
-]
+# An alternative way to declare pipelines within classes.
+
+class DoubleAllNumbers
+  include Micro::Service::Pipeline
+
+  pipeline Steps::ConvertToNumbers, Steps::Double
+end
 
 result = Add2ToAllNumbers.call(relation: %w[1 1 2 2 3 4])
 
