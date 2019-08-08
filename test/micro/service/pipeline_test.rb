@@ -36,10 +36,11 @@ class Micro::Service::PipelineTest < Minitest::Test
     Steps::Add2
   ]
 
-  DoubleAllNumbers = Micro::Service::Pipeline[
-    Steps::ConvertToNumbers,
-    Steps::Double
-  ]
+  class DoubleAllNumbers
+    include Micro::Service::Pipeline
+
+    pipeline Steps::ConvertToNumbers, Steps::Double
+  end
 
   def test_success
     result = Add2ToAllNumbers.call(relation: %w[1 1 2 2 3 4])
