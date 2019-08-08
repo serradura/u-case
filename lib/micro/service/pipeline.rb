@@ -4,6 +4,17 @@ module Micro
   module Service
     module Pipeline
       class Reducer
+        INVALID_SERVICES =
+          'argument must be a collection of `Micro::Service::Base` classes'.freeze
+
+        def self.build(args)
+          services = Array(args)
+
+          raise ArgumentError, INVALID_SERVICES if services.any? { |klass| !(klass < ::Micro::Service::Base) }
+
+          new(services)
+        end
+
         def initialize(services)
           @services = services
         end
@@ -25,19 +36,33 @@ module Micro
 
       private_constant :Reducer
 
-      INVALID_SERVICES =
-        'argument must be a collection of `Micro::Service::Base` classes'.freeze
+      module Macros
+        def pipeline(*args)
+          @pipeline = Reducer.build(args)
+        end
 
-      def self.[](*args)
-        self.new(args)
+        def pipeline_call(options)
+          @pipeline.call(options)
+        end
+
+        def call(options={})
+          new(options).call
+        end
       end
 
-      def self.new(args)
-        services = Array(args)
+      private_constant :Macros
 
-        raise ArgumentError, INVALID_SERVICES if services.any? { |klass| !(klass < ::Micro::Service::Base) }
+      def self.[](*args)
+        Reducer.build(args)
+      end
 
-        Reducer.new(services)
+      def self.included(base)
+        base.extend(Macros)
+        base.class_eval('def initialize(options); @options = options; end')
+      end
+
+      def call
+        self.class.pipeline_call(@options)
       end
     end
   end
