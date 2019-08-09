@@ -158,7 +158,7 @@ module Steps
     attribute :numbers
 
     def call!
-      Success(numbers.map { |number| number * number })
+      Success(numbers.map { |number| number * 2 })
     end
   end
 end
@@ -195,7 +195,7 @@ class Double < Micro::Service::Strict
   attribute :numbers
 
   def call!
-    Success(numbers.map { |number| number * number })
+    Success(numbers.map { |number| number * 2 })
   end
 end
 

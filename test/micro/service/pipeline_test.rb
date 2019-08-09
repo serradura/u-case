@@ -26,7 +26,7 @@ class Micro::Service::PipelineTest < Minitest::Test
       attribute :numbers
 
       def call!
-        Success(numbers.map { |number| number * number })
+        Success(numbers.map { |number| number * 2 })
       end
     end
   end
@@ -55,7 +55,7 @@ class Micro::Service::PipelineTest < Minitest::Test
 
     assert(pipeline.success?)
     assert_instance_of(Micro::Service::Result, pipeline)
-    pipeline.on_success { |value| assert_equal([1, 1, 4, 4, 9, 16], value) }
+    pipeline.on_success { |value| assert_equal([2, 2, 4, 4, 6, 8], value) }
   end
 
   def test_failure
