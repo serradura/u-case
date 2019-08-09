@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    u-service (0.8.0)
+    u-service (0.9.0)
       u-attributes (~> 1.1)
 
 GEM
@@ -16,7 +16,7 @@ GEM
       json (>= 1.8, < 3)
       simplecov-html (~> 0.10.0)
     simplecov-html (0.10.2)
-    u-attributes (1.1.1)
+    u-attributes (1.2.0)
 
 PLATFORMS
   ruby
