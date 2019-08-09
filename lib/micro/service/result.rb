@@ -3,27 +3,27 @@
 module Micro
   module Service
     class Result
-      include Micro::Attributes.with(:initialize)
+      module Type
+        INVALID = 'type must be nil or a symbol'.freeze
 
-      attributes :success, :type, :value
-
-      INVALID_TYPE =  "#{self.name}#type must be nil or a symbol".freeze
-
-      def self.Type(arg)
-        return arg if arg.nil? || arg.is_a?(Symbol)
-        raise TypeError, INVALID_TYPE
+        def self.[](arg)
+          return arg if arg.nil? || arg.is_a?(Symbol)
+          raise TypeError, INVALID
+        end
       end
 
-      def self.Success(value:, type: nil)
-        self.new(success: true, type: Type(type), value: value)
+      private_constant :Type
+
+      include Micro::Attributes.with(:strict_initialize)
+
+      def self.[](value:, type: nil)
+        new(value: value, type: Type[type])
       end
 
-      def self.Failure(value:, type: nil)
-        self.new(success: false, type: Type(type), value: value)
-      end
+      attributes :type, :value
 
       def success?
-        success
+        raise NotImplementedError
       end
 
       def failure?
@@ -47,20 +47,6 @@ module Micro
         def failure_type?(arg)
           failure? && (arg.nil? || arg == type)
         end
-
-      module Helpers
-        private
-
-          def Success(arg=nil)
-            value, type = block_given? ? [yield, arg] : [arg, nil]
-            Result::Success(value: value, type: type)
-          end
-
-          def Failure(arg=nil)
-            value, type = block_given? ? [yield, arg] : [arg, nil]
-            Result::Failure(value: value, type: type)
-          end
-      end
     end
   end
 end

@@ -30,7 +30,7 @@ module Micro
 
           def initial_result(arg)
             return arg if arg.is_a?(Micro::Service::Result)
-            Micro::Service::Result::Success(value: arg)
+            Micro::Service::Result::Success[value: arg]
           end
       end
 

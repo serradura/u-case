@@ -46,7 +46,7 @@ class Micro::Service::PipelineTest < Minitest::Test
     result = Add2ToAllNumbers.call(relation: %w[1 1 2 2 3 4])
 
     assert(result.success?)
-    assert_instance_of(Micro::Service::Result, result)
+    assert_instance_of(Micro::Service::Result::Success, result)
     result.on_success { |value| assert_equal([3, 3, 4, 4, 5, 6], value) }
 
     # ---
@@ -54,7 +54,7 @@ class Micro::Service::PipelineTest < Minitest::Test
     pipeline = DoubleAllNumbers.call(relation: %w[1 1 2 2 3 4])
 
     assert(pipeline.success?)
-    assert_instance_of(Micro::Service::Result, pipeline)
+    assert_instance_of(Micro::Service::Result::Success, pipeline)
     pipeline.on_success { |value| assert_equal([2, 2, 4, 4, 6, 8], value) }
   end
 
@@ -62,7 +62,7 @@ class Micro::Service::PipelineTest < Minitest::Test
     result = Add2ToAllNumbers.call(relation: %w[1 1 2 a 3 4])
 
     assert(result.failure?)
-    assert_instance_of(Micro::Service::Result, result)
+    assert_instance_of(Micro::Service::Result::Failure, result)
     result.on_failure { |value| assert_equal('relation must contain only numbers', value) }
 
     # ---
@@ -70,7 +70,7 @@ class Micro::Service::PipelineTest < Minitest::Test
     pipeline = DoubleAllNumbers.call(relation: %w[1 1 b 2 3 4])
 
     assert(pipeline.failure?)
-    assert_instance_of(Micro::Service::Result, pipeline)
+    assert_instance_of(Micro::Service::Result::Failure, pipeline)
     pipeline.on_failure { |value| assert_equal('relation must contain only numbers', value) }
   end
 

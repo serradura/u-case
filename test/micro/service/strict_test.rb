@@ -28,13 +28,13 @@ class Micro::Service::StrictTest < Minitest::Test
 
     assert(calculation.success?)
     assert_equal(4, calculation.value)
-    assert_instance_of(Micro::Service::Result, calculation)
+    assert_kind_of(Micro::Service::Result, calculation)
 
     result = Multiply.new(a: 1, b: '1').call
 
     assert(result.failure?)
     assert_equal(:invalid_data, result.value)
-    assert_instance_of(Micro::Service::Result, result)
+    assert_kind_of(Micro::Service::Result, result)
   end
 
   def test_class_call_method
@@ -42,13 +42,13 @@ class Micro::Service::StrictTest < Minitest::Test
 
     assert(calculation.success?)
     assert_equal(4, calculation.value)
-    assert_instance_of(Micro::Service::Result, calculation)
+    assert_kind_of(Micro::Service::Result, calculation)
 
     result = Double.call(number: 0)
 
     assert(result.failure?)
     assert_equal('number must be greater than 0', result.value)
-    assert_instance_of(Micro::Service::Result, result)
+    assert_kind_of(Micro::Service::Result, result)
   end
 
   class Foo < Micro::Service::Strict

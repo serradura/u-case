@@ -49,11 +49,11 @@ class Micro::Service::Result::HelpersTest < Minitest::Test
     result2 = instance2.success
 
     assert(result1.success?)
-    assert_instance_of(Micro::Service::Result, result1)
+    assert_instance_of(Micro::Service::Result::Success, result1)
     result1.on_success { |value| assert_equal('Serradura', value[:data].name) }
 
     assert(result2.success?)
-    assert_instance_of(Micro::Service::Result, result2)
+    assert_instance_of(Micro::Service::Result::Success, result2)
     result2.on_success { |value| assert_equal('Serradura', value.name) }
   end
 
@@ -67,11 +67,11 @@ class Micro::Service::Result::HelpersTest < Minitest::Test
     result2 = instance2.failure
 
     assert(result1.failure?)
-    assert_instance_of(Micro::Service::Result, result1)
+    assert_instance_of(Micro::Service::Result::Failure, result1)
     result1.on_failure { |value| assert_equal('Serradura', value[:data].name) }
 
     assert(result2.failure?)
-    assert_instance_of(Micro::Service::Result, result2)
+    assert_instance_of(Micro::Service::Result::Failure, result2)
     result2.on_failure { |value| assert_equal('Serradura', value.name) }
   end
 end
