@@ -13,10 +13,11 @@ Create simple and powerful service objects.
   - [Installation](#installation)
   - [Usage](#usage)
     - [How to create a Service Object?](#how-to-create-a-service-object)
-    - [How to use the Service Object result hooks?](#how-to-use-the-service-object-result-hooks)
+    - [How to use the result hooks?](#how-to-use-the-result-hooks)
     - [How to create a pipeline of Service Objects?](#how-to-create-a-pipeline-of-service-objects)
     - [What is a strict Service Object?](#what-is-a-strict-service-object)
     - [How to validate Service Object attributes?](#how-to-validate-service-object-attributes)
+    - [It's possible to compose pipelines with other pipelines?](#its-possible-to-compose-pipelines-with-other-pipelines)
   - [Development](#development)
   - [Contributing](#contributing)
   - [License](#license)
@@ -64,6 +65,7 @@ end
 #====================#
 
 result = Multiply.call(a: 2, b: 2)
+
 p result.success? # true
 p result.value    # 4
 
@@ -76,6 +78,7 @@ p result.value    # 4
 #----------------------------#
 
 result = Multiply.new(a: 2, b: 3).call
+
 p result.success? # true
 p result.value    # 6
 
@@ -84,12 +87,13 @@ p result.value    # 6
 #===========================#
 
 result = Multiply.call(a: '2', b: 2)
+
 p result.success? # false
 p result.failure? # true
 p result.value    # :invalid_data
 ```
 
-### How to use the Service Object result hooks?
+### How to use the result hooks?
 
 ```ruby
 class Double < Micro::Service::Base
@@ -135,13 +139,13 @@ Double
 ```ruby
 module Steps
   class ConvertToNumbers < Micro::Service::Base
-    attribute :relation
+    attribute :numbers
 
     def call!
-      if relation.all? { |value| String(value) =~ /\d+/ }
-        Success(numbers: relation.map(&:to_i))
+      if numbers.all? { |value| String(value) =~ /\d+/ }
+        Success(numbers: numbers.map(&:to_i))
       else
-        Failure('relation must contain only numbers')
+        Failure('numbers must contain only numeric types')
       end
     end
   end
@@ -150,7 +154,7 @@ module Steps
     attribute :numbers
 
     def call!
-      Success(numbers.map { |number| number + 2 })
+      Success(numbers: numbers.map { |number| number + 2 })
     end
   end
 
@@ -158,17 +162,36 @@ module Steps
     attribute :numbers
 
     def call!
-      Success(numbers.map { |number| number * 2 })
+      Success(numbers: numbers.map { |number| number * 2 })
+    end
+  end
+
+  class Square < Micro::Service::Strict
+    attribute :numbers
+
+    def call!
+      Success(numbers: numbers.map { |number| number * number })
     end
   end
 end
+
+#=================================================#
+# Creating a pipeline using the collection syntax #
+#=================================================#
 
 Add2ToAllNumbers = Micro::Service::Pipeline[
   Steps::ConvertToNumbers,
   Steps::Add2
 ]
 
-# An alternative way to declare pipelines within classes.
+result = Add2ToAllNumbers.call(numbers: %w[1 1 2 2 3 4])
+
+p result.success? # true
+p result.value    # {:numbers => [3, 3, 4, 4, 5, 6]}
+
+#=======================================================#
+# An alternative way to create a pipeline using classes #
+#=======================================================#
 
 class DoubleAllNumbers
   include Micro::Service::Pipeline
@@ -176,14 +199,20 @@ class DoubleAllNumbers
   pipeline Steps::ConvertToNumbers, Steps::Double
 end
 
-result = Add2ToAllNumbers.call(relation: %w[1 1 2 2 3 4])
-
-p result.success? # true
-p result.value    # [3, 3, 4, 4, 5, 6]
-
 DoubleAllNumbers
-  .call(relation: %w[1 1 b 2 3 4])
-  .on_failure { |message| p message } # "relation must contain only numbers"
+  .call(numbers: %w[1 1 b 2 3 4])
+  .on_failure { |message| p message } # "numbers must contain only numeric types"
+
+#=================================================================#
+# Another way to create a pipeline using the composition operator #
+#=================================================================#
+
+SquareAllNumbers =
+  Steps::ConvertToNumbers >> Steps::Square
+
+SquareAllNumbers
+  .call(numbers: %w[1 1 2 2 3 4])
+  .on_success { |value| p value[:numbers] } # [1, 1, 4, 4, 9, 16]
 ```
 
 ### What is a strict Service Object?
@@ -248,6 +277,68 @@ end
 # There is a strict variation for Micro::Service::WithValidation
 # Use Micro::Service::Strict::Validation if do you want this behavior.
 ```
+
+### It's possible to compose pipelines with other pipelines?
+
+Answer: Yes
+
+```ruby
+module Steps
+  class ConvertToNumbers < Micro::Service::Base
+    attribute :numbers
+
+    def call!
+      if numbers.all? { |value| String(value) =~ /\d+/ }
+        Success(numbers: numbers.map(&:to_i))
+      else
+        Failure('numbers must contain only numeric types')
+      end
+    end
+  end
+
+  class Add2 < Micro::Service::Strict
+    attribute :numbers
+
+    def call!
+      Success(numbers: numbers.map { |number| number + 2 })
+    end
+  end
+
+  class Double < Micro::Service::Strict
+    attribute :numbers
+
+    def call!
+      Success(numbers: numbers.map { |number| number * 2 })
+    end
+  end
+
+  class Square < Micro::Service::Strict
+    attribute :numbers
+
+    def call!
+      Success(numbers: numbers.map { |number| number * number })
+    end
+  end
+end
+
+Add2ToAllNumbers = Steps::ConvertToNumbers >> Steps::Add2
+DoubleAllNumbers = Steps::ConvertToNumbers >> Steps::Double
+SquareAllNumbers = Steps::ConvertToNumbers >> Steps::Square
+DoubleAllNumbersAndAdd2 = DoubleAllNumbers >> Steps::Add2
+SquareAllNumbersAndAdd2 = SquareAllNumbers >> Steps::Add2
+DoubleAllNumbersAndSquareThem = DoubleAllNumbers >> SquareAllNumbersAndAdd2
+SquareAllNumbersAndDoubleThem = SquareAllNumbersAndAdd2 >> DoubleAllNumbers
+
+DoubleAllNumbersAndSquareThem
+  .call(numbers: %w[1 1 2 2 3 4])
+  .on_success { |value| p value[:numbers] } # [6, 6, 18, 18, 38, 66]
+
+SquareAllNumbersAndDoubleThem
+  .call(numbers: %w[1 1 2 2 3 4])
+  .on_success { |value| p value[:numbers] } # [6, 6, 12, 12, 22, 36]
+```
+
+Note: You can blend any of the [syntaxes/approaches to create the pipelines](#how-to-create-a-pipeline-of-service-objects)) - [examples](https://github.com/serradura/u-service/blob/master/test/micro/service/pipeline/blend_test.rb#L7-L34).
 
 ## Development
 
