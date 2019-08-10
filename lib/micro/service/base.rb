@@ -8,6 +8,10 @@ module Micro
 
       INVALID_RESULT = '#call! must return a Micro::Service::Result instance'.freeze
 
+      def self.>>(service)
+        Micro::Service::Pipeline[self, service]
+      end
+
       def self.call(options = {})
         new(options).call
       end
