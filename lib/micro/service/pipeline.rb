@@ -4,11 +4,19 @@ module Micro
   module Service
     module Pipeline
       class Reducer
+        attr_reader :services
+
         INVALID_SERVICES =
           'argument must be a collection of `Micro::Service::Base` classes'.freeze
 
+        def self.map_services(arg)
+          return arg.services if arg.is_a?(Reducer)
+          return arg.__pipeline__.services if arg.is_a?(Class) && arg < Micro::Service::Pipeline
+          Array(arg)
+        end
+
         def self.build(args)
-          services = Array(args)
+          services = Array(args).flat_map { |arg| map_services(arg) }
 
           raise ArgumentError, INVALID_SERVICES if services.any? { |klass| !(klass < ::Micro::Service::Base) }
 
@@ -26,23 +34,26 @@ module Micro
           end
         end
 
+        def >>(arg)
+          Reducer.build(services + self.class.map_services(arg))
+        end
+
         private
 
           def initial_result(arg)
             return arg if arg.is_a?(Micro::Service::Result)
+
             Micro::Service::Result::Success[value: arg]
           end
       end
 
-      private_constant :Reducer
-
-      module Macros
-        def pipeline(*args)
-          @pipeline = Reducer.build(args)
+      module ClassMethods
+        def __pipeline__
+          @__pipeline
         end
 
-        def pipeline_call(options)
-          @pipeline.call(options)
+        def pipeline(*args)
+          @__pipeline = Reducer.build(args)
         end
 
         def call(options={})
@@ -50,19 +61,19 @@ module Micro
         end
       end
 
-      private_constant :Macros
+      private_constant :ClassMethods
 
       def self.[](*args)
         Reducer.build(args)
       end
 
       def self.included(base)
-        base.extend(Macros)
+        base.extend(ClassMethods)
         base.class_eval('def initialize(options); @options = options; end')
       end
 
       def call
-        self.class.pipeline_call(@options)
+        self.class.__pipeline__.call(@options)
       end
     end
   end
