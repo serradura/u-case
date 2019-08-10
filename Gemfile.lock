@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    u-service (0.9.0)
+    u-service (0.10.0)
       u-attributes (~> 1.1)
 
 GEM
