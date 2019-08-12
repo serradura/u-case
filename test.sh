@@ -1,7 +1,11 @@
 #!/bin/bash
 
-git checkout -- Gemfile.lock
+bundle
+
+rm Gemfile.lock
 
 source $(dirname $0)/.travis.sh
 
-git checkout -- Gemfile.lock
+rm Gemfile.lock
+
+bundle
