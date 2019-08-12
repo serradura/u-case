@@ -8,6 +8,11 @@
 
 Create simple and powerful service objects.
 
+The main goals of this project are:
+1. The smallest possible learning curve.
+2. Referential transparency and data integrity.
+3. No callbacks, compose a pipeline of service objects to represents complex business logic. (input >> process/transform >> output)
+
 - [μ-service (Micro::Service)](#%ce%bc-service-microservice)
   - [Required Ruby version](#required-ruby-version)
   - [Installation](#installation)
