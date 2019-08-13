@@ -5,7 +5,7 @@ module Steps
     attribute :numbers
 
     def call!
-      if numbers.all? { |value| String(value) =~ /\d+/ }
+      if !numbers.nil? && numbers.all? { |value| String(value) =~ /\d+/ }
         Success(numbers: numbers.map(&:to_i))
       else
         Failure('numbers must contain only numeric types')
