@@ -87,4 +87,16 @@ class Micro::Service::Pipeline::ClassesTest < Minitest::Test
       result.on_failure { |value| assert_equal('numbers must contain only numeric types', value) }
     end
   end
+
+  class Foo
+    include Micro::Service::Pipeline
+  end
+
+  def test_the_error_when_using_a_pipeline_class_without_a_defined_set_of_services
+    err1 = assert_raises(ArgumentError) { Foo.new({}) }
+    assert_equal("This class hasn't declared its pipeline. Please, use the `pipeline()` macro to define one.", err1.message)
+
+    err2 = assert_raises(ArgumentError) { Foo.call({}) }
+    assert_equal("This class hasn't declared its pipeline. Please, use the `pipeline()` macro to define one.", err2.message)
+  end
 end
