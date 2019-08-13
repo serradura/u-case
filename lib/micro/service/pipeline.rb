@@ -74,9 +74,19 @@ module Micro
         Reducer.build(args)
       end
 
+      UNDEFINED_PIPELINE = "This class hasn't declared its pipeline. Please, use the `pipeline()` macro to define one.".freeze
+
+      private_constant :UNDEFINED_PIPELINE
+
       def self.included(base)
         base.extend(ClassMethods)
-        base.class_eval('def initialize(options); @options = options; end')
+        base.class_eval(<<-RUBY)
+        def initialize(options)
+          @options = options
+          pipeline = self.class.__pipeline__
+          raise ArgumentError, UNDEFINED_PIPELINE unless pipeline
+        end
+        RUBY
       end
 
       def call
