@@ -41,9 +41,16 @@ module Micro
         private
 
           def initial_result(arg)
+            return arg.call if arg_to_call?(arg)
             return arg if arg.is_a?(Micro::Service::Result)
 
             Micro::Service::Result::Success[value: arg]
+          end
+
+          def arg_to_call?(arg)
+            return true if arg.is_a?(Micro::Service::Base) || arg.is_a?(Reducer)
+            return true if arg.is_a?(Class) && (arg < Micro::Service::Base || arg < Micro::Service::Pipeline)
+            return false
           end
       end
 
