@@ -23,6 +23,8 @@ The main goals of this project are:
     - [What is a strict Service Object?](#what-is-a-strict-service-object)
     - [How to validate Service Object attributes?](#how-to-validate-service-object-attributes)
     - [It's possible to compose pipelines with other pipelines?](#its-possible-to-compose-pipelines-with-other-pipelines)
+  - [Comparisons](#comparisons)
+  - [Benchmarks](#benchmarks)
   - [Development](#development)
   - [Contributing](#contributing)
   - [License](#license)
@@ -344,6 +346,20 @@ SquareAllNumbersAndDoubleThem
 ```
 
 Note: You can blend any of the [syntaxes/approaches to create the pipelines](#how-to-create-a-pipeline-of-service-objects)) - [examples](https://github.com/serradura/u-service/blob/master/test/micro/service/pipeline/blend_test.rb#L7-L34).
+
+## Comparisons
+
+Check it out implementations of the same use case with different libs (abstractions).
+
+* [interactor](https://github.com/serradura/u-service/blob/master/comparisons/interactor.rb)
+* [u-service](https://github.com/serradura/u-service/blob/master/comparisons/u-service.rb)
+
+## Benchmarks
+
+**[interactor](https://github.com/collectiveidea/interactor)** VS **[u-service](https://github.com/serradura/u-service)**
+
+https://github.com/serradura/u-service/tree/master/benchmarks/interactor
+
 
 ## Development
 
