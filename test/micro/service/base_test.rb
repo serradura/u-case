@@ -23,7 +23,14 @@ class Micro::Service::BaseTest < Minitest::Test
     end
   end
 
-  def test_instance_call_method
+  def test_the_initializer_data_validation
+    [nil, 1, true, '', []].each do |arg|
+      err = assert_raises(ArgumentError) { Multiply.new(arg) }
+      assert_equal('argument must be a Hash', err.message)
+    end
+  end
+
+  def test_the_instance_call_method
     calculation = Multiply.new(a: 2, b: 2).call
 
     assert(calculation.success?)
@@ -37,7 +44,7 @@ class Micro::Service::BaseTest < Minitest::Test
     assert_kind_of(Micro::Service::Result, result)
   end
 
-  def test_class_call_method
+  def test_the_class_call_method
     calculation = Double.call(number: 2)
 
     assert(calculation.success?)
@@ -51,10 +58,17 @@ class Micro::Service::BaseTest < Minitest::Test
     assert_kind_of(Micro::Service::Result, result)
   end
 
+  def test_the_data_validation_error_when_calling_the_call_class_method
+    [nil, 1, true, '', []].each do |arg|
+      err = assert_raises(ArgumentError) { Multiply.call(arg) }
+      assert_equal('argument must be a Hash', err.message)
+    end
+  end
+
   class Foo < Micro::Service::Base
   end
 
-  def test_template_method
+  def test_the_template_method
     assert_raises(NotImplementedError) { Foo.call }
 
     assert_raises(NotImplementedError) { Foo.new({}).call }
@@ -68,7 +82,7 @@ class Micro::Service::BaseTest < Minitest::Test
     end
   end
 
-  def test_result_error
+  def test_the_result_error
     err1 = assert_raises(TypeError) { LoremIpsum.call(text: 'lorem ipsum') }
     assert_equal('Micro::Service::BaseTest::LoremIpsum#call! must return a Micro::Service::Result instance', err1.message)
 

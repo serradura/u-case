@@ -30,6 +30,15 @@ class Micro::Service::Pipeline::CompositionOperatorTest < Minitest::Test
     { pipeline: SquareAllNumbersAndDoubleThem, result: [6, 6, 12, 12, 22, 36] },
   ].map(&OpenStruct.method(:new))
 
+  def test_the_data_validation_error_when_calling_with_the_wrong_king_of_data
+    [nil, 1, true, '', []].each do |arg|
+      EXAMPLES.map(&:pipeline).each do |pipeline|
+        err = assert_raises(ArgumentError) { pipeline.call(arg) }
+        assert_equal('argument must be a Hash', err.message)
+      end
+    end
+  end
+
   def test_result_must_be_success
     EXAMPLES.each do |example|
       result = example.pipeline.call(numbers: %w[1 1 2 2 3 4])
