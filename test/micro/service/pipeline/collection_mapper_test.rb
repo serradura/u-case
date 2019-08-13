@@ -1,7 +1,6 @@
 require 'ostruct'
 require 'test_helper'
-
-require_relative 'steps'
+require 'support/steps'
 
 class Micro::Service::Pipeline::CollectionMapperTest < Minitest::Test
   Add2ToAllNumbers = Micro::Service::Pipeline[
