@@ -1,6 +1,5 @@
 require 'test_helper'
-
-require_relative 'pipeline/jobs'
+require 'support/jobs'
 
 class Micro::Service::PipelineTest < Minitest::Test
   def test_calling_with_a_result

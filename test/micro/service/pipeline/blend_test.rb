@@ -1,7 +1,6 @@
 require 'ostruct'
 require 'test_helper'
-
-require_relative 'steps'
+require 'support/steps'
 
 class Micro::Service::Pipeline::BlendTest < Minitest::Test
   Add2ToAllNumbers =
