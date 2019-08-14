@@ -5,10 +5,42 @@ gemfile do
 
   gem 'benchmark-ips', '~> 2.7', '>= 2.7.2'
   gem 'interactor', '~> 3.1', '>= 3.1.1'
-  gem 'u-service', '~> 0.11.0'
+  gem 'u-service', '~> 0.12.0'
 end
 
 require 'benchmark/ips'
+
+module IT
+  class ConvertToNumbers
+    include Interactor
+
+    def call
+      numbers = context.numbers
+
+      if numbers.all? { |value| String(value) =~ /\d+/ }
+        context.numbers = numbers.map(&:to_i)
+      else
+        context.fail! numbers: 'must contain only numeric types'
+      end
+    end
+  end
+
+  class Add2
+    include Interactor
+
+    def call
+      numbers = context.numbers
+
+      context.numbers = numbers.map { |number| number + 2 }
+    end
+  end
+
+  class Add2ToAllNumbers
+    include Interactor::Organizer
+
+    organize ConvertToNumbers, Add2
+  end
+end
 
 module MSB
   class ConvertToNumbers < Micro::Service::Base
@@ -58,38 +90,6 @@ module MSS
   Add2ToAllNumbers = ConvertToNumbers >> Add2
 end
 
-module IT
-  class ConvertToNumbers
-    include Interactor
-
-    def call
-      numbers = context.numbers
-
-      if numbers.all? { |value| String(value) =~ /\d+/ }
-        context.numbers = numbers.map(&:to_i)
-      else
-        context.fail! numbers: 'must contain only numeric types'
-      end
-    end
-  end
-
-  class Add2
-    include Interactor
-
-    def call
-      numbers = context.numbers
-
-      context.numbers = numbers.map { |number| number + 2 }
-    end
-  end
-
-  class Add2ToAllNumbers
-    include Interactor::Organizer
-
-    organize ConvertToNumbers, Add2
-  end
-end
-
 NUMBERS = {numbers: %w[1 1 2 2 c 4]}
 
 Benchmark.ips do |x|
@@ -97,6 +97,10 @@ Benchmark.ips do |x|
 
   x.time = 5
   x.warmup = 2
+
+  x.report('Interactor::Organizer') do
+    IT::Add2ToAllNumbers.call(NUMBERS)
+  end
 
   x.report('Pipeline of Micro::Service::Base') do
     MSB::Add2ToAllNumbers.call(NUMBERS)
@@ -106,29 +110,25 @@ Benchmark.ips do |x|
     MSS::Add2ToAllNumbers.call(NUMBERS)
   end
 
-  x.report('Interactor::Organizer') do
-    IT::Add2ToAllNumbers.call(NUMBERS)
-  end
-
   x.compare!
 end
 
 # Warming up --------------------------------------
-# Pipeline of Micro::Service::Base
-#                          5.437k i/100ms
-# Pipeline of Micro::Service::Strict
-#                          5.192k i/100ms
 # Interactor::Organizer
-#                          2.236k i/100ms
+#                          2.355k i/100ms
+# Pipeline of Micro::Service::Base
+#                         15.483k i/100ms
+# Pipeline of Micro::Service::Strict
+#                         13.467k i/100ms
 # Calculating -------------------------------------
-# Pipeline of Micro::Service::Base
-#                          56.665k (± 1.9%) i/s -    288.161k in   5.087185s
-# Pipeline of Micro::Service::Strict
-#                          52.914k (± 2.0%) i/s -    264.792k in   5.006157s
 # Interactor::Organizer
-#                          22.940k (± 2.9%) i/s -    116.272k in   5.072931s
+#                          23.767k (± 2.1%) i/s -    120.105k in   5.055726s
+# Pipeline of Micro::Service::Base
+#                         166.013k (± 1.8%) i/s -    836.082k in   5.037938s
+# Pipeline of Micro::Service::Strict
+#                         141.545k (± 2.1%) i/s -    713.751k in   5.044932s
 
 # Comparison:
-# Pipeline of Micro::Service::Base:   56665.3 i/s
-# Pipeline of Micro::Service::Strict: 52914.3 i/s - 1.07x  slower
-# Interactor::Organizer:              22940.3 i/s - 2.47x  slower
+# Pipeline of Micro::Service::Base:   166013.1 i/s
+# Pipeline of Micro::Service::Strict: 141545.4 i/s - 1.17x  slower
+# Interactor::Organizer:              23766.6 i/s - 6.99x  slower
