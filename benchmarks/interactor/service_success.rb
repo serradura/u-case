@@ -5,10 +5,25 @@ gemfile do
 
   gem 'benchmark-ips', '~> 2.7', '>= 2.7.2'
   gem 'interactor', '~> 3.1', '>= 3.1.1'
-  gem 'u-service', '~> 0.11.0'
+  gem 'u-service', '~> 0.12.0'
 end
 
 require 'benchmark/ips'
+
+class IT_Multiply
+  include Interactor
+
+  def call
+    a = context.a
+    b = context.b
+
+    if a.is_a?(Numeric) && b.is_a?(Numeric)
+      context.number = a * b
+    else
+      context.fail!(:invalid_data)
+    end
+  end
+end
 
 class MSB_Multiply < Micro::Service::Base
   attributes :a, :b
@@ -34,21 +49,6 @@ class MSS_Multiply < Micro::Service::Strict
   end
 end
 
-class IT_Multiply
-  include Interactor
-
-  def call
-    a = context.a
-    b = context.b
-
-    if a.is_a?(Numeric) && b.is_a?(Numeric)
-      context.number = a * b
-    else
-      context.fail!(:invalid_data)
-    end
-  end
-end
-
 SYMBOL_KEYS = { a: 2, b: 2 }
 STRING_KEYS = { 'a' => 1, 'b' => 1 }
 
@@ -57,6 +57,11 @@ Benchmark.ips do |x|
 
   x.time = 5
   x.warmup = 2
+
+  x.report('Interactor') do
+    IT_Multiply.call(SYMBOL_KEYS)
+    IT_Multiply.call(STRING_KEYS)
+  end
 
   x.report('Micro::Service::Base') do
     MSB_Multiply.call(SYMBOL_KEYS)
@@ -68,26 +73,21 @@ Benchmark.ips do |x|
     MSS_Multiply.call(STRING_KEYS)
   end
 
-  x.report('Interactor') do
-    IT_Multiply.call(SYMBOL_KEYS)
-    IT_Multiply.call(STRING_KEYS)
-  end
-
   x.compare!
 end
 
 # Warming up --------------------------------------
-# Micro::Service::Base     5.365k i/100ms
+#           Interactor     2.943k i/100ms
+# Micro::Service::Base    12.540k i/100ms
 # Micro::Service::Strict
-#                          4.535k i/100ms
-#           Interactor     2.620k i/100ms
+#                          9.584k i/100ms
 # Calculating -------------------------------------
-# Micro::Service::Base     51.795k (± 4.7%) i/s -    262.885k in   5.086671s
+#           Interactor     29.874k (± 2.7%) i/s -    150.093k in   5.027909s
+# Micro::Service::Base    131.440k (± 1.9%) i/s -    664.620k in   5.058327s
 # Micro::Service::Strict
-#                          46.253k (± 1.6%) i/s -    231.285k in   5.001748s
-#           Interactor     29.561k (± 3.3%) i/s -    149.340k in   5.057720s
+#                          99.111k (± 2.2%) i/s -    498.368k in   5.031006s
 
 # Comparison:
-# Micro::Service::Base:    51794.5 i/s
-# Micro::Service::Strict:  46253.0 i/s - 1.12x  slower
-#             Interactor:  29561.5 i/s - 1.75x  slower
+# Micro::Service::Base:   131440.3 i/s
+# Micro::Service::Strict: 99111.3 i/s - 1.33x  slower
+#           Interactor:   29873.6 i/s - 4.40x  slower
