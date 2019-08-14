@@ -6,8 +6,9 @@ module Micro
       class Reducer
         attr_reader :services
 
-        INVALID_SERVICES =
-          'argument must be a collection of `Micro::Service::Base` classes'.freeze
+        InvalidServices = ArgumentError.new('argument must be a collection of `Micro::Service::Base` classes'.freeze)
+
+        private_constant :InvalidServices
 
         def self.map_services(arg)
           return arg.services if arg.is_a?(Reducer)
@@ -18,7 +19,7 @@ module Micro
         def self.build(args)
           services = Array(args).flat_map { |arg| map_services(arg) }
 
-          raise ArgumentError, INVALID_SERVICES if services.any? { |klass| !(klass < ::Micro::Service::Base) }
+          raise InvalidServices if services.any? { |klass| !(klass < ::Micro::Service::Base) }
 
           new(services)
         end
@@ -30,7 +31,7 @@ module Micro
         def call(arg={})
           @services.reduce(initial_result(arg)) do |result, service|
             break result if result.failure?
-            service.call(result.value)
+            service.__new__(result, result.value).call
           end
         end
 
@@ -43,8 +44,8 @@ module Micro
           def initial_result(arg)
             return arg.call if arg_to_call?(arg)
             return arg if arg.is_a?(Micro::Service::Result)
-
-            Micro::Service::Result::Success[value: arg]
+            result = Micro::Service::Result.new
+            result.__set__(true, arg, nil)
           end
 
           def arg_to_call?(arg)
@@ -74,9 +75,9 @@ module Micro
         Reducer.build(args)
       end
 
-      UNDEFINED_PIPELINE = "This class hasn't declared its pipeline. Please, use the `pipeline()` macro to define one.".freeze
+      UndefinedPipeline = ArgumentError.new("This class hasn't declared its pipeline. Please, use the `pipeline()` macro to define one.".freeze)
 
-      private_constant :UNDEFINED_PIPELINE
+      private_constant :UndefinedPipeline
 
       def self.included(base)
         base.extend(ClassMethods)
@@ -84,7 +85,7 @@ module Micro
         def initialize(options)
           @options = options
           pipeline = self.class.__pipeline__
-          raise ArgumentError, UNDEFINED_PIPELINE unless pipeline
+          raise UndefinedPipeline unless pipeline
         end
         RUBY
       end

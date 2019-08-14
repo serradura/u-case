@@ -28,7 +28,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
 
       assert(calculation.success?)
       assert_equal(4, calculation.value[:number])
-      assert_instance_of(Micro::Service::Result::Success, calculation)
+      assert_instance_of(Micro::Service::Result, calculation)
 
       # ---
 
@@ -50,7 +50,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
 
       assert(result.failure?)
       assert_equal(["can't be blank", 'is not a number'], result.value[:errors][:b])
-      assert_instance_of(Micro::Service::Result::Failure, result)
+      assert_instance_of(Micro::Service::Result, result)
 
       # ---
 
@@ -58,7 +58,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
 
       assert(result.failure?)
       assert_equal(['is not a number'], result.value[:errors][:b])
-      assert_instance_of(Micro::Service::Result::Failure, result)
+      assert_instance_of(Micro::Service::Result, result)
     end
   end
 end

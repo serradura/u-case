@@ -44,7 +44,7 @@ class Micro::Service::Pipeline::CompositionOperatorTest < Minitest::Test
       result = example.pipeline.call(numbers: %w[1 1 2 2 3 4])
 
       assert(result.success?)
-      assert_instance_of(Micro::Service::Result::Success, result)
+      assert_instance_of(Micro::Service::Result, result)
       result
         .on_success { |value| assert_equal(example.result, value[:numbers]) }
     end
@@ -55,7 +55,7 @@ class Micro::Service::Pipeline::CompositionOperatorTest < Minitest::Test
       result = pipeline.call(numbers: %w[1 1 2 a 3 4])
 
       assert(result.failure?)
-      assert_instance_of(Micro::Service::Result::Failure, result)
+      assert_instance_of(Micro::Service::Result, result)
       result.on_failure { |value| assert_equal('numbers must contain only numeric types', value) }
     end
   end
