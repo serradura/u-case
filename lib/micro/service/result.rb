@@ -3,27 +3,20 @@
 module Micro
   module Service
     class Result
-      module Type
-        INVALID = 'type must be nil or a symbol'.freeze
+      InvalidType = TypeError.new('type must be nil or a symbol'.freeze)
 
-        def self.[](arg)
-          return arg if arg.nil? || arg.is_a?(Symbol)
-          raise TypeError, INVALID
-        end
+      attr_reader :value, :type
+
+      def __set__(is_success, value, type)
+        raise InvalidType unless type.nil? || type.is_a?(Symbol)
+
+        @success, @value, @type = is_success, value, type
+
+        self
       end
-
-      private_constant :Type
-
-      include Micro::Attributes.with(:strict_initialize)
-
-      def self.[](value:, type: nil)
-        new(value: value, type: Type[type])
-      end
-
-      attributes :type, :value
 
       def success?
-        raise NotImplementedError
+        @success
       end
 
       def failure?

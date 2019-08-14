@@ -3,7 +3,7 @@ require 'test_helper'
 require 'support/steps'
 
 class Micro::Service::CallingTest < Minitest::Test
-  Failure = Micro::Service::Result::Failure
+  Failure = Micro::Service::Result
 
   Add2ToAllNumbers1 = Micro::Service::Pipeline[
     Steps::ConvertToNumbers,
