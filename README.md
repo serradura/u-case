@@ -333,16 +333,16 @@ DoubleAllNumbers = Steps::ConvertToNumbers >> Steps::Double
 SquareAllNumbers = Steps::ConvertToNumbers >> Steps::Square
 DoubleAllNumbersAndAdd2 = DoubleAllNumbers >> Steps::Add2
 SquareAllNumbersAndAdd2 = SquareAllNumbers >> Steps::Add2
-DoubleAllNumbersAndSquareThem = DoubleAllNumbers >> SquareAllNumbersAndAdd2
-SquareAllNumbersAndDoubleThem = SquareAllNumbersAndAdd2 >> DoubleAllNumbers
+SquareAllNumbersAndDouble = SquareAllNumbersAndAdd2 >> DoubleAllNumbers
+DoubleAllNumbersAndSquareAndAdd2 = DoubleAllNumbers >> SquareAllNumbersAndAdd2
 
-DoubleAllNumbersAndSquareThem
-  .call(numbers: %w[1 1 2 2 3 4])
-  .on_success { |value| p value[:numbers] } # [6, 6, 18, 18, 38, 66]
-
-SquareAllNumbersAndDoubleThem
+SquareAllNumbersAndDouble
   .call(numbers: %w[1 1 2 2 3 4])
   .on_success { |value| p value[:numbers] } # [6, 6, 12, 12, 22, 36]
+
+DoubleAllNumbersAndSquareAndAdd2
+  .call(numbers: %w[1 1 2 2 3 4])
+  .on_success { |value| p value[:numbers] } # [6, 6, 18, 18, 38, 66]
 ```
 
 Note: You can blend any of the [syntaxes/approaches to create the pipelines](#how-to-create-a-pipeline-of-service-objects)) - [examples](https://github.com/serradura/u-service/blob/master/test/micro/service/pipeline/blend_test.rb#L7-L34).
@@ -360,6 +360,7 @@ Check it out implementations of the same use case with different libs (abstracti
 
 https://github.com/serradura/u-service/tree/master/benchmarks/interactor
 
+![interactor VS u-service](https://github.com/serradura/u-service/blob/master/assets/u-service_benchmarks.png?raw=true)
 
 ## Development
 
