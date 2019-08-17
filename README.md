@@ -351,7 +351,7 @@ Note: You can blend any of the [syntaxes/approaches to create the pipelines](#ho
 ## Examples
 
 1. [Rescuing an exception inside of service objects](https://github.com/serradura/u-service/blob/master/examples/rescuing_exceptions.rb)
-2. [Users creation](https://github.com/serradura/u-service/blob/master/examples/rescuing_exceptions.rb)
+2. [Users creation](https://github.com/serradura/u-service/blob/master/examples/users_creation.rb)
 
     An example of how to use services pipelines to sanitize and validate the input data, and how to represents a common use case, like: create an user.
 3. [CLI calculator](https://github.com/serradura/u-service/tree/master/examples/calculator)
