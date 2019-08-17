@@ -1,0 +1,60 @@
+require 'u-service'
+
+require_relative 'calc/operation'
+require_relative 'calc/normalize_args'
+require_relative 'calc/transform_into_numbers'
+
+module Calc
+  TransformArgsIntoNumbers = NormalizeArgs >> TransformIntoNumbers
+
+  module With
+    Add = TransformArgsIntoNumbers >> Operation::Add
+    Divide = TransformArgsIntoNumbers >> Operation::Divide
+    Subtract = TransformArgsIntoNumbers >> Operation::Subtract
+    Multiply = TransformArgsIntoNumbers >> Operation::Multiply
+  end
+end
+
+class PerformTask < Micro::Service::Base
+  attributes :args, :operation
+
+  def call!
+    operation
+      .call(args: args)
+      .on_success { |value| print_operation(value) }
+      .on_failure(:not_a_number) { |message| puts "ERROR: #{message}" }
+      .on_failure(:arguments_with_space_chars) do |(a, b)|
+        puts "ERROR: Arguments can't have spaces: a: #{a}, b: #{b}"
+      end
+  end
+
+  private def print_operation(a:, operator:, b:, result:)
+    puts "#{a} #{operator} #{b} = #{result}"
+  end
+end
+
+namespace :calc do
+  desc 'adds two numbers'
+  task :add, [:a, :b] do |_task, args|
+    PerformTask.call(args: args, operation: Calc::With::Add)
+  end
+
+  desc 'divides two numbers'
+  task :divide, [:a, :b] do |_task, args|
+    begin
+      PerformTask.call(args: args, operation: Calc::With::Divide)
+    rescue ZeroDivisionError => e
+      puts "ERROR: #{e.message}"
+    end
+  end
+
+  desc 'subtracts two numbers'
+  task :subtract, [:a, :b] do |_task, args|
+    PerformTask.call(args: args, operation: Calc::With::Subtract)
+  end
+
+  desc 'multiplies two numbers'
+  task :multiply, [:a, :b] do |_task, args|
+    PerformTask.call(args: args, operation: Calc::With::Multiply)
+  end
+end
