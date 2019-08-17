@@ -23,6 +23,7 @@ The main goals of this project are:
     - [What is a strict Service Object?](#what-is-a-strict-service-object)
     - [How to validate Service Object attributes?](#how-to-validate-service-object-attributes)
     - [It's possible to compose pipelines with other pipelines?](#its-possible-to-compose-pipelines-with-other-pipelines)
+  - [Examples](#examples)
   - [Comparisons](#comparisons)
   - [Benchmarks](#benchmarks)
   - [Development](#development)
@@ -346,6 +347,16 @@ DoubleAllNumbersAndSquareAndAdd2
 ```
 
 Note: You can blend any of the [syntaxes/approaches to create the pipelines](#how-to-create-a-pipeline-of-service-objects)) - [examples](https://github.com/serradura/u-service/blob/master/test/micro/service/pipeline/blend_test.rb#L7-L34).
+
+## Examples
+
+1. [Rescuing an exception inside of service objects](https://github.com/serradura/u-service/blob/master/examples/rescuing_exceptions.rb)
+2. [Users creation](https://github.com/serradura/u-service/blob/master/examples/rescuing_exceptions.rb)
+
+    An example of how to use services pipelines to sanitize and validate the input data, and how to represents a common use case, like: create an user.
+3. [CLI calculator](https://github.com/serradura/u-service/tree/master/examples/calculator)
+
+    A more complex example which use rake tasks to demonstrate how to handle user data, and how to use different failures type to control the app flow.
 
 ## Comparisons
 
