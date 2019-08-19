@@ -3,17 +3,15 @@
 require 'micro/service'
 
 module Micro
-  class Service::WithValidation < Micro::Service::Base
-    include Micro::Attributes::Features::ActiveModelValidations
+  module Service
+    class Base
+      include Micro::Attributes::Features::ActiveModelValidations
 
-    def call
-      return Failure(errors: self.errors) unless valid?
+      def call
+        return Failure(:validation_error) { {errors: self.errors, service: self} } unless valid?
 
-      super
+        __call
+      end
     end
-  end
-
-  class Service::Strict::Validation < Service::WithValidation
-    include Micro::Attributes::Features::StrictInitialize
   end
 end
