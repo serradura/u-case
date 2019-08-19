@@ -5,8 +5,12 @@ This example uses [rake](http://rubygems.org/gems/rake) to expose a CLI calculat
 ## Installation instructions
 ```sh
 gem install rake
-gem install u-service -v 0.12.0
+gem install u-service -v 0.13.0
 ```
+
+*Note:*
+
+If zsh is your shell, use: [`unsetopt nomatch`](https://thoughtbot.com/blog/how-to-use-arguments-in-a-rake-task) to avoid errors when invoking rake tasks with arguments.
 
 ### Usage
 

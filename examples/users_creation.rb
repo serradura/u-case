@@ -5,10 +5,8 @@ gemfile do
 
   # NOTE: I used an older version of the Activemodel only to show the compatibility with its older versions.
   gem 'activemodel', '~> 3.2', '>= 3.2.22.5'
-  gem 'u-service', '~> 0.12.0'
+  gem 'u-service', '~> 0.13.0', require: 'u-service/with_validation'
 end
-
-require 'micro/service/with_validation'
 
 module Users
   class Entity
@@ -37,7 +35,7 @@ module Users
       end
     end
 
-    class ValidateParams < Micro::Service::WithValidation
+    class ValidateParams < Micro::Service::Base
       attributes :name, :email
 
       validates :name, presence: true
@@ -79,8 +77,6 @@ module Users
   end
 end
 
-require 'pp'
-
 params = {
   "name" => "  Rodrigo  \n  Serradura ",
   "email" => "   RoDRIGo.SERRAdura@gmail.com   "
@@ -113,7 +109,8 @@ puts "\n-- Failure scenario --\n\n"
 
 Users::Creation::Process
   .call(name: '', email: '')
-  .on_failure { |errors:| p errors.full_messages }
+  .on_failure { |value| p value[:errors].full_messages }
+  .on_failure { |value| p value[:service].errors.full_messages }
 
 
 # :: example of the output: ::
@@ -130,4 +127,5 @@ Users::Creation::Process
 #
 # -- Failure scenarios --
 #
+# ["Name can't be blank", "Email is invalid"]
 # ["Name can't be blank", "Email is invalid"]
