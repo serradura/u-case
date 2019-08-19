@@ -19,7 +19,7 @@ class Micro::Service::BaseTest < Minitest::Test
     def call!
       return Failure { 'number must be greater than 0' } if number <= 0
 
-      Multiply.call(a: number, b: number)
+      Multiply.call(a: number, b: 2)
     end
   end
 
@@ -45,10 +45,10 @@ class Micro::Service::BaseTest < Minitest::Test
   end
 
   def test_the_class_call_method
-    calculation = Double.call(number: 2)
+    calculation = Double.call(number: 3)
 
     assert(calculation.success?)
-    assert_equal(4, calculation.value)
+    assert_equal(6, calculation.value)
     assert_kind_of(Micro::Service::Result, calculation)
 
     result = Double.call(number: 0)

@@ -111,7 +111,7 @@ class Double < Micro::Service::Base
     return Failure(:invalid) { 'the number must be a numeric value' } unless number.is_a?(Numeric)
     return Failure(:lte_zero) { 'the number must be greater than 0' } if number <= 0
 
-    Success(number * number)
+    Success(number * 2)
   end
 end
 
@@ -126,7 +126,7 @@ Double
   .on_failure(:lte_zero) { |msg| raise ArgumentError, msg }
 
 # The output when is a success:
-# 9
+# 6
 
 #=============================#
 # Raising an error if failure #
