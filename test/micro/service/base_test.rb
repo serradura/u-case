@@ -89,4 +89,30 @@ class Micro::Service::BaseTest < Minitest::Test
     err2 = assert_raises(TypeError) { LoremIpsum.new(text: 'ipsum indolor').call }
     assert_equal('Micro::Service::BaseTest::LoremIpsum#call! must return a Micro::Service::Result instance', err2.message)
   end
+
+  def test_that_sets_a_result_object_avoiding_the_service_to_create_one
+    result_instance = Micro::Service::Result.new
+
+    service = Multiply.new(a: 3, b: 2)
+    service.__set_result__(result_instance)
+
+    result = service.call
+
+    assert_same(result_instance, result)
+  end
+
+  def test_the_error_when_trying_to_set_an_invalid_result_object
+    service = Multiply.new(a: 3, b: 2)
+
+    err = assert_raises(ArgumentError) { service.__set_result__([]) }
+    assert_equal('argument must be an instance of Micro::Service::Result', err.message)
+  end
+
+  def test_when_already_exists_a_result_and_tries_to_set_a_new_one
+    service = Multiply.new(a: 3, b: 2)
+    service.call
+
+    err = assert_raises(ArgumentError) { service.__set_result__(Micro::Service::Result.new) }
+    assert_equal('result is already defined', err.message)
+  end
 end
