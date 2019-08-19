@@ -252,8 +252,8 @@ Note: To do this your application must have the [activemodel >= 3.2](https://rub
 # any kind of service attribute can be validated.
 #
 class Multiply < Micro::Service::Base
-  attribute :a
-  attribute :b
+  attributes :a, :b
+
   validates :a, :b, presence: true, numericality: true
 
   def call!
@@ -267,13 +267,18 @@ end
 # But if do you want an automatic way to fail
 # your services if there is some invalid data.
 # You can use:
-require 'micro/service/with_validation'
+
+# In some file. e.g: A Rails initializer
+require 'micro/service/with_validation' # or require 'u-service/with_validation'
+
+# In the Gemfile
+gem 'u-service', '~> 0.12.0', require: 'u-service/with_validation'
 
 # Using this approach, you can rewrite the previous sample with fewer lines of code.
 
-class Multiply < Micro::Service::WithValidation
-  attribute :a
-  attribute :b
+class Multiply < Micro::Service::Base
+  attributes :a, :b
+
   validates :a, :b, presence: true, numericality: true
 
   def call!
@@ -282,8 +287,8 @@ class Multiply < Micro::Service::WithValidation
 end
 
 # Note:
-# There is a strict variation for Micro::Service::WithValidation
-# Use Micro::Service::Strict::Validation if do you want this behavior.
+# After requiring the validation mode, the
+# Micro::Service::Strict classes will inherit this new behavior.
 ```
 
 ### It's possible to compose pipelines with other pipelines?
