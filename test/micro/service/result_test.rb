@@ -3,7 +3,7 @@ require 'test_helper'
 class Micro::Service::ResultTest < Minitest::Test
   def test_success_result
     result = Micro::Service::Result.new
-    result.__set__(true, 1, nil)
+    result.__set__(true, 1, :ok)
 
     assert result.success?
     refute result.failure?
@@ -24,7 +24,7 @@ class Micro::Service::ResultTest < Minitest::Test
 
   def test_failure_result
     result = Micro::Service::Result.new
-    result.__set__(false, 1, nil)
+    result.__set__(false, 1, :error)
 
     refute result.success?
     assert result.failure?
@@ -47,9 +47,9 @@ class Micro::Service::ResultTest < Minitest::Test
     success_number = rand(1..1_000_000)
     failure_number = rand(1..1_000_000)
 
-    success = Micro::Service::Result.new.tap { |r| r.__set__(true, success_number, nil) }
+    success = Micro::Service::Result.new.tap { |r| r.__set__(true, success_number, :ok) }
 
-    failure = Micro::Service::Result.new.tap { |r| r.__set__(false, failure_number, nil) }
+    failure = Micro::Service::Result.new.tap { |r| r.__set__(false, failure_number, :error) }
 
     assert_equal(success_number, success.value)
     assert_equal(failure_number, failure.value)

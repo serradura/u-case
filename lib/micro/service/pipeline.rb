@@ -28,7 +28,7 @@ module Micro
           @services = services
         end
 
-        def call(arg={})
+        def call(arg = {})
           @services.reduce(initial_result(arg)) do |result, service|
             break result if result.failure?
             service.__new__(result, result.value).call
@@ -45,7 +45,7 @@ module Micro
             return arg.call if arg_to_call?(arg)
             return arg if arg.is_a?(Micro::Service::Result)
             result = Micro::Service::Result.new
-            result.__set__(true, arg, nil)
+            result.__set__(true, arg, :ok)
           end
 
           def arg_to_call?(arg)
@@ -64,7 +64,7 @@ module Micro
           @__pipeline = Reducer.build(args)
         end
 
-        def call(options={})
+        def call(options = {})
           new(options).call
         end
       end
