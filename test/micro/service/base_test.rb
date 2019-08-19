@@ -69,8 +69,10 @@ class Micro::Service::BaseTest < Minitest::Test
   end
 
   def test_the_template_method
-    assert_raises(NotImplementedError) { Foo.call }
+    assert_raises(NotImplementedError) { Micro::Service::Base.call }
+    assert_raises(NotImplementedError) { Micro::Service::Base.new({}).call }
 
+    assert_raises(NotImplementedError) { Foo.call }
     assert_raises(NotImplementedError) { Foo.new({}).call }
   end
 
