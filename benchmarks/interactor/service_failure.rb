@@ -5,7 +5,7 @@ gemfile do
 
   gem 'benchmark-ips', '~> 2.7', '>= 2.7.2'
   gem 'interactor', '~> 3.1', '>= 3.1.1'
-  gem 'u-service', '~> 0.12.0'
+  gem 'u-service', '~> 0.13.0'
 end
 
 require 'benchmark/ips'
@@ -77,17 +77,17 @@ Benchmark.ips do |x|
 end
 
 # Warming up --------------------------------------
-#           Interactor     1.507k i/100ms
-# Micro::Service::Base    12.902k i/100ms
+#           Interactor     1.529k i/100ms
+# Micro::Service::Base    12.440k i/100ms
 # Micro::Service::Strict
-#                          9.758k i/100ms
+#                          9.534k i/100ms
 # Calculating -------------------------------------
-#           Interactor     15.482k (± 2.6%) i/s -     78.364k in   5.065166s
-# Micro::Service::Base    134.861k (± 1.3%) i/s -    683.806k in   5.071263s
+#           Interactor     15.736k (± 3.0%) i/s -     79.508k in   5.057323s
+# Micro::Service::Base    129.999k (± 1.5%) i/s -    659.320k in   5.072863s
 # Micro::Service::Strict
-#                         101.331k (± 1.5%) i/s -    507.416k in   5.008688s
+#                          98.943k (± 1.5%) i/s -    495.768k in   5.011742s
 
 # Comparison:
-# Micro::Service::Base:   134861.1 i/s
-# Micro::Service::Strict: 101331.5 i/s - 1.33x  slower
-#           Interactor:   15482.0 i/s - 8.71x  slower
+# Micro::Service::Base:    129998.6 i/s
+# Micro::Service::Strict:  98942.8 i/s - 1.31x  slower
+#           Interactor:    15736.4 i/s - 8.26x  slower
