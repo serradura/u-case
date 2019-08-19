@@ -5,11 +5,11 @@ module Micro
     class Base
       include Micro::Attributes.without(:strict_initialize)
 
-      INVALID_RESULT = '#call! must return a Micro::Service::Result instance'.freeze
-
+      UNEXPECTED_RESULT = '#call! must return a Micro::Service::Result instance'.freeze
+      InvalidResultInstance = ArgumentError.new('argument must be an instance of Micro::Service::Result'.freeze)
       ResultIsAlreadyDefined = ArgumentError.new('result is already defined'.freeze)
 
-      private_constant :INVALID_RESULT, :ResultIsAlreadyDefined
+      private_constant :UNEXPECTED_RESULT, :ResultIsAlreadyDefined, :InvalidResultInstance
 
       def self.>>(service)
         Micro::Service::Pipeline[self, service]
@@ -31,29 +31,34 @@ module Micro
       end
 
       def call
-        result = call!
-        return result if result.is_a?(Service::Result)
-        raise TypeError, self.class.name + INVALID_RESULT
+        __call
       end
 
       def __set_result__(result)
+        raise InvalidResultInstance unless result.is_a?(Result)
         raise ResultIsAlreadyDefined if @__result
         @__result = result
       end
 
       private
 
+        def __call
+          result = call!
+          return result if result.is_a?(Service::Result)
+          raise TypeError, self.class.name + UNEXPECTED_RESULT
+        end
+
         def __get_result__
           @__result ||= Result.new
         end
 
-        def Success(arg=nil)
-          value, type = block_given? ? [yield, arg] : [arg, nil]
+        def Success(arg = :ok)
+          block_given? ? (value, type = yield, arg) : (value, type = arg, :ok)
           __get_result__.__set__(true, value, type)
         end
 
-        def Failure(arg=nil)
-          value, type = block_given? ? [yield, arg] : [arg, nil]
+        def Failure(arg = :error)
+          block_given? ? (value, type = yield, arg) : (value, type = arg, :error)
           __get_result__.__set__(false, value, type)
         end
     end

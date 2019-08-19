@@ -3,12 +3,12 @@
 module Micro
   module Service
     class Result
-      InvalidType = TypeError.new('type must be nil or a symbol'.freeze)
+      InvalidType = TypeError.new('type must be a symbol'.freeze)
 
       attr_reader :value, :type
 
       def __set__(is_success, value, type)
-        raise InvalidType unless type.nil? || type.is_a?(Symbol)
+        raise InvalidType unless type.is_a?(Symbol)
 
         @success, @value, @type = is_success, value, type
 
@@ -23,22 +23,22 @@ module Micro
         !success?
       end
 
-      def on_success(arg=nil)
+      def on_success(arg = :ok)
         self.tap { yield(value) if success_type?(arg) }
       end
 
-      def on_failure(arg=nil)
+      def on_failure(arg = :error)
         self.tap{ yield(value) if failure_type?(arg) }
       end
 
       private
 
         def success_type?(arg)
-          success? && (arg.nil? || arg == type)
+          success? && (arg == :ok || arg == type)
         end
 
         def failure_type?(arg)
-          failure? && (arg.nil? || arg == type)
+          failure? && (arg == :error || arg == type)
         end
     end
   end
