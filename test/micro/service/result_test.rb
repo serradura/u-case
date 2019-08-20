@@ -70,7 +70,6 @@ class Micro::Service::ResultTest < Minitest::Test
     assert_equal(2, counter)
   end
 
-
   def test_failure_hook
     counter = 0
     number = rand(1..1_000_000)
@@ -83,5 +82,13 @@ class Micro::Service::ResultTest < Minitest::Test
       .on_failure { counter += 1 }
 
     assert_equal(2, counter)
+  end
+
+  def test_the_invalid_type_error
+    type = nil
+    result = Micro::Service::Result.new
+
+    err = assert_raises(TypeError) { result.__set__(true, nil, type) }
+    assert_equal('type must be a Symbol', err.message)
   end
 end
