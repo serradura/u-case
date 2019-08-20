@@ -53,13 +53,13 @@ module Micro
         end
 
         def Success(arg = :ok)
-          block_given? ? (value, type = yield, arg) : (value, type = arg, :ok)
-          __get_result__.__set__(true, value, type)
+          value, type = block_given? ? [yield, arg] : [arg, :ok]
+          __get_result__.__set__(true, value, type, nil)
         end
 
         def Failure(arg = :error)
-          block_given? ? (value, type = yield, arg) : (value, type = arg, :error)
-          __get_result__.__set__(false, value, type)
+          value, type = block_given? ? [yield, arg] : [arg, :error]
+          __get_result__.__set__(false, value, type, self)
         end
     end
   end

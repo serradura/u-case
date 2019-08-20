@@ -8,7 +8,7 @@ class Micro::Service::BaseTest < Minitest::Test
       if a.is_a?(Numeric) && b.is_a?(Numeric)
         Success(a * b)
       else
-        Failure(:invalid_data)
+        Failure(:invalid_data) { [a, b]}
       end
     end
   end
@@ -31,25 +31,32 @@ class Micro::Service::BaseTest < Minitest::Test
   end
 
   def test_the_instance_call_method
-    calculation = Multiply.new(a: 2, b: 2).call
+    result = Multiply.new(a: 2, b: 2).call
 
-    assert(calculation.success?)
-    assert_equal(4, calculation.value)
-    assert_kind_of(Micro::Service::Result, calculation)
+    assert(result.success?)
+    assert_equal(4, result.value)
+    assert_kind_of(Micro::Service::Result, result)
 
     result = Multiply.new(a: 1, b: '1').call
 
     assert(result.failure?)
-    assert_equal(:invalid_data, result.value)
+    assert_equal([1, '1'], result.value)
     assert_kind_of(Micro::Service::Result, result)
+
+    result
+      .on_failure(:invalid_data) { |(a, _b), _service| assert_equal(1, a) }
+      .on_failure(:invalid_data) { |(_a, b), _service| assert_equal('1', b) }
+      .on_failure(:invalid_data) do |_value, service|
+        assert_instance_of(Multiply, service)
+      end
   end
 
   def test_the_class_call_method
-    calculation = Double.call(number: 3)
+    result = Double.call(number: 3)
 
-    assert(calculation.success?)
-    assert_equal(6, calculation.value)
-    assert_kind_of(Micro::Service::Result, calculation)
+    assert(result.success?)
+    assert_equal(6, result.value)
+    assert_kind_of(Micro::Service::Result, result)
 
     result = Double.call(number: 0)
 

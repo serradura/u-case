@@ -45,7 +45,7 @@ module Micro
             return arg.call if arg_to_call?(arg)
             return arg if arg.is_a?(Micro::Service::Result)
             result = Micro::Service::Result.new
-            result.__set__(true, arg, :ok)
+            result.__set__(true, arg, :ok, nil)
           end
 
           def arg_to_call?(arg)

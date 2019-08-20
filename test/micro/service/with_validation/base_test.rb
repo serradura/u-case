@@ -43,12 +43,13 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
           result = Multiply.new(a: 1, b: nil).call
 
           assert(result.failure?)
-          assert_equal(["can't be blank", 'is not a number'], result.value[:errors][:b])
+          assert_equal(["can't be blank", 'is not a number'], result.value[:b])
           assert_instance_of(Micro::Service::Result, result)
 
           counter_1 = 0
           result
-            .on_failure(:validation_error) { |value| assert_instance_of(Multiply, value[:service]) }
+            .on_failure(:validation_error) { |errors, service| refute(errors.empty?) }
+            .on_failure(:validation_error) { |errors, service| assert_instance_of(Multiply, service) }
             .on_failure(:validation_error) { counter_1 += 1 }
             .on_failure { counter_1 += 1 }
 
@@ -59,12 +60,13 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
           result = Multiply.new(a: 1, b: 'a').call
 
           assert(result.failure?)
-          assert_equal(['is not a number'], result.value[:errors][:b])
+          assert_equal(['is not a number'], result.value[:b])
           assert_instance_of(Micro::Service::Result, result)
 
           counter_2 = 0
           result
-            .on_failure(:validation_error) { |value| assert_instance_of(Multiply, value[:service]) }
+            .on_failure(:validation_error) { |value, service| refute(value.empty?) }
+            .on_failure(:validation_error) { |value, service| assert_instance_of(Multiply, service) }
             .on_failure(:validation_error) { counter_2 += 1 }
             .on_failure { counter_2 += 1 }
 
