@@ -69,5 +69,8 @@ class Micro::Service::PipelineTest < Minitest::Test
       .call(Jobs::State::Default)
       .on_success { raise }
       .on_failure(:invalid_uuid) { |job| assert_nil(job.id) }
+      .on_failure(:invalid_uuid) do |_job, service|
+        assert_instance_of(Jobs::ValidateID, service)
+      end
   end
 end

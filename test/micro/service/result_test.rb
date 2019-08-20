@@ -1,12 +1,20 @@
 require 'test_helper'
 
 class Micro::Service::ResultTest < Minitest::Test
+  def build_service
+    Micro::Service::Base.new({})
+  end
+
   def test_success_result
     result = Micro::Service::Result.new
-    result.__set__(true, 1, :ok)
+    result.__set__(true, 1, :ok, nil)
 
     assert result.success?
     refute result.failure?
+
+    assert_equal(1, result.value)
+    err = assert_raises(Micro::Service::Result::InvalidAccessToTheServiceObject) { result.service }
+    assert_equal('only a failure result can access its service object', err.message)
 
     # ---
 
@@ -15,6 +23,7 @@ class Micro::Service::ResultTest < Minitest::Test
       result
         .on_failure { raise }
         .on_success { assert(true) }
+        .on_success { |value| assert_equal(1, value) }
     )
 
     # ---
@@ -23,11 +32,16 @@ class Micro::Service::ResultTest < Minitest::Test
   end
 
   def test_failure_result
+    service = build_service
+
     result = Micro::Service::Result.new
-    result.__set__(false, 1, :error)
+    result.__set__(false, 0, :error, service)
 
     refute result.success?
     assert result.failure?
+
+    assert_equal(0, result.value)
+    assert_same(service, result.service)
 
     # ---
 
@@ -35,6 +49,8 @@ class Micro::Service::ResultTest < Minitest::Test
       result,
       result
         .on_failure { assert(true) }
+        .on_failure { |value| assert_equal(0, value) }
+        .on_failure { |_value, serv| assert_same(serv, service) }
         .on_success { raise }
     )
 
@@ -47,9 +63,9 @@ class Micro::Service::ResultTest < Minitest::Test
     success_number = rand(1..1_000_000)
     failure_number = rand(1..1_000_000)
 
-    success = Micro::Service::Result.new.tap { |r| r.__set__(true, success_number, :ok) }
+    success = Micro::Service::Result.new.tap { |r| r.__set__(true, success_number, :ok, nil) }
 
-    failure = Micro::Service::Result.new.tap { |r| r.__set__(false, failure_number, :error) }
+    failure = Micro::Service::Result.new.tap { |r| r.__set__(false, failure_number, :error, build_service) }
 
     assert_equal(success_number, success.value)
     assert_equal(failure_number, failure.value)
@@ -58,7 +74,7 @@ class Micro::Service::ResultTest < Minitest::Test
   def test_success_hook
     counter = 0
     number = rand(1..1_000_000)
-    result = Micro::Service::Result.new.tap { |r| r.__set__(true, number, :valid) }
+    result = Micro::Service::Result.new.tap { |r| r.__set__(true, number, :valid, nil) }
 
     result
       .on_failure { raise }
@@ -73,7 +89,7 @@ class Micro::Service::ResultTest < Minitest::Test
   def test_failure_hook
     counter = 0
     number = rand(1..1_000_000)
-    result = Micro::Service::Result.new.tap { |r| r.__set__(false, number, :invalid) }
+    result = Micro::Service::Result.new.tap { |r| r.__set__(false, number, :invalid, build_service) }
 
     result
       .on_success { raise }
@@ -88,7 +104,7 @@ class Micro::Service::ResultTest < Minitest::Test
     type = nil
     result = Micro::Service::Result.new
 
-    err = assert_raises(TypeError) { result.__set__(true, nil, type) }
+    err = assert_raises(TypeError) { result.__set__(true, :value, type, nil) }
     assert_equal('type must be a Symbol', err.message)
   end
 end
