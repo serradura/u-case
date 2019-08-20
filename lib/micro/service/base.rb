@@ -5,7 +5,7 @@ module Micro
     class Base
       include Micro::Attributes.without(:strict_initialize)
 
-      UNEXPECTED_RESULT = '#call! must return a Micro::Service::Result instance'.freeze
+      UNEXPECTED_RESULT = '#call! must return an instance of Micro::Service::Result'.freeze
       InvalidResultInstance = ArgumentError.new('argument must be an instance of Micro::Service::Result'.freeze)
       ResultIsAlreadyDefined = ArgumentError.new('result is already defined'.freeze)
 

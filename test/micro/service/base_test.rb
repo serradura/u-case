@@ -86,10 +86,10 @@ class Micro::Service::BaseTest < Minitest::Test
 
   def test_the_result_error
     err1 = assert_raises(TypeError) { LoremIpsum.call(text: 'lorem ipsum') }
-    assert_equal('Micro::Service::BaseTest::LoremIpsum#call! must return a Micro::Service::Result instance', err1.message)
+    assert_equal('Micro::Service::BaseTest::LoremIpsum#call! must return an instance of Micro::Service::Result', err1.message)
 
     err2 = assert_raises(TypeError) { LoremIpsum.new(text: 'ipsum indolor').call }
-    assert_equal('Micro::Service::BaseTest::LoremIpsum#call! must return a Micro::Service::Result instance', err2.message)
+    assert_equal('Micro::Service::BaseTest::LoremIpsum#call! must return an instance of Micro::Service::Result', err2.message)
   end
 
   def test_that_sets_a_result_object_avoiding_the_service_to_create_one
