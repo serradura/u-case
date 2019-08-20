@@ -234,7 +234,7 @@ result.failure?                               # true
 result.service.is_a?(Steps::ConvertToNumbers) # true
 
 result.on_failure do |_message, service|
-  puts "#{service.class.name} was the service responsible by the failure" } # Steps::ConvertToNumbers was the service responsible by the failure
+  puts "#{service.class.name} was the service responsible for the failure" } # Steps::ConvertToNumbers was the service responsible for the failure
 end
 ```
 

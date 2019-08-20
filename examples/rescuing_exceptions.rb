@@ -3,7 +3,7 @@ require 'bundler/inline'
 gemfile do
   source 'https://rubygems.org'
 
-  gem 'u-service', '~> 0.13.0'
+  gem 'u-service', '~> 0.14.0'
 end
 
 class Divide < Micro::Service::Base
