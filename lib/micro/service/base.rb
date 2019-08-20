@@ -5,11 +5,16 @@ module Micro
     class Base
       include Micro::Attributes.without(:strict_initialize)
 
-      UNEXPECTED_RESULT = '#call! must return an instance of Micro::Service::Result'.freeze
+      class UnexpectedResult < TypeError
+        MESSAGE = '#call! must return an instance of Micro::Service::Result'.freeze
+
+        def initialize(klass); super(klass.name + MESSAGE); end
+      end
+
       InvalidResultInstance = ArgumentError.new('argument must be an instance of Micro::Service::Result'.freeze)
       ResultIsAlreadyDefined = ArgumentError.new('result is already defined'.freeze)
 
-      private_constant :UNEXPECTED_RESULT, :ResultIsAlreadyDefined, :InvalidResultInstance
+      private_constant :ResultIsAlreadyDefined, :InvalidResultInstance
 
       def self.>>(service)
         Micro::Service::Pipeline[self, service]
@@ -45,7 +50,7 @@ module Micro
         def __call
           result = call!
           return result if result.is_a?(Service::Result)
-          raise TypeError, self.class.name + UNEXPECTED_RESULT
+          raise UnexpectedResult.new(self.class)
         end
 
         def __get_result__
