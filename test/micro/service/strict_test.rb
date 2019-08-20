@@ -24,11 +24,11 @@ class Micro::Service::StrictTest < Minitest::Test
   end
 
   def test_instance_call_method
-    calculation = Multiply.new(a: 2, b: 2).call
+    result = Multiply.new(a: 2, b: 2).call
 
-    assert(calculation.success?)
-    assert_equal(4, calculation.value)
-    assert_kind_of(Micro::Service::Result, calculation)
+    assert(result.success?)
+    assert_equal(4, result.value)
+    assert_kind_of(Micro::Service::Result, result)
 
     result = Multiply.new(a: 1, b: '1').call
 
@@ -38,11 +38,11 @@ class Micro::Service::StrictTest < Minitest::Test
   end
 
   def test_class_call_method
-    calculation = Double.call(number: 2)
+    result = Double.call(number: 2)
 
-    assert(calculation.success?)
-    assert_equal(4, calculation.value)
-    assert_kind_of(Micro::Service::Result, calculation)
+    assert(result.success?)
+    assert_equal(4, result.value)
+    assert_kind_of(Micro::Service::Result, result)
 
     result = Double.call(number: 0)
 
@@ -55,8 +55,10 @@ class Micro::Service::StrictTest < Minitest::Test
   end
 
   def test_template_method
-    assert_raises(NotImplementedError) { Foo.call }
+    assert_raises(NotImplementedError) { Micro::Service::Strict.call }
+    assert_raises(NotImplementedError) { Micro::Service::Strict.new({}).call }
 
+    assert_raises(NotImplementedError) { Foo.call }
     assert_raises(NotImplementedError) { Foo.new({}).call }
   end
 
