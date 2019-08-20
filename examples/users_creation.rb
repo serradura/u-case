@@ -5,7 +5,7 @@ gemfile do
 
   # NOTE: I used an older version of the Activemodel only to show the compatibility with its older versions.
   gem 'activemodel', '~> 3.2', '>= 3.2.22.5'
-  gem 'u-service', '~> 0.13.0', require: 'u-service/with_validation'
+  gem 'u-service', '~> 0.14.0', require: 'u-service/with_validation'
 end
 
 module Users
@@ -109,8 +109,10 @@ puts "\n-- Failure scenario --\n\n"
 
 Users::Creation::Process
   .call(name: '', email: '')
-  .on_failure { |value| p value[:errors].full_messages }
-  .on_failure { |value| p value[:service].errors.full_messages }
+  .on_failure { |errors| p errors.full_messages }
+  .on_failure do |_errors, service|
+    puts "#{service.class.name} was the service responsible for the failure"
+  end
 
 
 # :: example of the output: ::
@@ -128,4 +130,4 @@ Users::Creation::Process
 # -- Failure scenarios --
 #
 # ["Name can't be blank", "Email is invalid"]
-# ["Name can't be blank", "Email is invalid"]
+# Users::Creation::ValidateParams was the service responsible for the failure
