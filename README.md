@@ -183,9 +183,9 @@ module Steps
   end
 end
 
-#=================================================#
+#-------------------------------------------------#
 # Creating a pipeline using the collection syntax #
-#=================================================#
+#-------------------------------------------------#
 
 Add2ToAllNumbers = Micro::Service::Pipeline[
   Steps::ConvertToNumbers,
@@ -197,9 +197,9 @@ result = Add2ToAllNumbers.call(numbers: %w[1 1 2 2 3 4])
 p result.success? # true
 p result.value    # {:numbers => [3, 3, 4, 4, 5, 6]}
 
-#=======================================================#
+#-------------------------------------------------------#
 # An alternative way to create a pipeline using classes #
-#=======================================================#
+#-------------------------------------------------------#
 
 class DoubleAllNumbers
   include Micro::Service::Pipeline
@@ -211,9 +211,9 @@ DoubleAllNumbers
   .call(numbers: %w[1 1 b 2 3 4])
   .on_failure { |message| p message } # "numbers must contain only numeric types"
 
-#=================================================================#
+#-----------------------------------------------------------------#
 # Another way to create a pipeline using the composition operator #
-#=================================================================#
+#-----------------------------------------------------------------#
 
 SquareAllNumbers =
   Steps::ConvertToNumbers >> Steps::Square
@@ -221,6 +221,21 @@ SquareAllNumbers =
 SquareAllNumbers
   .call(numbers: %w[1 1 2 2 3 4])
   .on_success { |value| p value[:numbers] } # [1, 1, 4, 4, 9, 16]
+
+#=================================================================#
+# Attention:                                                      #
+# When happening a failure, the service object responsible for it #
+# will be accessible in the result                                #
+#=================================================================#
+
+result = SquareAllNumbers.call(numbers: %w[1 1 b 2 3 4])
+
+result.failure?                               # true
+result.service.is_a?(Steps::ConvertToNumbers) # true
+
+result.on_failure do |_message, service|
+  puts "#{service.class.name} was the service responsible by the failure" } # Steps::ConvertToNumbers was the service responsible by the failure
+end
 ```
 
 ### What is a strict Service Object?
