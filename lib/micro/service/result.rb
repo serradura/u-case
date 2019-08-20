@@ -3,7 +3,7 @@
 module Micro
   module Service
     class Result
-      InvalidType = TypeError.new('type must be a symbol'.freeze)
+      InvalidType = TypeError.new('type must be a Symbol'.freeze)
 
       attr_reader :value, :type
 
