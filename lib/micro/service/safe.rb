@@ -7,7 +7,7 @@ module Micro
         begin
           super
         rescue => exception
-          raise exception if exception.is_a?(Micro::Service::Base::UnexpectedResult)
+          raise exception if exception.is_a?(Error::UnexpectedResult)
 
           Failure(:exception) { exception }
         end

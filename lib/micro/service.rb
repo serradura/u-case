@@ -4,6 +4,7 @@ require 'micro/attributes'
 
 require 'micro/service/version'
 
+require 'micro/service/error'
 require 'micro/service/result'
 require 'micro/service/base'
 require 'micro/service/safe'
