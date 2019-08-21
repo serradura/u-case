@@ -51,6 +51,8 @@ module Micro
       end
 
       class SafeReducer < Reducer
+        ARGUMENT_MUST_BE_A_HASH = 'argument must be a Hash'.freeze
+
         def call(arg = {})
           @services.reduce(initial_result(arg)) do |result, service|
             break result if result.failure?
@@ -58,10 +60,16 @@ module Micro
             begin
               service.__new__(result, result.value).call
             rescue => exception
-              raise exception if exception.is_a?(Micro::Service::Base::UnexpectedResult)
+              raise exception if exception.is_a?(Error::UnexpectedResult) || exception.message == ARGUMENT_MUST_BE_A_HASH
               result.__set__(false, exception, :exception, service)
             end
           end
+        end
+
+        alias_method :&, :>>
+
+        def >>(arg)
+          raise NoMethodError
         end
       end
 
@@ -79,18 +87,20 @@ module Micro
         end
       end
 
-      private_constant :ClassMethods
+      CONSTRUCTOR = <<-RUBY
+      def initialize(options)
+        @options = options
+        pipeline = self.class.__pipeline__
+        raise Error::UndefinedPipeline unless pipeline
+      end
+      RUBY
+
+      private_constant :ClassMethods, :CONSTRUCTOR
 
       def self.included(base)
         def base.pipeline_reducer; Reducer; end
         base.extend(ClassMethods)
-        base.class_eval(<<-RUBY)
-        def initialize(options)
-          @options = options
-          pipeline = self.class.__pipeline__
-          raise Error::UndefinedPipeline unless pipeline
-        end
-        RUBY
+        base.class_eval(CONSTRUCTOR)
       end
 
       def self.[](*args)
