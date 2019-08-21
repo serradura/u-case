@@ -5,11 +5,6 @@ module Micro
     module Pipeline
       class Reducer
         attr_reader :services
-
-        InvalidServices = ArgumentError.new('argument must be a collection of `Micro::Service::Base` classes'.freeze)
-
-        private_constant :InvalidServices
-
         def self.map_services(arg)
           return arg.services if arg.is_a?(Reducer)
           return arg.__pipeline__.services if arg.is_a?(Class) && arg < Micro::Service::Pipeline
@@ -19,7 +14,7 @@ module Micro
         def self.build(args)
           services = Array(args).flat_map { |arg| map_services(arg) }
 
-          raise InvalidServices if services.any? { |klass| !(klass < ::Micro::Service::Base) }
+          raise Error::InvalidServices if services.any? { |klass| !(klass < ::Micro::Service::Base) }
 
           new(services)
         end
@@ -36,7 +31,7 @@ module Micro
         end
 
         def >>(arg)
-          Reducer.build(services + self.class.map_services(arg))
+          self.class.build(services + self.class.map_services(arg))
         end
 
         private
@@ -55,13 +50,28 @@ module Micro
           end
       end
 
+      class SafeReducer < Reducer
+        def call(arg = {})
+          @services.reduce(initial_result(arg)) do |result, service|
+            break result if result.failure?
+
+            begin
+              service.__new__(result, result.value).call
+            rescue => exception
+              raise exception if exception.is_a?(Micro::Service::Base::UnexpectedResult)
+              result.__set__(false, exception, :exception, service)
+            end
+          end
+        end
+      end
+
       module ClassMethods
         def __pipeline__
           @__pipeline
         end
 
         def pipeline(*args)
-          @__pipeline = Reducer.build(args)
+          @__pipeline = pipeline_reducer.build(args)
         end
 
         def call(options = {})
@@ -71,27 +81,35 @@ module Micro
 
       private_constant :ClassMethods
 
-      def self.[](*args)
-        Reducer.build(args)
-      end
-
-      UndefinedPipeline = ArgumentError.new("This class hasn't declared its pipeline. Please, use the `pipeline()` macro to define one.".freeze)
-
-      private_constant :UndefinedPipeline
-
       def self.included(base)
+        def base.pipeline_reducer; Reducer; end
         base.extend(ClassMethods)
         base.class_eval(<<-RUBY)
         def initialize(options)
           @options = options
           pipeline = self.class.__pipeline__
-          raise UndefinedPipeline unless pipeline
+          raise Error::UndefinedPipeline unless pipeline
         end
         RUBY
       end
 
+      def self.[](*args)
+        Reducer.build(args)
+      end
+
       def call
         self.class.__pipeline__.call(@options)
+      end
+
+      module Safe
+        def self.included(base)
+          base.send(:include, Micro::Service::Pipeline)
+          def base.pipeline_reducer; SafeReducer; end
+        end
+
+        def self.[](*args)
+          SafeReducer.build(args)
+        end
       end
     end
   end
