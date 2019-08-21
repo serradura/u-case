@@ -57,12 +57,7 @@ module Micro
           @services.reduce(initial_result(arg)) do |result, service|
             break result if result.failure?
 
-            begin
-              service.__new__(result, result.value).call
-            rescue => exception
-              raise exception if exception.is_a?(Error::UnexpectedResult) || exception.message == ARGUMENT_MUST_BE_A_HASH
-              result.__set__(false, exception, :exception, service)
-            end
+            service_result(service, result)
           end
         end
 
@@ -71,6 +66,21 @@ module Micro
         def >>(arg)
           raise NoMethodError
         end
+
+        private
+
+          def service_result(service, result)
+            begin
+              service.__new__(result, result.value).call
+            rescue => exception
+              raise exception if wrong_usage?(exception)
+              result.__set__(false, exception, :exception, service)
+            end
+          end
+
+          def wrong_usage?(exception)
+            exception.is_a?(Error::UnexpectedResult) || exception.message == ARGUMENT_MUST_BE_A_HASH
+          end
       end
 
       module ClassMethods
