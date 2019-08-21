@@ -3,22 +3,15 @@ require 'test_helper'
 require 'support/steps'
 
 class Micro::Service::Pipeline::Safe::CompositionOperatorTest < Minitest::Test
-  Add2ToAllNumbers =
-    Steps::ConvertToNumbers & Steps::Add2
-
-  DoubleAllNumbers =
-    Steps::ConvertToNumbers & Steps::Double
-
-  SquareAllNumbers =
-    Steps::ConvertToNumbers & Steps::Square
+  Add2ToAllNumbers = Steps::ConvertToNumbers & Steps::Add2
+  DoubleAllNumbers = Steps::ConvertToNumbers & Steps::Double
+  SquareAllNumbers = Steps::ConvertToNumbers & Steps::Square
 
   DoubleAllNumbersAndAdd2 = DoubleAllNumbers & Steps::Add2
-
   SquareAllNumbersAndAdd2 = SquareAllNumbers & Steps::Add2
 
-  DoubleAllNumbersAndSquareThem = DoubleAllNumbers & SquareAllNumbersAndAdd2
-
-  SquareAllNumbersAndDoubleThem = SquareAllNumbersAndAdd2 & DoubleAllNumbers
+  SquareAllNumbersAndDouble = SquareAllNumbersAndAdd2 & DoubleAllNumbers
+  DoubleAllNumbersAndSquareAndAdd2 = DoubleAllNumbers & SquareAllNumbersAndAdd2
 
   EXAMPLES = [
     { pipeline: Add2ToAllNumbers, result: [3, 3, 4, 4, 5, 6] },
@@ -26,8 +19,8 @@ class Micro::Service::Pipeline::Safe::CompositionOperatorTest < Minitest::Test
     { pipeline: SquareAllNumbers, result: [1, 1, 4, 4, 9, 16] },
     { pipeline: DoubleAllNumbersAndAdd2, result: [4, 4, 6, 6, 8, 10] },
     { pipeline: SquareAllNumbersAndAdd2, result: [3, 3, 6, 6, 11, 18] },
-    { pipeline: DoubleAllNumbersAndSquareThem, result: [6, 6, 18, 18, 38, 66] },
-    { pipeline: SquareAllNumbersAndDoubleThem, result: [6, 6, 12, 12, 22, 36] },
+    { pipeline: SquareAllNumbersAndDouble, result: [6, 6, 12, 12, 22, 36] },
+    { pipeline: DoubleAllNumbersAndSquareAndAdd2, result: [6, 6, 18, 18, 38, 66] }
   ].map(&OpenStruct.method(:new))
 
   def test_the_data_validation_error_when_calling_with_the_wrong_king_of_data

@@ -352,8 +352,10 @@ end
 Add2ToAllNumbers = Steps::ConvertToNumbers >> Steps::Add2
 DoubleAllNumbers = Steps::ConvertToNumbers >> Steps::Double
 SquareAllNumbers = Steps::ConvertToNumbers >> Steps::Square
+
 DoubleAllNumbersAndAdd2 = DoubleAllNumbers >> Steps::Add2
 SquareAllNumbersAndAdd2 = SquareAllNumbers >> Steps::Add2
+
 SquareAllNumbersAndDouble = SquareAllNumbersAndAdd2 >> DoubleAllNumbers
 DoubleAllNumbersAndSquareAndAdd2 = DoubleAllNumbers >> SquareAllNumbersAndAdd2
 
