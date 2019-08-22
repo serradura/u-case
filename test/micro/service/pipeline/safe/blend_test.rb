@@ -97,7 +97,7 @@ class Micro::Service::Pipeline::Safe::BlendTest < Minitest::Test
       result
         .on_failure { counter += 1 }
         .on_failure(:exception) { |value| counter += 1 if value.is_a?(ZeroDivisionError) }
-        .on_failure(:exception) { |_value, service| counter += 1 if service == DivideNumbersByZero}
+        .on_failure(:exception) { |_value, service| counter += 1 if service.is_a?(DivideNumbersByZero) }
 
       assert_equal(3, counter)
     end
