@@ -52,4 +52,11 @@ class Micro::Service::Pipeline::Safe::CompositionOperatorTest < Minitest::Test
       result.on_failure { |value| assert_equal('numbers must contain only numeric types', value) }
     end
   end
+
+  def test_the_error_when_using_the_regular_composition_operator
+    double_all_numbers = Steps::ConvertToNumbers & Steps::Double
+
+    err = assert_raises(NoMethodError) { double_all_numbers >> Steps::Add2 }
+    assert_match(/undefined method `>>' for #<Micro::Service::Pipeline::SafeReducer.*>. Please, use the method `&' to avoid this error\./, err.message)
+  end
 end
