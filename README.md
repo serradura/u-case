@@ -272,7 +272,7 @@ class Multiply < Micro::Service::Base
   validates :a, :b, presence: true, numericality: true
 
   def call!
-    return Failure(errors: self.errors) unless valid?
+    return Failure(:validation_error) { self.errors } unless valid?
 
     Success(number: a * b)
   end
@@ -287,7 +287,7 @@ end
 require 'micro/service/with_validation' # or require 'u-service/with_validation'
 
 # In the Gemfile
-gem 'u-service', '~> 0.12.0', require: 'u-service/with_validation'
+gem 'u-service', '~> 0.14.0', require: 'u-service/with_validation'
 
 # Using this approach, you can rewrite the previous sample with fewer lines of code.
 
