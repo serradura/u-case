@@ -75,10 +75,11 @@ module Micro
 
           def service_result(service, result)
             begin
-              service.__new__(result, result.value).call
+              instance = service.__new__(result, result.value)
+              instance.call
             rescue => exception
               raise exception if Error::ByWrongUsage.check(exception)
-              result.__set__(false, exception, :exception, service)
+              result.__set__(false, exception, :exception, instance)
             end
           end
       end
