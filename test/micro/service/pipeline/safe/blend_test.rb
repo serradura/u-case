@@ -60,4 +60,46 @@ class Micro::Service::Pipeline::Safe::BlendTest < Minitest::Test
       result.on_failure { |value| assert_equal('numbers must contain only numeric types', value) }
     end
   end
+
+  class DivideNumbersByZero < Micro::Service::Strict
+    attributes :numbers
+
+    def call!
+      Success(numbers: numbers.map { |number| number / 0 })
+    end
+  end
+
+  Add2ToAllNumbersAndDivideByZero = Add2ToAllNumbers & DivideNumbersByZero
+
+  DoubleAllNumbersAndDivideByZero = Micro::Service::Pipeline::Safe[
+    DoubleAllNumbers,
+    DivideNumbersByZero
+  ]
+
+  class SquareAllNumbersAndDivideByZero
+    include Micro::Service::Pipeline::Safe
+
+    pipeline SquareAllNumbers, DivideNumbersByZero
+  end
+
+  def test_the_expection_interception
+    [
+      Add2ToAllNumbersAndDivideByZero.call(numbers: %w[4 6 8]),
+      DoubleAllNumbersAndDivideByZero.call(numbers: %w[6 4 8]),
+      SquareAllNumbersAndDivideByZero.call(numbers: %w[8 4 6])
+    ].each do |result|
+      assert(result.failure?)
+      assert_instance_of(ZeroDivisionError, result.value)
+      assert_kind_of(Micro::Service::Result, result)
+
+      counter = 0
+
+      result
+        .on_failure { counter += 1 }
+        .on_failure(:exception) { |value| counter += 1 if value.is_a?(ZeroDivisionError) }
+        .on_failure(:exception) { |_value, service| counter += 1 if service == DivideNumbersByZero}
+
+      assert_equal(3, counter)
+    end
+  end
 end
