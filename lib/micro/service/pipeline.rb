@@ -55,6 +55,7 @@ module Micro
       end
 
       class SafeReducer < Reducer
+        MISSING_KEYWORD = 'missing keyword'.freeze
         ARGUMENT_MUST_BE_A_HASH = 'argument must be a Hash'.freeze
 
         def call(arg = {})
@@ -76,13 +77,9 @@ module Micro
             begin
               service.__new__(result, result.value).call
             rescue => exception
-              raise exception if wrong_usage?(exception)
+              raise exception if Error::ByWrongUsage.check(exception)
               result.__set__(false, exception, :exception, service)
             end
-          end
-
-          def wrong_usage?(exception)
-            exception.is_a?(Error::UnexpectedResult) || exception.message == ARGUMENT_MUST_BE_A_HASH
           end
       end
 

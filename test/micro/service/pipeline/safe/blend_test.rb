@@ -102,4 +102,25 @@ class Micro::Service::Pipeline::Safe::BlendTest < Minitest::Test
       assert_equal(3, counter)
     end
   end
+
+  class EmptyHash < Micro::Service::Base
+    def call!; Success({}); end
+  end
+
+  class Add < Micro::Service::Strict
+    attributes :a, :b
+    def call!; Success(a + b); end
+  end
+
+  def test_that_raises_wrong_usage_exceptions
+    pipeline_1 = EmptyHash & DivideNumbersByZero
+
+    err1 = assert_raises(ArgumentError) { pipeline_1.call({}) }
+    assert_equal('missing keyword: :numbers', err1.message)
+
+    pipeline_2 = EmptyHash & Add
+
+    err2 = assert_raises(ArgumentError) { pipeline_2.call({}) }
+    assert_equal('missing keywords: :a, :b', err2.message)
+  end
 end
