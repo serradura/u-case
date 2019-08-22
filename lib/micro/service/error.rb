@@ -11,20 +11,23 @@ module Micro
 
       ResultIsAlreadyDefined = ArgumentError.new('result is already defined'.freeze)
 
+      InvalidResultType = TypeError.new('type must be a Symbol'.freeze)
       InvalidResultInstance = ArgumentError.new('argument must be an instance of Micro::Service::Result'.freeze)
 
+      InvalidService = TypeError.new('service must be a kind or an instance of Micro::Service::Base'.freeze)
       InvalidServices = ArgumentError.new('argument must be a collection of `Micro::Service::Base` classes'.freeze)
 
       UndefinedPipeline = ArgumentError.new("This class hasn't declared its pipeline. Please, use the `pipeline()` macro to define one.".freeze)
 
-      module ByWrongUsage
-        MISSING_KEYWORD = 'missing keyword'.freeze
-        ARGUMENT_MUST_BE_A_HASH = 'argument must be a Hash'.freeze
+      class InvalidAccessToTheServiceObject < StandardError
+        MSG = 'only a failure result can access its service object'.freeze
 
+        def initialize(message = MSG); super; end
+      end
+
+      module ByWrongUsage
         def self.check(exception)
-          msg = exception.message
-          arg_error = msg == ARGUMENT_MUST_BE_A_HASH || msg.include?(MISSING_KEYWORD)
-          arg_error || exception.is_a?(Error::UnexpectedResult)
+          exception.is_a?(Error::UnexpectedResult) || exception.is_a?(ArgumentError)
         end
       end
     end

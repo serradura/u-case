@@ -13,7 +13,7 @@ class Micro::Service::ResultTest < Minitest::Test
     refute result.failure?
 
     assert_equal(1, result.value)
-    err = assert_raises(Micro::Service::Result::InvalidAccessToTheServiceObject) { result.service }
+    err = assert_raises(Micro::Service::Error::InvalidAccessToTheServiceObject) { result.service }
     assert_equal('only a failure result can access its service object', err.message)
 
     # ---
