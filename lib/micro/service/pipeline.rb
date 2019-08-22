@@ -34,6 +34,10 @@ module Micro
           self.class.build(services + self.class.map_services(arg))
         end
 
+        def &(arg)
+          raise NoMethodError, "undefined method `&' for #{self.inspect}. Please, use the method `>>' to avoid this error."
+        end
+
         private
 
           def initial_result(arg)
@@ -56,7 +60,6 @@ module Micro
         def call(arg = {})
           @services.reduce(initial_result(arg)) do |result, service|
             break result if result.failure?
-
             service_result(service, result)
           end
         end
@@ -64,7 +67,7 @@ module Micro
         alias_method :&, :>>
 
         def >>(arg)
-          raise NoMethodError
+          raise NoMethodError, "undefined method `>>' for #{self.inspect}. Please, use the method `&' to avoid this error."
         end
 
         private
