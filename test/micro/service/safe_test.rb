@@ -73,36 +73,22 @@ class Micro::Service::SafeTest < Minitest::Test
   end
 
   def test_that_exceptions_generate_a_failure
-    result_1 = Divide.new(a: 2, b: 0).call
+    [
+      Divide.new(a: 2, b: 0).call,
+      Divide.call(a: 2, b: 0)
+    ].each do |result|
+      assert(result.failure?)
+      assert_instance_of(ZeroDivisionError, result.value)
+      assert_kind_of(Micro::Service::Result, result)
 
-    assert(result_1.failure?)
-    assert_instance_of(ZeroDivisionError, result_1.value)
-    assert_kind_of(Micro::Service::Result, result_1)
+      counter = 0
 
-    counter_1 = 0
+      result
+        .on_failure { counter += 1 }
+        .on_failure(:exception) { |value| counter += 1 if value.is_a?(ZeroDivisionError) }
+        .on_failure(:exception) { |_value, service| counter += 1 if service.is_a?(Divide) }
 
-    result_1
-      .on_failure { counter_1 += 1 }
-      .on_failure(:exception) { |value| counter_1 += 1 if value.is_a?(ZeroDivisionError) }
-      .on_failure(:exception) { |_value, service| counter_1 += 1 if service.is_a?(Divide) }
-
-    assert_equal(3, counter_1)
-
-    # ---
-
-    result_2 = Divide.call(a: 2, b: 0)
-
-    assert(result_2.failure?)
-    assert_instance_of(ZeroDivisionError, result_2.value)
-    assert_kind_of(Micro::Service::Result, result_2)
-
-    counter_2 = 0
-
-    result_2
-      .on_failure { counter_2 += 1 }
-      .on_failure(:exception) { |value| counter_2 += 1 if value.is_a?(ZeroDivisionError) }
-      .on_failure(:exception) { |_value, service| counter_2 += 1 if service.is_a?(Divide) }
-
-    assert_equal(3, counter_2)
+      assert_equal(3, counter)
+    end
   end
 end
