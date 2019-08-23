@@ -91,4 +91,83 @@ class Micro::Service::SafeTest < Minitest::Test
       assert_equal(3, counter)
     end
   end
+
+  class Divide2ByArgV1 < Micro::Service::Safe
+    attribute :arg
+
+    def call!
+      Success(2 / arg)
+    rescue => e
+      Failure(e)
+    end
+  end
+
+  class Divide2ByArgV2 < Micro::Service::Safe
+    attribute :arg
+
+    def call!
+      Success(2 / arg)
+    rescue => e
+      Failure { e }
+    end
+  end
+
+  class Divide2ByArgV3 < Micro::Service::Safe
+    attribute :arg
+
+    def call!
+      Success(2 / arg)
+    rescue => e
+      Failure(:foo) { e }
+    end
+  end
+
+  class GenerateZeroDivisionError < Micro::Service::Safe
+    attribute :arg
+
+    def call!
+      Failure(arg / 0)
+    rescue => e
+      Success(e)
+    end
+  end
+
+  def test_the_rescue_of_an_exception_inside_of_a_safe_service
+    [
+      Divide2ByArgV1.call(arg: 0),
+      Divide2ByArgV2.call(arg: 0)
+    ].each do |result|
+      counter = 0
+
+      refute(result.success?)
+      assert_kind_of(ZeroDivisionError, result.value)
+
+      result.on_failure(:exception) { counter += 1 }
+      assert_equal(1, counter)
+    end
+
+    # ---
+
+    result = Divide2ByArgV3.call(arg: 0)
+    counter = 0
+
+    refute(result.success?)
+    assert_kind_of(ZeroDivisionError, result.value)
+
+    result.on_failure(:exception) { counter += 1 } # will be avoided
+    result.on_failure(:foo) { counter -= 1 }
+    assert_equal(-1, counter)
+
+    # ---
+
+    result = GenerateZeroDivisionError.call(arg: 2)
+    counter = 0
+
+    assert(result.success?)
+    assert_kind_of(ZeroDivisionError, result.value)
+
+    result.on_success { counter += 1 }
+    result.on_failure(:exception) { counter += 1 } # will be avoided
+    assert_equal(1, counter)
+  end
 end
