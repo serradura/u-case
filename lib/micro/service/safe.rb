@@ -9,7 +9,7 @@ module Micro
       end
 
       def call
-        __call
+        super
       rescue => exception
         raise exception if Error::ByWrongUsage.check(exception)
         Failure(exception)
