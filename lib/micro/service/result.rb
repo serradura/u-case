@@ -28,22 +28,22 @@ module Micro
         raise Error::InvalidAccessToTheServiceObject
       end
 
-      def on_success(arg = :ok)
+      def on_success(arg = nil)
         self.tap { yield(value) if success_type?(arg) }
       end
 
-      def on_failure(arg = :error)
+      def on_failure(arg = nil)
         self.tap{ yield(value, @service) if failure_type?(arg) }
       end
 
       private
 
         def success_type?(arg)
-          success? && (arg == :ok || arg == type)
+          success? && (arg.nil? || arg == type)
         end
 
         def failure_type?(arg)
-          failure? && (arg == :error || arg == type)
+          failure? && (arg.nil? || arg == type)
         end
 
         def is_a_service?(arg)

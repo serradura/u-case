@@ -88,4 +88,27 @@ class Micro::Service::StrictTest < Minitest::Test
     err3 = assert_raises(ArgumentError) { Double.call({}) }
     assert_equal('missing keyword: :number', err3.message)
   end
+
+  class Divide < Micro::Service::Strict
+    attributes :a, :b
+
+    def call!
+      return Success(a / b) if a.is_a?(Integer) && b.is_a?(Integer)
+      Failure(:not_an_integer)
+    rescue => e
+      Failure(e)
+    end
+  end
+
+  def test_the_exception_result_type
+    result = Divide.call(a: 2, b: 0)
+    counter = 0
+
+    refute(result.success?)
+    assert_kind_of(ZeroDivisionError, result.value)
+
+    result.on_failure(:error) { counter += 1 } # will be avoided
+    result.on_failure(:exception) { counter -= 1 }
+    assert_equal(-1, counter)
+  end
 end
