@@ -5,6 +5,11 @@ module Micro
     class Base
       include Micro::Attributes.without(:strict_initialize)
 
+      def self.__failure_type(arg, type)
+        return :exception if type == :error && arg.is_a?(Exception)
+        type
+      end
+
       def self.>>(service)
         Pipeline[self, service]
       end
@@ -55,7 +60,8 @@ module Micro
         end
 
         def Failure(arg = :error)
-          value, type = block_given? ? [yield, arg] : [arg, :error]
+          value = block_given? ? yield : arg
+          type = self.class.__failure_type(value, block_given? ? arg : :error)
           __get_result__.__set__(false, value, type, self)
         end
     end

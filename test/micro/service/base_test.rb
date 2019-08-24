@@ -124,4 +124,27 @@ class Micro::Service::BaseTest < Minitest::Test
     err = assert_raises(ArgumentError) { service.__set_result__(Micro::Service::Result.new) }
     assert_equal('result is already defined', err.message)
   end
+
+  class Divide < Micro::Service::Base
+    attributes :a, :b
+
+    def call!
+      return Success(a / b) if a.is_a?(Integer) && b.is_a?(Integer)
+      Failure(:not_an_integer)
+    rescue => e
+      Failure(e)
+    end
+  end
+
+  def test_the_exception_result_type
+    result = Divide.call(a: 2, b: 0)
+    counter = 0
+
+    refute(result.success?)
+    assert_kind_of(ZeroDivisionError, result.value)
+
+    result.on_failure(:error) { counter += 1 } # will be avoided
+    result.on_failure(:exception) { counter -= 1 }
+    assert_equal(-1, counter)
+  end
 end
