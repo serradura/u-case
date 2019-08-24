@@ -170,4 +170,17 @@ class Micro::Service::SafeTest < Minitest::Test
     result.on_failure(:exception) { counter += 1 } # will be avoided
     assert_equal(1, counter)
   end
+
+  def test_that_when_a_failure_result_is_a_symbol_both_type_and_value_will_be_the_same
+    result = Divide.call(a: 2, b: 'a')
+    counter = 0
+
+    refute(result.success?)
+    assert_equal(:not_an_integer, result.value)
+
+    result.on_failure(:error) { counter += 1 } # will be avoided
+    result.on_failure(:not_an_integer) { counter -= 1 }
+    result.on_failure { counter -= 1 }
+    assert_equal(-2, counter)
+  end
 end
