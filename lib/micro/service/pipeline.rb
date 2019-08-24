@@ -55,9 +55,6 @@ module Micro
       end
 
       class SafeReducer < Reducer
-        MISSING_KEYWORD = 'missing keyword'.freeze
-        ARGUMENT_MUST_BE_A_HASH = 'argument must be a Hash'.freeze
-
         def call(arg = {})
           @services.reduce(initial_result(arg)) do |result, service|
             break result if result.failure?
