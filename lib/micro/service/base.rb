@@ -51,7 +51,7 @@ module Micro
 
         def __call
           result = call!
-          return result if result.is_a?(Service::Result)
+          return result if result.is_a?(Result)
           raise Error::UnexpectedResult.new(self.class)
         end
 
