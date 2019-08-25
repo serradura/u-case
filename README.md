@@ -9,21 +9,30 @@
 Create simple and powerful service objects.
 
 The main goals of this project are:
-1. The smallest possible learning curve.
+1. The smallest possible learning curve (input **>>** process/transform **>>** output).
 2. Referential transparency and data integrity.
-3. No callbacks, compose a pipeline of service objects to represents complex business logic. (input >> process/transform >> output)
+3. No callbacks.
+4. Compose a pipeline of service objects to represents complex business logic.
 
+## Table of Contents
 - [μ-service (Micro::Service)](#%ce%bc-service-microservice)
+  - [Table of Contents](#table-of-contents)
   - [Required Ruby version](#required-ruby-version)
   - [Installation](#installation)
   - [Usage](#usage)
-    - [How to create a Service Object?](#how-to-create-a-service-object)
-    - [How to use the result hooks?](#how-to-use-the-result-hooks)
+    - [How to define a Service Object?](#how-to-define-a-service-object)
+    - [What is a `Micro::Service::Result`?](#what-is-a-microserviceresult)
+      - [What are the default types of a `Micro::Service::Result`?](#what-are-the-default-types-of-a-microserviceresult)
+      - [How to define custom result types?](#how-to-define-custom-result-types)
+        - [Is it possible to define a custom result type without a block?](#is-it-possible-to-define-a-custom-result-type-without-a-block)
+      - [How to use the result hooks?](#how-to-use-the-result-hooks)
+        - [What happens if a hook is declared multiple times?](#what-happens-if-a-hook-is-declared-multiple-times)
     - [How to create a pipeline of Service Objects?](#how-to-create-a-pipeline-of-service-objects)
+      - [Is it possible to compose pipelines with other pipelines?](#is-it-possible-to-compose-pipelines-with-other-pipelines)
     - [What is a strict Service Object?](#what-is-a-strict-service-object)
+    - [Is there some feature to auto handle exceptions inside of services/pipelines?](#is-there-some-feature-to-auto-handle-exceptions-inside-of-servicespipelines)
     - [How to validate Service Object attributes?](#how-to-validate-service-object-attributes)
-    - [It's possible to compose pipelines with other pipelines?](#its-possible-to-compose-pipelines-with-other-pipelines)
-  - [Examples](#examples)
+    - [Examples](#examples)
   - [Comparisons](#comparisons)
   - [Benchmarks](#benchmarks)
   - [Development](#development)
@@ -53,55 +62,196 @@ Or install it yourself as:
 
 ## Usage
 
-### How to create a Service Object?
+### How to define a Service Object?
+
+```ruby
+class Multiply < Micro::Service::Base
+  # 1. Define its inputs as attributes
+  attributes :a, :b
+
+  # 2. Define the method `call!` with its business logic
+  def call!
+
+    # 3. Return the calling result using the `Success()` and `Failure()` methods
+    if a.is_a?(Numeric) && b.is_a?(Numeric)
+      Success(a * b)
+    else
+      Failure { '`a` and `b` attributes must be numeric' }
+    end
+  end
+end
+
+#================================#
+# Calling a Service Object class #
+#================================#
+
+# Success result
+
+result = Multiply.call(a: 2, b: 2)
+
+result.success? # true
+result.value    # 4
+
+# Failure result
+
+bad_result = Multiply.call(a: 2, b: '2')
+
+bad_result.failure? # true
+bad_result.value    # "`a` and `b` attributes must be numeric"
+
+#-----------------------------------#
+# Calling a Service Object instance #
+#-----------------------------------#
+
+result = Multiply.new(a: 2, b: 3).call
+
+result.value # 6
+
+# Note:
+# ----
+# The result of a Micro::Service::Base.call
+# is an instance of Micro::Service::Result
+```
+
+[⬆️ Back to Top](#table-of-contents)
+
+### What is a `Micro::Service::Result`?
+
+A `Micro::Service::Result` carries the output data of some Service Object. These are their main methods:
+- `#success?` returns true if is a successful result.
+- `#failure?` returns true if is an unsuccessful result.
+- `#value` the result value itself.
+- `#type` a Symbol which gives meaning for the result, this is useful to declare different types of failures or success.
+- `#on_success` or `#on_failure` are hook methods which help you define the flow of your application.
+- `#service` if the result is a failure the service will be accessible through this method. This feature is handy to use with pipeline failures (this topic will be covered ahead).
+
+[⬆️ Back to Top](#table-of-contents)
+
+#### What are the default types of a `Micro::Service::Result`?
+
+Every result has a type and these are the default values: :ok when success, and :error/:exception when failures.
+
+```ruby
+class Divide < Micro::Service::Base
+  attributes :a, :b
+
+  def call!
+    invalid_attributes.empty? ? Success(a / b) : Failure(invalid_attributes)
+  rescue => e
+    Failure(e)
+  end
+
+  private def invalid_attributes
+    attributes.select { |_key, value| !value.is_a?(Numeric) }
+  end
+end
+
+# Success result
+
+result = Divide.call(a: 2, b: 2)
+
+result.type     # :ok
+result.value    # 1
+result.success? # true
+result.service  # raises `Micro::Service::Error::InvalidAccessToTheServiceObject: only a failure result can access its service object`
+
+# Failure result - type == :error
+
+bad_result = Divide.call(a: 2, b: '2')
+
+bad_result.type     # :error
+bad_result.value    # {"b"=>"2"}
+bad_result.failure? # true
+bad_result.service  # #<Divide:0x0000 @__attributes={"a"=>2, "b"=>"2"}, @a=2, @b="2", @__result=#<Micro::Service::Result:0x0000 @service=#<Divide:0x0000 ...>, @type=:error, @value={"b"=>"2"}, @success=false>>
+
+# Failure result - type == :exception
+
+err_result = Divide.call(a: 2, b: 0)
+
+err_result.type     # :exception
+err_result.value    # <ZeroDivisionError: divided by 0>
+err_result.failure? # true
+err_result.service  # #<Divide:0x0000 @__attributes={"a"=>2, "b"=>0}, @a=2, @b=0, @__result=#<Micro::Service::Result:0x0000 @service=#<Divide:0x0000 ...>, @type=:exception, @value=#<ZeroDivisionError: divided by 0>, @success=false>>
+
+# Note:
+# ----
+# Any Exception instance which is wrapped by
+# the Failure() method will receive `:exception` instead of the `:error` type.
+```
+
+[⬆️ Back to Top](#table-of-contents)
+
+#### How to define custom result types?
+
+Answer: Use a symbol as the argument of Success() and Failure() methods and declare a block to set the value.
 
 ```ruby
 class Multiply < Micro::Service::Base
   attributes :a, :b
 
   def call!
-    if a.is_a?(Numeric) && b.is_a?(Numeric)
-      Success(a * b)
-    else
-      Failure(:invalid_data)
+    return Success(a * b) if a.is_a?(Numeric) && b.is_a?(Numeric)
+
+    Failure(:invalid_data) do
+      attributes.reject { |_, input| input.is_a?(Numeric) }
     end
   end
 end
 
-#====================#
-# Calling a service  #
-#====================#
+# Success result
 
-result = Multiply.call(a: 2, b: 2)
+result = Multiply.call(a: 3, b: 2)
 
-p result.success? # true
-p result.value    # 4
+result.type     # :ok
+result.value    # 6
+result.success? # true
 
-# Note:
-# The result of a Micro::Service#call
-# is an instance of Micro::Service::Result
+# Failure result
 
-#----------------------------#
-# Calling a service instance #
-#----------------------------#
+bad_result = Multiply.call(a: 3, b: '2')
 
-result = Multiply.new(a: 2, b: 3).call
-
-p result.success? # true
-p result.value    # 6
-
-#===========================#
-# Verify the result failure #
-#===========================#
-
-result = Multiply.call(a: '2', b: 2)
-
-p result.success? # false
-p result.failure? # true
-p result.value    # :invalid_data
+bad_result.type     # :invalid_data
+bad_result.value    # {"b"=>"2"}
+bad_result.failure? # true
 ```
 
-### How to use the result hooks?
+[⬆️ Back to Top](#table-of-contents)
+
+##### Is it possible to define a custom result type without a block?
+
+Answer: Yes, it is. But only for failure results!
+
+```ruby
+class Multiply < Micro::Service::Base
+  attributes :a, :b
+
+  def call!
+    return Failure(:invalid_data) unless a.is_a?(Numeric) && b.is_a?(Numeric)
+
+    Success(a * b)
+  end
+end
+
+result = Multiply.call(a: 2, b: '2')
+
+result.failure?           #true
+result.value              #:invalid_data
+result.type               #:invalid_data
+result.service.attributes # {"a"=>2, "b"=>"2"}
+
+# Note:
+# ----
+# This feature is handy to respond to some pipeline failure
+# (this topic will be covered ahead).
+```
+
+[⬆️ Back to Top](#table-of-contents)
+
+#### How to use the result hooks?
+
+As mentioned earlier, the `Micro::Service::Result` has two methods to improve the flow control. They are: `#on_success`, `on_failure`.
+
+The examples below show how to use them:
 
 ```ruby
 class Double < Micro::Service::Base
@@ -125,8 +275,8 @@ Double
   .on_failure(:invalid) { |msg| raise TypeError, msg }
   .on_failure(:lte_zero) { |msg| raise ArgumentError, msg }
 
-# The output when is a success:
-# 6
+# The output because is a success:
+#   6
 
 #=============================#
 # Raising an error if failure #
@@ -135,12 +285,54 @@ Double
 Double
   .call(number: -1)
   .on_success { |number| p number }
+  .on_failure { |_msg, service| puts "#{service.class.name} was the service responsible for the failure" }
   .on_failure(:invalid) { |msg| raise TypeError, msg }
   .on_failure(:lte_zero) { |msg| raise ArgumentError, msg }
 
-# The output (raised an error) when is a failure:
-# ArgumentError (the number must be greater than 0)
+# The outputs because is a failure:
+#   Double was the service responsible for the failure
+# (throws the error)
+#   ArgumentError (the number must be greater than 0)
+
+# Note:
+# ----
+# The service responsible for the failure will be accessible as the second hook argument
 ```
+
+[⬆️ Back to Top](#table-of-contents)
+
+##### What happens if a hook is declared multiple times?
+
+Answer: The hook will be triggered if it matches the result type.
+
+```ruby
+class Double < Micro::Service::Base
+  attributes :number
+
+  def call!
+    return Failure(:invalid) { 'the number must be a numeric value' } unless number.is_a?(Numeric)
+
+    Success(:computed) { number * 2 }
+  end
+end
+
+result = Double.call(number: 3)
+result.value     # 6
+result.value * 4 # 24
+
+accum = 0
+
+result.on_success { |number| accum += number }
+      .on_success { |number| accum += number }
+      .on_success(:computed) { |number| accum += number }
+      .on_success(:computed) { |number| accum += number }
+
+accum # 24
+
+result.value * 4 == accum # true
+```
+
+[⬆️ Back to Top](#table-of-contents)
 
 ### How to create a pipeline of Service Objects?
 
@@ -222,11 +414,10 @@ SquareAllNumbers
   .call(numbers: %w[1 1 2 2 3 4])
   .on_success { |value| p value[:numbers] } # [1, 1, 4, 4, 9, 16]
 
-#=================================================================#
-# Attention:                                                      #
-# When happening a failure, the service object responsible for it #
-# will be accessible in the result                                #
-#=================================================================#
+# Note:
+# ----
+# When happening a failure, the service object responsible for this
+# will be accessible in the result
 
 result = SquareAllNumbers.call(numbers: %w[1 1 b 2 3 4])
 
@@ -238,77 +429,11 @@ result.on_failure do |_message, service|
 end
 ```
 
-### What is a strict Service Object?
+[⬆️ Back to Top](#table-of-contents)
 
-A: Is a service object which will require all keywords (attributes) on its initialization.
+#### Is it possible to compose pipelines with other pipelines?
 
-```ruby
-class Double < Micro::Service::Strict
-  attribute :numbers
-
-  def call!
-    Success(numbers.map { |number| number * 2 })
-  end
-end
-
-Double.call({})
-
-# The output (raised an error):
-# ArgumentError (missing keyword: :numbers)
-```
-
-### How to validate Service Object attributes?
-
-Note: To do this your application must have the [activemodel >= 3.2](https://rubygems.org/gems/activemodel) as a dependency.
-
-```ruby
-#
-# By default, if your project has the activemodel
-# any kind of service attribute can be validated.
-#
-class Multiply < Micro::Service::Base
-  attributes :a, :b
-
-  validates :a, :b, presence: true, numericality: true
-
-  def call!
-    return Failure(:validation_error) { self.errors } unless valid?
-
-    Success(number: a * b)
-  end
-end
-
-#
-# But if do you want an automatic way to fail
-# your services if there is some invalid data.
-# You can use:
-
-# In some file. e.g: A Rails initializer
-require 'micro/service/with_validation' # or require 'u-service/with_validation'
-
-# In the Gemfile
-gem 'u-service', '~> 0.14.0', require: 'u-service/with_validation'
-
-# Using this approach, you can rewrite the previous sample with fewer lines of code.
-
-class Multiply < Micro::Service::Base
-  attributes :a, :b
-
-  validates :a, :b, presence: true, numericality: true
-
-  def call!
-    Success(number: a * b)
-  end
-end
-
-# Note:
-# After requiring the validation mode, the
-# Micro::Service::Strict classes will inherit this new behavior.
-```
-
-### It's possible to compose pipelines with other pipelines?
-
-Answer: Yes
+Answer: Yes, it is.
 
 ```ruby
 module Steps
@@ -370,7 +495,168 @@ DoubleAllNumbersAndSquareAndAdd2
 
 Note: You can blend any of the [syntaxes/approaches to create the pipelines](#how-to-create-a-pipeline-of-service-objects)) - [examples](https://github.com/serradura/u-service/blob/master/test/micro/service/pipeline/blend_test.rb#L7-L34).
 
-## Examples
+[⬆️ Back to Top](#table-of-contents)
+
+### What is a strict Service Object?
+
+Answer: Is a service object which will require all keywords (attributes) on its initialization.
+
+```ruby
+class Double < Micro::Service::Strict
+  attribute :numbers
+
+  def call!
+    Success(numbers.map { |number| number * 2 })
+  end
+end
+
+Double.call({})
+
+# The output (raised an error):
+# ArgumentError (missing keyword: :numbers)
+```
+
+[⬆️ Back to Top](#table-of-contents)
+
+### Is there some feature to auto handle exceptions inside of services/pipelines?
+
+Answer: Yes, there is!
+
+**Service Objects:**
+
+Like `Micro::Service::Strict` the `Micro::Service::Safe` is another special kind of Service object. It has the ability to auto wrap an exception into a failure result. e.g:
+
+```ruby
+require 'logger'
+
+AppLogger = Logger.new(STDOUT)
+
+class Divide < Micro::Service::Safe
+  attributes :a, :b
+
+  def call!
+    return Success(a / b) if a.is_a?(Integer) && b.is_a?(Integer)
+    Failure(:not_an_integer)
+  end
+end
+
+result = Divide.call(a: 2, b: 0)
+result.type == :exception             # true
+result.value.is_a?(ZeroDivisionError) # true
+
+result.on_failure(:exception) do |exception|
+  AppLogger.error(exception.message) # E, [2019-08-21T00:05:44.195506 #9532] ERROR -- : divided by 0
+end
+
+# Note:
+# ----
+# If you need a specific error handling,
+# I recommend the usage of a case statement. e,g:
+
+result.on_failure(:exception) do |exception, service|
+  case exception
+  when ZeroDivisionError then AppLogger.error(exception.message)
+  else AppLogger.debug("#{service.class.name} was the service responsible for the exception")
+  end
+end
+
+# Another note:
+# ------------
+# It is possible to rescue an exception even when is a safe service.
+# Examples: https://github.com/serradura/u-service/blob/a6d0a8aa5d28d1f062484eaa0d5a17c4fb08b6fb/test/micro/service/safe_test.rb#L95-L123
+```
+
+**Pipelines:**
+
+As the safe services, safe pipelines have the ability to intercept an exception in any of its steps. These are the ways to define one:
+
+```ruby
+module Users
+  Create = ProcessParams & ValidateParams & Persist & SendToCRM
+end
+
+# Note:
+# The ampersand is based on the safe navigation operator. https://ruby-doc.org/core-2.6/doc/syntax/calling_methods_rdoc.html#label-Safe+navigation+operator
+
+# The alternatives are:
+
+module Users
+  class Create
+    include Micro::Service::Pipeline::Safe
+
+    pipeline ProcessParams, ValidateParams, Persist, SendToCRM
+  end
+end
+
+# or
+
+module Users
+  Create = Micro::Service::Pipeline::Safe[
+    ProcessParams,
+    ValidateParams,
+    Persist,
+    SendToCRM
+  ]
+end
+```
+
+[⬆️ Back to Top](#table-of-contents)
+
+### How to validate Service Object attributes?
+
+**Requirement:**
+
+To do this your application must have the [activemodel >= 3.2](https://rubygems.org/gems/activemodel) as a dependency.
+
+```ruby
+#
+# By default, if your project has the activemodel
+# any kind of service attribute can be validated.
+#
+class Multiply < Micro::Service::Base
+  attributes :a, :b
+
+  validates :a, :b, presence: true, numericality: true
+
+  def call!
+    return Failure(:validation_error) { self.errors } unless valid?
+
+    Success(number: a * b)
+  end
+end
+
+#
+# But if do you want an automatic way to fail
+# your services if there is some invalid data.
+# You can use:
+
+# In some file. e.g: A Rails initializer
+require 'micro/service/with_validation' # or require 'u-service/with_validation'
+
+# In the Gemfile
+gem 'u-service', require: 'u-service/with_validation'
+
+# Using this approach, you can rewrite the previous sample with fewer lines of code.
+
+class Multiply < Micro::Service::Base
+  attributes :a, :b
+
+  validates :a, :b, presence: true, numericality: true
+
+  def call!
+    Success(number: a * b)
+  end
+end
+
+# Note:
+# ----
+# After requiring the validation mode, the
+# Micro::Service::Strict and Micro::Service::Safe classes will inherit this new behavior.
+```
+
+[⬆️ Back to Top](#table-of-contents)
+
+### Examples
 
 1. [Rescuing an exception inside of service objects](https://github.com/serradura/u-service/blob/master/examples/rescuing_exceptions.rb)
 2. [Users creation](https://github.com/serradura/u-service/blob/master/examples/users_creation.rb)
@@ -379,6 +665,8 @@ Note: You can blend any of the [syntaxes/approaches to create the pipelines](#ho
 3. [CLI calculator](https://github.com/serradura/u-service/tree/master/examples/calculator)
 
     A more complex example which use rake tasks to demonstrate how to handle user data, and how to use different failures type to control the app flow.
+
+[⬆️ Back to Top](#table-of-contents)
 
 ## Comparisons
 
