@@ -183,4 +183,17 @@ class Micro::Service::SafeTest < Minitest::Test
     result.on_failure { counter -= 1 }
     assert_equal(-2, counter)
   end
+
+  def test_to_proc
+    results = [
+      {a: 2, b: 2},
+      {a: 4, b: 2},
+      {a: 6, b: 2},
+      {a: 8, b: 2}
+    ].map(&Divide)
+
+    values = results.map(&:value)
+
+    assert_equal([1, 2, 3, 4], values)
+  end
 end

@@ -160,4 +160,17 @@ class Micro::Service::BaseTest < Minitest::Test
     result.on_failure { counter -= 1 }
     assert_equal(-2, counter)
   end
+
+  def test_to_proc
+    results = [
+      {a: 1, b: 2},
+      {a: 2, b: 2},
+      {a: 3, b: 2},
+      {a: 4, b: 2}
+    ].map(&Multiply)
+
+    values = results.map(&:value)
+
+    assert_equal([2, 4, 6, 8], values)
+  end
 end
