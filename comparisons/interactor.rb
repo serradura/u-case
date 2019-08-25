@@ -6,7 +6,7 @@ class CreateResponse
 
     survey_response = responder.survey_responses.build(
       response_text: context.answers[:text],
-      rating: answers[:rating]
+      rating: answers[:rating],
       survey: context.survey
     )
 
