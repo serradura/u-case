@@ -73,4 +73,18 @@ class Micro::Service::PipelineTest < Minitest::Test
         assert_instance_of(Jobs::ValidateID, service)
       end
   end
+
+  def test_to_proc
+    sleeping_jobs =
+      [Jobs::Build, Jobs::Build, Jobs::Build].map(&:call).map(&:value)
+
+    results = sleeping_jobs.map(&Jobs::Run)
+
+    assert results.all?(&:success?)
+
+    results.map(&:value).each do |job:, changes:|
+      refute(job.sleeping?)
+      assert(changes.changed?(:state, from: 'sleeping', to: 'running'))
+    end
+  end
 end

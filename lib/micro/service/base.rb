@@ -5,6 +5,10 @@ module Micro
     class Base
       include Micro::Attributes.without(:strict_initialize)
 
+      def self.to_proc
+        Proc.new { |arg| call(arg) }
+      end
+
       def self.>>(service)
         Pipeline[self, service]
       end

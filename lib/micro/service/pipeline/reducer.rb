@@ -38,6 +38,10 @@ module Micro
           raise NoMethodError, "undefined method `&' for #{self.inspect}. Please, use the method `>>' to avoid this error."
         end
 
+        def to_proc
+          Proc.new { |arg| call(arg) }
+        end
+
         private
 
           def initial_result(arg)
