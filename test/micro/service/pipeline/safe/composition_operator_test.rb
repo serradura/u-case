@@ -2,16 +2,16 @@ require 'ostruct'
 require 'test_helper'
 require 'support/steps'
 
-class Micro::Service::Pipeline::CompositionOperatorTest < Minitest::Test
-  Add2ToAllNumbers = Steps::ConvertToNumbers >> Steps::Add2
-  DoubleAllNumbers = Steps::ConvertToNumbers >> Steps::Double
-  SquareAllNumbers = Steps::ConvertToNumbers >> Steps::Square
+class Micro::Service::Pipeline::Safe::CompositionOperatorTest < Minitest::Test
+  Add2ToAllNumbers = Steps::ConvertToNumbers & Steps::Add2
+  DoubleAllNumbers = Steps::ConvertToNumbers & Steps::Double
+  SquareAllNumbers = Steps::ConvertToNumbers & Steps::Square
 
-  DoubleAllNumbersAndAdd2 = DoubleAllNumbers >> Steps::Add2
-  SquareAllNumbersAndAdd2 = SquareAllNumbers >> Steps::Add2
+  DoubleAllNumbersAndAdd2 = DoubleAllNumbers & Steps::Add2
+  SquareAllNumbersAndAdd2 = SquareAllNumbers & Steps::Add2
 
-  SquareAllNumbersAndDouble = SquareAllNumbersAndAdd2 >> DoubleAllNumbers
-  DoubleAllNumbersAndSquareAndAdd2 = DoubleAllNumbers >> SquareAllNumbersAndAdd2
+  SquareAllNumbersAndDouble = SquareAllNumbersAndAdd2 & DoubleAllNumbers
+  DoubleAllNumbersAndSquareAndAdd2 = DoubleAllNumbers & SquareAllNumbersAndAdd2
 
   EXAMPLES = [
     { pipeline: Add2ToAllNumbers, result: [3, 3, 4, 4, 5, 6] },
@@ -53,10 +53,10 @@ class Micro::Service::Pipeline::CompositionOperatorTest < Minitest::Test
     end
   end
 
-  def test_the_error_when_using_the_safe_composition_operator
-    double_all_numbers = Steps::ConvertToNumbers >> Steps::Double
+  def test_the_error_when_using_the_regular_composition_operator
+    double_all_numbers = Steps::ConvertToNumbers & Steps::Double
 
-    err = assert_raises(NoMethodError) { double_all_numbers & Steps::Add2 }
-    assert_match(/undefined method `&' for #<Micro::Service::Pipeline::Reducer.*>. Please, use the method `>>' to avoid this error\./, err.message)
+    err = assert_raises(NoMethodError) { double_all_numbers >> Steps::Add2 }
+    assert_match(/undefined method `>>' for #<Micro::Service::Pipeline::SafeReducer.*>. Please, use the method `&' to avoid this error\./, err.message)
   end
 end

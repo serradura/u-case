@@ -1,7 +1,7 @@
 require 'test_helper'
 
-class Micro::Service::StrictTest < Minitest::Test
-  class Multiply < Micro::Service::Strict
+class Micro::Service::Strict::SafeTest < Minitest::Test
+  class Multiply < Micro::Service::Strict::Safe
     attributes :a, :b
 
     def call!
@@ -13,7 +13,7 @@ class Micro::Service::StrictTest < Minitest::Test
     end
   end
 
-  class Double < Micro::Service::Strict
+  class Double < Micro::Service::Strict::Safe
     attributes :number
 
     def call!
@@ -51,18 +51,18 @@ class Micro::Service::StrictTest < Minitest::Test
     assert_kind_of(Micro::Service::Result, result)
   end
 
-  class Foo < Micro::Service::Strict
+  class Foo < Micro::Service::Strict::Safe
   end
 
   def test_template_method
-    assert_raises(NotImplementedError) { Micro::Service::Strict.call }
-    assert_raises(NotImplementedError) { Micro::Service::Strict.new({}).call }
+    assert_raises(NotImplementedError) { Micro::Service::Strict::Safe.call }
+    assert_raises(NotImplementedError) { Micro::Service::Strict::Safe.new({}).call }
 
     assert_raises(NotImplementedError) { Foo.call }
     assert_raises(NotImplementedError) { Foo.new({}).call }
   end
 
-  class LoremIpsum < Micro::Service::Strict
+  class LoremIpsum < Micro::Service::Strict::Safe
     attributes :text
 
     def call!
@@ -72,10 +72,10 @@ class Micro::Service::StrictTest < Minitest::Test
 
   def test_result_error
     err1 = assert_raises(Micro::Service::Error::UnexpectedResult) { LoremIpsum.call(text: 'lorem ipsum') }
-    assert_equal('Micro::Service::StrictTest::LoremIpsum#call! must return an instance of Micro::Service::Result', err1.message)
+    assert_equal('Micro::Service::Strict::SafeTest::LoremIpsum#call! must return an instance of Micro::Service::Result', err1.message)
 
     err2 = assert_raises(Micro::Service::Error::UnexpectedResult) { LoremIpsum.new(text: 'ipsum indolor').call }
-    assert_equal('Micro::Service::StrictTest::LoremIpsum#call! must return an instance of Micro::Service::Result', err2.message)
+    assert_equal('Micro::Service::Strict::SafeTest::LoremIpsum#call! must return an instance of Micro::Service::Result', err2.message)
   end
 
   def test_keywords_validation
@@ -89,40 +89,50 @@ class Micro::Service::StrictTest < Minitest::Test
     assert_equal('missing keyword: :number', err3.message)
   end
 
-  class Divide < Micro::Service::Strict
+  class Divide < Micro::Service::Strict::Safe
     attributes :a, :b
 
     def call!
-      return Success(a / b) if a.is_a?(Integer) && b.is_a?(Integer)
-      Failure(:not_an_integer)
-    rescue => e
-      Failure(e)
+      if a.is_a?(Integer) && b.is_a?(Integer)
+        Success(a / b)
+      else
+        Failure(:not_an_integer)
+      end
     end
   end
 
-  def test_the_exception_result_type
-    result = Divide.call(a: 2, b: 0)
-    counter = 0
+  def test_that_exceptions_generate_a_failure
+    result_1 = Divide.new(a: 2, b: 0).call
 
-    refute(result.success?)
-    assert_kind_of(ZeroDivisionError, result.value)
+    assert(result_1.failure?)
+    assert_instance_of(ZeroDivisionError, result_1.value)
+    assert_kind_of(Micro::Service::Result, result_1)
 
-    result.on_failure(:error) { counter += 1 } # will be avoided
-    result.on_failure(:exception) { counter -= 1 }
-    assert_equal(-1, counter)
-  end
+    counter_1 = 0
 
-  def test_that_when_a_failure_result_is_a_symbol_both_type_and_value_will_be_the_same
-    result = Divide.call(a: 2, b: 'a')
-    counter = 0
+    result_1
+      .on_failure { counter_1 += 1 }
+      .on_failure(:exception) { |value| counter_1 += 1 if value.is_a?(ZeroDivisionError) }
+      .on_failure(:exception) { |_value, service| counter_1 += 1 if service.is_a?(Divide) }
 
-    refute(result.success?)
-    assert_equal(:not_an_integer, result.value)
+    assert_equal(3, counter_1)
 
-    result.on_failure(:error) { counter += 1 } # will be avoided
-    result.on_failure(:not_an_integer) { counter -= 1 }
-    result.on_failure { counter -= 1 }
-    assert_equal(-2, counter)
+    # ---
+
+    result_2 = Divide.call(a: 2, b: 0)
+
+    assert(result_2.failure?)
+    assert_instance_of(ZeroDivisionError, result_2.value)
+    assert_kind_of(Micro::Service::Result, result_2)
+
+    counter_2 = 0
+
+    result_2
+      .on_failure { counter_2 += 1 }
+      .on_failure(:exception) { |value| counter_2 += 1 if value.is_a?(ZeroDivisionError) }
+      .on_failure(:exception) { |_value, service| counter_2 += 1 if service.is_a?(Divide) }
+
+    assert_equal(3, counter_2)
   end
 
   def test_to_proc

@@ -2,45 +2,45 @@ require 'ostruct'
 require 'test_helper'
 require 'support/steps'
 
-class Micro::Service::Pipeline::ClassesTest < Minitest::Test
+class Micro::Service::Pipeline::Safe::ClassesTest < Minitest::Test
   class Add2ToAllNumbers
-    include Micro::Service::Pipeline
+    include Micro::Service::Pipeline::Safe
 
     pipeline Steps::ConvertToNumbers, Steps::Add2
   end
 
   class DoubleAllNumbers
-    include Micro::Service::Pipeline
+    include Micro::Service::Pipeline::Safe
 
     pipeline Steps::ConvertToNumbers, Steps::Double
   end
 
   class SquareAllNumbers
-    include Micro::Service::Pipeline
+    include Micro::Service::Pipeline::Safe
 
     pipeline Steps::ConvertToNumbers, Steps::Square
   end
 
   class DoubleAllNumbersAndAdd2
-    include Micro::Service::Pipeline
+    include Micro::Service::Pipeline::Safe
 
     pipeline DoubleAllNumbers, Steps::Add2
   end
 
   class SquareAllNumbersAndAdd2
-    include Micro::Service::Pipeline
+    include Micro::Service::Pipeline::Safe
 
     pipeline SquareAllNumbers, Steps::Add2
   end
 
   class SquareAllNumbersAndDouble
-    include Micro::Service::Pipeline
+    include Micro::Service::Pipeline::Safe
 
     pipeline SquareAllNumbersAndAdd2, DoubleAllNumbers
   end
 
   class DoubleAllNumbersAndSquareAndAdd2
-    include Micro::Service::Pipeline
+    include Micro::Service::Pipeline::Safe
 
     pipeline DoubleAllNumbers, SquareAllNumbersAndAdd2
   end
