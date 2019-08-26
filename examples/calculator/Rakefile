@@ -5,13 +5,13 @@ require_relative 'calc/normalize_args'
 require_relative 'calc/transform_into_numbers'
 
 module Calc
-  TransformArgsIntoNumbers = NormalizeArgs >> TransformIntoNumbers
+  TransformArgsIntoNumbers = NormalizeArgs & TransformIntoNumbers
 
   module With
-    Add = TransformArgsIntoNumbers >> Operation::Add
-    Divide = TransformArgsIntoNumbers >> Operation::Divide
-    Subtract = TransformArgsIntoNumbers >> Operation::Subtract
-    Multiply = TransformArgsIntoNumbers >> Operation::Multiply
+    Add = TransformArgsIntoNumbers & Operation::Add
+    Divide = TransformArgsIntoNumbers & Operation::Divide
+    Subtract = TransformArgsIntoNumbers & Operation::Subtract
+    Multiply = TransformArgsIntoNumbers & Operation::Multiply
   end
 end
 
@@ -22,7 +22,8 @@ class PerformTask < Micro::Service::Base
     operation
       .call(args: args)
       .on_success { |value| print_operation(value) }
-      .on_failure(:not_a_number) { |message| puts "ERROR: #{message}" }
+      .on_failure(:exception) { |err| puts "ERROR: #{err.message}" }
+      .on_failure(:not_a_number) { puts "ERROR: The arguments must contain only numeric values" }
       .on_failure(:arguments_with_space_chars) do |(a, b)|
         puts "ERROR: Arguments can't have spaces: a: #{a}, b: #{b}"
       end
@@ -41,11 +42,7 @@ namespace :calc do
 
   desc 'divides two numbers'
   task :divide, [:a, :b] do |_task, args|
-    begin
-      PerformTask.call(args: args, operation: Calc::With::Divide)
-    rescue ZeroDivisionError => e
-      puts "ERROR: #{e.message}"
-    end
+    PerformTask.call(args: args, operation: Calc::With::Divide)
   end
 
   desc 'subtracts two numbers'

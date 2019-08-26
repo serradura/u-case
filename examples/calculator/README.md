@@ -5,7 +5,7 @@ This example uses [rake](http://rubygems.org/gems/rake) to expose a CLI calculat
 ## Installation instructions
 ```sh
 gem install rake
-gem install u-service -v 0.14.0
+gem install u-service -v 1.0.0
 ```
 
 *Note:*

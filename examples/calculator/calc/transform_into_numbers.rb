@@ -7,7 +7,7 @@ class TransformIntoNumbers < Micro::Service::Base
     if number_a && number_b
       Success(a: number(a), b: number(b))
     else
-      Failure(:not_a_number) { 'The arguments must contain only numeric values' }
+      Failure(:not_a_number)
     end
   end
 

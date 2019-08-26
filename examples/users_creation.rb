@@ -5,7 +5,7 @@ gemfile do
 
   # NOTE: I used an older version of the Activemodel only to show the compatibility with its older versions.
   gem 'activemodel', '~> 3.2', '>= 3.2.22.5'
-  gem 'u-service', '~> 0.14.0', require: 'u-service/with_validation'
+  gem 'u-service', '~> 1.0.0', require: 'u-service/with_validation'
 end
 
 module Users
