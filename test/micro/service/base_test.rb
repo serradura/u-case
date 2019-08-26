@@ -92,10 +92,10 @@ class Micro::Service::BaseTest < Minitest::Test
   end
 
   def test_the_result_error
-    err1 = assert_raises(TypeError) { LoremIpsum.call(text: 'lorem ipsum') }
+    err1 = assert_raises(Micro::Service::Error::UnexpectedResult) { LoremIpsum.call(text: 'lorem ipsum') }
     assert_equal('Micro::Service::BaseTest::LoremIpsum#call! must return an instance of Micro::Service::Result', err1.message)
 
-    err2 = assert_raises(TypeError) { LoremIpsum.new(text: 'ipsum indolor').call }
+    err2 = assert_raises(Micro::Service::Error::UnexpectedResult) { LoremIpsum.new(text: 'ipsum indolor').call }
     assert_equal('Micro::Service::BaseTest::LoremIpsum#call! must return an instance of Micro::Service::Result', err2.message)
   end
 
@@ -123,5 +123,54 @@ class Micro::Service::BaseTest < Minitest::Test
 
     err = assert_raises(ArgumentError) { service.__set_result__(Micro::Service::Result.new) }
     assert_equal('result is already defined', err.message)
+  end
+
+  class Divide < Micro::Service::Base
+    attributes :a, :b
+
+    def call!
+      return Success(a / b) if a.is_a?(Integer) && b.is_a?(Integer)
+      Failure(:not_an_integer)
+    rescue => e
+      Failure(e)
+    end
+  end
+
+  def test_the_exception_result_type
+    result = Divide.call(a: 2, b: 0)
+    counter = 0
+
+    refute(result.success?)
+    assert_kind_of(ZeroDivisionError, result.value)
+
+    result.on_failure(:error) { counter += 1 } # will be avoided
+    result.on_failure(:exception) { counter -= 1 }
+    assert_equal(-1, counter)
+  end
+
+  def test_that_when_a_failure_result_is_a_symbol_both_type_and_value_will_be_the_same
+    result = Divide.call(a: 2, b: 'a')
+    counter = 0
+
+    refute(result.success?)
+    assert_equal(:not_an_integer, result.value)
+
+    result.on_failure(:error) { counter += 1 } # will be avoided
+    result.on_failure(:not_an_integer) { counter -= 1 }
+    result.on_failure { counter -= 1 }
+    assert_equal(-2, counter)
+  end
+
+  def test_to_proc
+    results = [
+      {a: 1, b: 2},
+      {a: 2, b: 2},
+      {a: 3, b: 2},
+      {a: 4, b: 2}
+    ].map(&Multiply)
+
+    values = results.map(&:value)
+
+    assert_equal([2, 4, 6, 8], values)
   end
 end

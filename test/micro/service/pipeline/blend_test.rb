@@ -3,8 +3,7 @@ require 'test_helper'
 require 'support/steps'
 
 class Micro::Service::Pipeline::BlendTest < Minitest::Test
-  Add2ToAllNumbers =
-    Steps::ConvertToNumbers >> Steps::Add2
+  Add2ToAllNumbers = Steps::ConvertToNumbers >> Steps::Add2
 
   DoubleAllNumbers = Micro::Service::Pipeline[
     Steps::ConvertToNumbers,
@@ -23,14 +22,13 @@ class Micro::Service::Pipeline::BlendTest < Minitest::Test
     SquareAllNumbers, Steps::Add2
   ]
 
-  class DoubleAllNumbersAndSquareThem
+  SquareAllNumbersAndDouble = SquareAllNumbersAndAdd2 >> DoubleAllNumbers
+
+  class DoubleAllNumbersAndSquareAndAdd2
     include Micro::Service::Pipeline
 
     pipeline DoubleAllNumbers, SquareAllNumbersAndAdd2
   end
-
-  SquareAllNumbersAndDoubleThem =
-    SquareAllNumbersAndAdd2 >> DoubleAllNumbers
 
   EXAMPLES = [
     { pipeline: Add2ToAllNumbers, result: [3, 3, 4, 4, 5, 6] },
@@ -38,8 +36,8 @@ class Micro::Service::Pipeline::BlendTest < Minitest::Test
     { pipeline: SquareAllNumbers, result: [1, 1, 4, 4, 9, 16] },
     { pipeline: DoubleAllNumbersAndAdd2, result: [4, 4, 6, 6, 8, 10] },
     { pipeline: SquareAllNumbersAndAdd2, result: [3, 3, 6, 6, 11, 18] },
-    { pipeline: DoubleAllNumbersAndSquareThem, result: [6, 6, 18, 18, 38, 66] },
-    { pipeline: SquareAllNumbersAndDoubleThem, result: [6, 6, 12, 12, 22, 36] }
+    { pipeline: SquareAllNumbersAndDouble, result: [6, 6, 12, 12, 22, 36] },
+    { pipeline: DoubleAllNumbersAndSquareAndAdd2, result: [6, 6, 18, 18, 38, 66] }
   ].map(&OpenStruct.method(:new))
 
   def test_result_must_be_success

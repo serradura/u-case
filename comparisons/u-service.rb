@@ -4,13 +4,13 @@ class CreateResponse < Micro::Service::Strict
   def call!
     survey_response = responder.survey_responses.build(
       response_text: answers[:text],
-      rating: answers[:rating]
+      rating: answers[:rating],
       survey: survey
     )
 
     return Success { attributes(:responder, :survey) } if survey_response.save
 
-    Failure(:survey_response) { survey_response.errors }
+    Failure(:survey_response_errors) { survey_response.errors }
   end
 end
 
@@ -23,7 +23,7 @@ class AddRewardPoints < Micro::Service::Strict
 
     return Success { attributes(:responder, :survey) } if reward_account.save
 
-    Failure(:reward_account) { reward_account.errors }
+    Failure(:reward_account_errors) { reward_account.errors }
   end
 end
 
@@ -38,7 +38,7 @@ class SendNotifications < Micro::Service::Strict
 
     return Success { attributes(:survey) } if sender.add_survey_response_notification
 
-    Failure(:sender) { sender.errors }
+    Failure(:sender_errors) { sender.errors }
   end
 end
 

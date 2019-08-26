@@ -2,16 +2,38 @@ require 'ostruct'
 require 'test_helper'
 require 'support/steps'
 
-class Micro::Service::Pipeline::CompositionOperatorTest < Minitest::Test
-  Add2ToAllNumbers = Steps::ConvertToNumbers >> Steps::Add2
-  DoubleAllNumbers = Steps::ConvertToNumbers >> Steps::Double
-  SquareAllNumbers = Steps::ConvertToNumbers >> Steps::Square
+class Micro::Service::Pipeline::Safe::CollectionMapperTest < Minitest::Test
+  Add2ToAllNumbers = Micro::Service::Pipeline::Safe[
+    Steps::ConvertToNumbers,
+    Steps::Add2
+  ]
 
-  DoubleAllNumbersAndAdd2 = DoubleAllNumbers >> Steps::Add2
-  SquareAllNumbersAndAdd2 = SquareAllNumbers >> Steps::Add2
+  DoubleAllNumbers = Micro::Service::Pipeline::Safe[
+    Steps::ConvertToNumbers,
+    Steps::Double
+  ]
 
-  SquareAllNumbersAndDouble = SquareAllNumbersAndAdd2 >> DoubleAllNumbers
-  DoubleAllNumbersAndSquareAndAdd2 = DoubleAllNumbers >> SquareAllNumbersAndAdd2
+  SquareAllNumbers = Micro::Service::Pipeline::Safe[
+    Steps::ConvertToNumbers,
+    Steps::Square
+  ]
+
+  DoubleAllNumbersAndAdd2 = Micro::Service::Pipeline::Safe[
+    DoubleAllNumbers,
+    Steps::Add2
+  ]
+
+  SquareAllNumbersAndAdd2 = Micro::Service::Pipeline::Safe[
+    SquareAllNumbers,
+    Steps::Add2
+  ]
+
+  SquareAllNumbersAndDouble =
+    Micro::Service::Pipeline::Safe[SquareAllNumbersAndAdd2, DoubleAllNumbers]
+
+  DoubleAllNumbersAndSquareAndAdd2 =
+    Micro::Service::Pipeline::Safe[DoubleAllNumbers, SquareAllNumbersAndAdd2]
+
 
   EXAMPLES = [
     { pipeline: Add2ToAllNumbers, result: [3, 3, 4, 4, 5, 6] },
@@ -51,12 +73,5 @@ class Micro::Service::Pipeline::CompositionOperatorTest < Minitest::Test
       assert_instance_of(Micro::Service::Result, result)
       result.on_failure { |value| assert_equal('numbers must contain only numeric types', value) }
     end
-  end
-
-  def test_the_error_when_using_the_safe_composition_operator
-    double_all_numbers = Steps::ConvertToNumbers >> Steps::Double
-
-    err = assert_raises(NoMethodError) { double_all_numbers & Steps::Add2 }
-    assert_match(/undefined method `&' for #<Micro::Service::Pipeline::Reducer.*>. Please, use the method `>>' to avoid this error\./, err.message)
   end
 end

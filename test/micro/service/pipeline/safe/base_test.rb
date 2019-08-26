@@ -1,7 +1,7 @@
 require 'test_helper'
-require 'support/jobs'
+require 'support/safe/jobs'
 
-class Micro::Service::PipelineTest < Minitest::Test
+class Micro::Service::Pipeline::Safe::BaseTest < Minitest::Test
   def test_calling_with_a_result
     new_job = Jobs::Build.call
 

@@ -3,20 +3,11 @@
 module Micro
   module Service
     class Result
-      InvalidType = TypeError.new('type must be a Symbol'.freeze)
-      InvalidService = TypeError.new('service must be a kind or an instance of Micro::Service::Base'.freeze)
-
-      class InvalidAccessToTheServiceObject < StandardError
-        MSG = 'only a failure result can access its service object'.freeze
-
-        def initialize(message = MSG); super; end
-      end
-
       attr_reader :value, :type
 
       def __set__(is_success, value, type, service)
-        raise InvalidType unless type.is_a?(Symbol)
-        raise InvalidService if !is_success && !is_a_service?(service)
+        raise Error::InvalidResultType unless type.is_a?(Symbol)
+        raise Error::InvalidService if !is_success && !is_a_service?(service)
 
         @success, @value, @type, @service = is_success, value, type, service
 
@@ -34,25 +25,25 @@ module Micro
       def service
         return @service if failure?
 
-        raise InvalidAccessToTheServiceObject
+        raise Error::InvalidAccessToTheServiceObject
       end
 
-      def on_success(arg = :ok)
+      def on_success(arg = nil)
         self.tap { yield(value) if success_type?(arg) }
       end
 
-      def on_failure(arg = :error)
+      def on_failure(arg = nil)
         self.tap{ yield(value, @service) if failure_type?(arg) }
       end
 
       private
 
         def success_type?(arg)
-          success? && (arg == :ok || arg == type)
+          success? && (arg.nil? || arg == type)
         end
 
         def failure_type?(arg)
-          failure? && (arg == :error || arg == type)
+          failure? && (arg.nil? || arg == type)
         end
 
         def is_a_service?(arg)
