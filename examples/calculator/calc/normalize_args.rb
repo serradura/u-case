@@ -7,7 +7,7 @@ module Calc
 
       return Success(a: a, b: b) if a !~ /\s/ && b !~ /\s/
 
-      Failure(:arguments_with_space_chars) { [a.inspect, b.inspect] }
+      Failure(:arguments_with_space_chars) { [a, b].map(&:inspect) }
     end
 
     private def normalize(value)

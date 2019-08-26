@@ -3,10 +3,10 @@ require 'bundler/inline'
 gemfile do
   source 'https://rubygems.org'
 
-  gem 'u-service', '~> 0.14.0'
+  gem 'u-service', '~> 1.0.0'
 end
 
-class Divide < Micro::Service::Base
+class DivideV1 < Micro::Service::Base
   attributes :a, :b
 
   def call!
@@ -14,15 +14,29 @@ class Divide < Micro::Service::Base
 
     Success(a / b)
   rescue => e
-    Failure(e.message)
+    Failure(e)
   end
 end
+
+class DivideV2 < Micro::Service::Safe
+  attributes :a, :b
+
+  def call!
+    return Failure('numbers must be greater than 0') if a < 0 || b < 0
+
+    Success(a / b)
+  end
+end
+
+#-------------------------#
+puts "\n== DivideV1 ==\n"
+#-------------------------#
 
 #---------------------------------#
 puts "\n-- Success scenario --\n\n"
 #---------------------------------#
 
-result = Divide.call(a: 4, b: 2)
+result = DivideV1.call(a: 4, b: 2)
 
 puts result.value if result.success?
 
@@ -30,17 +44,47 @@ puts result.value if result.success?
 puts "\n-- Failure scenarios --\n\n"
 #----------------------------------#
 
-result = Divide.call(a: 4, b: 0)
+result = DivideV1.call(a: 4, b: 0)
 
-puts result.value if result.failure?
+p result.value if result.failure?
 
 puts ''
 
-result = Divide.call(a: -4, b: 2)
+result = DivideV1.call(a: -4, b: 2)
 
-puts result.value if result.failure?
+p result.value if result.failure?
 
-# :: example of the output: ::
+#
+# ---
+#
+
+#-------------------------#
+puts "\n== DivideV2 ==\n"
+#-------------------------#
+
+#---------------------------------#
+puts "\n-- Success scenario --\n\n"
+#---------------------------------#
+
+result = DivideV2.call(a: 4, b: 2)
+
+puts result.value if result.success?
+
+#----------------------------------#
+puts "\n-- Failure scenarios --\n\n"
+#----------------------------------#
+
+result = DivideV2.call(a: 4, b: 0)
+
+p result.value if result.failure?
+
+puts ''
+
+result = DivideV2.call(a: -4, b: 2)
+
+p result.value if result.failure?
+
+# :: example of the outputs ::
 
 # -- Success scenario --
 #
@@ -48,6 +92,6 @@ puts result.value if result.failure?
 #
 # -- Failure scenarios --
 #
-# divided by 0
+# #<ZeroDivisionError: divided by 0>
 #
 # numbers must be greater than 0
