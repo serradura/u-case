@@ -9,29 +9,28 @@
 Create simple and powerful service objects.
 
 The main goals of this project are:
-1. The smallest possible learning curve (input **>>** process/transform **>>** output).
+1. Be simple to use and easy to learn (input **>>** process/transform **>>** output).
 2. Referential transparency and data integrity.
-3. No callbacks.
+3. No callbacks (before, after, around...).
 4. Compose a pipeline of service objects to represents complex business logic.
 
-## Table of Contents
+## Table of Contents <!-- omit in toc -->
 - [μ-service (Micro::Service)](#%ce%bc-service-microservice)
-  - [Table of Contents](#table-of-contents)
   - [Required Ruby version](#required-ruby-version)
   - [Installation](#installation)
   - [Usage](#usage)
-    - [How to define a Service Object?](#how-to-define-a-service-object)
+    - [How to define a service object?](#how-to-define-a-service-object)
     - [What is a `Micro::Service::Result`?](#what-is-a-microserviceresult)
       - [What are the default types of a `Micro::Service::Result`?](#what-are-the-default-types-of-a-microserviceresult)
       - [How to define custom result types?](#how-to-define-custom-result-types)
-        - [Is it possible to define a custom result type without a block?](#is-it-possible-to-define-a-custom-result-type-without-a-block)
+      - [Is it possible to define a custom result type without a block?](#is-it-possible-to-define-a-custom-result-type-without-a-block)
       - [How to use the result hooks?](#how-to-use-the-result-hooks)
-        - [What happens if a hook is declared multiple times?](#what-happens-if-a-hook-is-declared-multiple-times)
-    - [How to create a pipeline of Service Objects?](#how-to-create-a-pipeline-of-service-objects)
+      - [What happens if a result hook is declared multiple times?](#what-happens-if-a-result-hook-is-declared-multiple-times)
+    - [How to create a pipeline of service objects?](#how-to-create-a-pipeline-of-service-objects)
       - [Is it possible to compose pipelines with other pipelines?](#is-it-possible-to-compose-pipelines-with-other-pipelines)
-    - [What is a strict Service Object?](#what-is-a-strict-service-object)
+    - [What is a strict service object?](#what-is-a-strict-service-object)
     - [Is there some feature to auto handle exceptions inside of services/pipelines?](#is-there-some-feature-to-auto-handle-exceptions-inside-of-servicespipelines)
-    - [How to validate Service Object attributes?](#how-to-validate-service-object-attributes)
+    - [How to validate service object attributes?](#how-to-validate-service-object-attributes)
     - [Examples](#examples)
   - [Comparisons](#comparisons)
   - [Benchmarks](#benchmarks)
@@ -62,7 +61,7 @@ Or install it yourself as:
 
 ## Usage
 
-### How to define a Service Object?
+### How to define a service object?
 
 ```ruby
 class Multiply < Micro::Service::Base
@@ -82,7 +81,7 @@ class Multiply < Micro::Service::Base
 end
 
 #================================#
-# Calling a Service Object class #
+# Calling a service object class #
 #================================#
 
 # Success result
@@ -100,7 +99,7 @@ bad_result.failure? # true
 bad_result.value    # "`a` and `b` attributes must be numeric"
 
 #-----------------------------------#
-# Calling a Service Object instance #
+# Calling a service object instance #
 #-----------------------------------#
 
 result = Multiply.new(a: 2, b: 3).call
@@ -113,19 +112,19 @@ result.value # 6
 # is an instance of Micro::Service::Result
 ```
 
-[⬆️ Back to Top](#table-of-contents)
+[⬆️ Back to Top](#table-of-contents-)
 
 ### What is a `Micro::Service::Result`?
 
-A `Micro::Service::Result` carries the output data of some Service Object. These are their main methods:
+A `Micro::Service::Result` stores the output data of some service object. These are their main methods:
 - `#success?` returns true if is a successful result.
 - `#failure?` returns true if is an unsuccessful result.
 - `#value` the result value itself.
 - `#type` a Symbol which gives meaning for the result, this is useful to declare different types of failures or success.
 - `#on_success` or `#on_failure` are hook methods which help you define the flow of your application.
-- `#service` if the result is a failure the service will be accessible through this method. This feature is handy to use with pipeline failures (this topic will be covered ahead).
+- `#service` if the result is a failure the service will be accessible through this method. This feature is handy to handle pipeline failures (this topic will be covered ahead).
 
-[⬆️ Back to Top](#table-of-contents)
+[⬆️ Back to Top](#table-of-contents-)
 
 #### What are the default types of a `Micro::Service::Result`?
 
@@ -179,11 +178,11 @@ err_result.service  # #<Divide:0x0000 @__attributes={"a"=>2, "b"=>0}, @a=2, @b=0
 # the Failure() method will receive `:exception` instead of the `:error` type.
 ```
 
-[⬆️ Back to Top](#table-of-contents)
+[⬆️ Back to Top](#table-of-contents-)
 
 #### How to define custom result types?
 
-Answer: Use a symbol as the argument of Success() and Failure() methods and declare a block to set the value.
+Answer: Use a symbol as the argument of Success() and Failure() methods and declare a block to set their values.
 
 ```ruby
 class Multiply < Micro::Service::Base
@@ -215,9 +214,9 @@ bad_result.value    # {"b"=>"2"}
 bad_result.failure? # true
 ```
 
-[⬆️ Back to Top](#table-of-contents)
+[⬆️ Back to Top](#table-of-contents-)
 
-##### Is it possible to define a custom result type without a block?
+#### Is it possible to define a custom result type without a block?
 
 Answer: Yes, it is. But only for failure results!
 
@@ -241,11 +240,11 @@ result.service.attributes # {"a"=>2, "b"=>"2"}
 
 # Note:
 # ----
-# This feature is handy to respond to some pipeline failure
+# This feature is handy to handle pipeline failures
 # (this topic will be covered ahead).
 ```
 
-[⬆️ Back to Top](#table-of-contents)
+[⬆️ Back to Top](#table-of-contents-)
 
 #### How to use the result hooks?
 
@@ -299,9 +298,9 @@ Double
 # The service responsible for the failure will be accessible as the second hook argument
 ```
 
-[⬆️ Back to Top](#table-of-contents)
+[⬆️ Back to Top](#table-of-contents-)
 
-##### What happens if a hook is declared multiple times?
+#### What happens if a result hook is declared multiple times?
 
 Answer: The hook will be triggered if it matches the result type.
 
@@ -332,9 +331,9 @@ accum # 24
 result.value * 4 == accum # true
 ```
 
-[⬆️ Back to Top](#table-of-contents)
+[⬆️ Back to Top](#table-of-contents-)
 
-### How to create a pipeline of Service Objects?
+### How to create a pipeline of service objects?
 
 ```ruby
 module Steps
@@ -429,7 +428,7 @@ result.on_failure do |_message, service|
 end
 ```
 
-[⬆️ Back to Top](#table-of-contents)
+[⬆️ Back to Top](#table-of-contents-)
 
 #### Is it possible to compose pipelines with other pipelines?
 
@@ -495,11 +494,11 @@ DoubleAllNumbersAndSquareAndAdd2
 
 Note: You can blend any of the [syntaxes/approaches to create the pipelines](#how-to-create-a-pipeline-of-service-objects)) - [examples](https://github.com/serradura/u-service/blob/master/test/micro/service/pipeline/blend_test.rb#L7-L34).
 
-[⬆️ Back to Top](#table-of-contents)
+[⬆️ Back to Top](#table-of-contents-)
 
-### What is a strict Service Object?
+### What is a strict service object?
 
-Answer: Is a service object which will require all keywords (attributes) on its initialization.
+Answer: Is a service object which will require all the keywords (attributes) on its initialization.
 
 ```ruby
 class Double < Micro::Service::Strict
@@ -516,15 +515,15 @@ Double.call({})
 # ArgumentError (missing keyword: :numbers)
 ```
 
-[⬆️ Back to Top](#table-of-contents)
+[⬆️ Back to Top](#table-of-contents-)
 
 ### Is there some feature to auto handle exceptions inside of services/pipelines?
 
 Answer: Yes, there is!
 
-**Service Objects:**
+**Service objects:**
 
-Like `Micro::Service::Strict` the `Micro::Service::Safe` is another special kind of Service object. It has the ability to auto wrap an exception into a failure result. e.g:
+Like `Micro::Service::Strict` the `Micro::Service::Safe` is another kind of service object. It has the ability to intercept an exception as a failure result. e.g:
 
 ```ruby
 require 'logger'
@@ -550,7 +549,7 @@ end
 
 # Note:
 # ----
-# If you need a specific error handling,
+# If you need to handle a specific error,
 # I recommend the usage of a case statement. e,g:
 
 result.on_failure(:exception) do |exception, service|
@@ -600,9 +599,9 @@ module Users
 end
 ```
 
-[⬆️ Back to Top](#table-of-contents)
+[⬆️ Back to Top](#table-of-contents-)
 
-### How to validate Service Object attributes?
+### How to validate service object attributes?
 
 **Requirement:**
 
@@ -610,8 +609,8 @@ To do this your application must have the [activemodel >= 3.2](https://rubygems.
 
 ```ruby
 #
-# By default, if your project has the activemodel
-# any kind of service attribute can be validated.
+# By default, if your application has the activemodel as a dependency,
+# any kind of service can use it to validate their attributes.
 #
 class Multiply < Micro::Service::Base
   attributes :a, :b
@@ -627,8 +626,7 @@ end
 
 #
 # But if do you want an automatic way to fail
-# your services if there is some invalid data.
-# You can use:
+# your services on validation errors, you can use:
 
 # In some file. e.g: A Rails initializer
 require 'micro/service/with_validation' # or require 'u-service/with_validation'
@@ -636,7 +634,7 @@ require 'micro/service/with_validation' # or require 'u-service/with_validation'
 # In the Gemfile
 gem 'u-service', require: 'u-service/with_validation'
 
-# Using this approach, you can rewrite the previous sample with fewer lines of code.
+# Using this approach, you can rewrite the previous example with fewer lines of code. e.g:
 
 class Multiply < Micro::Service::Base
   attributes :a, :b
@@ -654,7 +652,7 @@ end
 # Micro::Service::Strict and Micro::Service::Safe classes will inherit this new behavior.
 ```
 
-[⬆️ Back to Top](#table-of-contents)
+[⬆️ Back to Top](#table-of-contents-)
 
 ### Examples
 
@@ -666,7 +664,7 @@ end
 
     A more complex example which use rake tasks to demonstrate how to handle user data, and how to use different failures type to control the app flow.
 
-[⬆️ Back to Top](#table-of-contents)
+[⬆️ Back to Top](#table-of-contents-)
 
 ## Comparisons
 
