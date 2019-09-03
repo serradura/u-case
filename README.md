@@ -1,9 +1,9 @@
-[![Gem](https://img.shields.io/gem/v/u-service.svg?style=flat-square)](https://rubygems.org/gems/u-service)
+[![Gem](https://img.shields.io/gem/v/u-case.svg?style=flat-square)](https://rubygems.org/gems/u-case)
 [![Build Status](https://travis-ci.com/serradura/u-service.svg?branch=master)](https://travis-ci.com/serradura/u-service)
 [![Maintainability](https://api.codeclimate.com/v1/badges/a30b18528a317435c2ee/maintainability)](https://codeclimate.com/github/serradura/u-service/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/a30b18528a317435c2ee/test_coverage)](https://codeclimate.com/github/serradura/u-service/test_coverage)
 
-μ-service (Micro::Service)
+μ-case (Micro::Case)
 ==========================
 
 Create simple and powerful service objects.
@@ -15,13 +15,13 @@ The main goals of this project are:
 4. Compose a pipeline of service objects to represents complex business logic.
 
 ## Table of Contents <!-- omit in toc -->
-- [μ-service (Micro::Service)](#%ce%bc-service-microservice)
+- [μ-service (Micro::Case)](#%ce%bc-service-microservice)
   - [Required Ruby version](#required-ruby-version)
   - [Installation](#installation)
   - [Usage](#usage)
     - [How to define a service object?](#how-to-define-a-service-object)
-    - [What is a `Micro::Service::Result`?](#what-is-a-microserviceresult)
-      - [What are the default types of a `Micro::Service::Result`?](#what-are-the-default-types-of-a-microserviceresult)
+    - [What is a `Micro::Case::Result`?](#what-is-a-microserviceresult)
+      - [What are the default types of a `Micro::Case::Result`?](#what-are-the-default-types-of-a-microserviceresult)
       - [How to define custom result types?](#how-to-define-custom-result-types)
       - [Is it possible to define a custom result type without a block?](#is-it-possible-to-define-a-custom-result-type-without-a-block)
       - [How to use the result hooks?](#how-to-use-the-result-hooks)
@@ -48,7 +48,7 @@ The main goals of this project are:
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'u-service'
+gem 'u-case'
 ```
 
 And then execute:
@@ -57,14 +57,14 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install u-service
+    $ gem install u-case
 
 ## Usage
 
 ### How to define a service object?
 
 ```ruby
-class Multiply < Micro::Service::Base
+class Multiply < Micro::Case::Base
   # 1. Define its inputs as attributes
   attributes :a, :b
 
@@ -108,15 +108,15 @@ result.value # 6
 
 # Note:
 # ----
-# The result of a Micro::Service::Base.call
-# is an instance of Micro::Service::Result
+# The result of a Micro::Case::Base.call
+# is an instance of Micro::Case::Result
 ```
 
 [⬆️ Back to Top](#table-of-contents-)
 
-### What is a `Micro::Service::Result`?
+### What is a `Micro::Case::Result`?
 
-A `Micro::Service::Result` stores the output data of some service object. These are their main methods:
+A `Micro::Case::Result` stores the output data of some service object. These are their main methods:
 - `#success?` returns true if is a successful result.
 - `#failure?` returns true if is an unsuccessful result.
 - `#value` the result value itself.
@@ -126,12 +126,12 @@ A `Micro::Service::Result` stores the output data of some service object. These 
 
 [⬆️ Back to Top](#table-of-contents-)
 
-#### What are the default types of a `Micro::Service::Result`?
+#### What are the default types of a `Micro::Case::Result`?
 
 Every result has a type and these are the default values: :ok when success, and :error/:exception when failures.
 
 ```ruby
-class Divide < Micro::Service::Base
+class Divide < Micro::Case::Base
   attributes :a, :b
 
   def call!
@@ -152,7 +152,7 @@ result = Divide.call(a: 2, b: 2)
 result.type     # :ok
 result.value    # 1
 result.success? # true
-result.service  # raises `Micro::Service::Error::InvalidAccessToTheServiceObject: only a failure result can access its service object`
+result.service  # raises `Micro::Case::Error::InvalidAccessToTheServiceObject: only a failure result can access its service object`
 
 # Failure result - type == :error
 
@@ -161,7 +161,7 @@ bad_result = Divide.call(a: 2, b: '2')
 bad_result.type     # :error
 bad_result.value    # {"b"=>"2"}
 bad_result.failure? # true
-bad_result.service  # #<Divide:0x0000 @__attributes={"a"=>2, "b"=>"2"}, @a=2, @b="2", @__result=#<Micro::Service::Result:0x0000 @service=#<Divide:0x0000 ...>, @type=:error, @value={"b"=>"2"}, @success=false>>
+bad_result.service  # #<Divide:0x0000 @__attributes={"a"=>2, "b"=>"2"}, @a=2, @b="2", @__result=#<Micro::Case::Result:0x0000 @service=#<Divide:0x0000 ...>, @type=:error, @value={"b"=>"2"}, @success=false>>
 
 # Failure result - type == :exception
 
@@ -170,7 +170,7 @@ err_result = Divide.call(a: 2, b: 0)
 err_result.type     # :exception
 err_result.value    # <ZeroDivisionError: divided by 0>
 err_result.failure? # true
-err_result.service  # #<Divide:0x0000 @__attributes={"a"=>2, "b"=>0}, @a=2, @b=0, @__result=#<Micro::Service::Result:0x0000 @service=#<Divide:0x0000 ...>, @type=:exception, @value=#<ZeroDivisionError: divided by 0>, @success=false>>
+err_result.service  # #<Divide:0x0000 @__attributes={"a"=>2, "b"=>0}, @a=2, @b=0, @__result=#<Micro::Case::Result:0x0000 @service=#<Divide:0x0000 ...>, @type=:exception, @value=#<ZeroDivisionError: divided by 0>, @success=false>>
 
 # Note:
 # ----
@@ -185,7 +185,7 @@ err_result.service  # #<Divide:0x0000 @__attributes={"a"=>2, "b"=>0}, @a=2, @b=0
 Answer: Use a symbol as the argument of Success() and Failure() methods and declare a block to set their values.
 
 ```ruby
-class Multiply < Micro::Service::Base
+class Multiply < Micro::Case::Base
   attributes :a, :b
 
   def call!
@@ -221,7 +221,7 @@ bad_result.failure? # true
 Answer: Yes, it is. But only for failure results!
 
 ```ruby
-class Multiply < Micro::Service::Base
+class Multiply < Micro::Case::Base
   attributes :a, :b
 
   def call!
@@ -248,12 +248,12 @@ result.service.attributes # {"a"=>2, "b"=>"2"}
 
 #### How to use the result hooks?
 
-As mentioned earlier, the `Micro::Service::Result` has two methods to improve the flow control. They are: `#on_success`, `on_failure`.
+As mentioned earlier, the `Micro::Case::Result` has two methods to improve the flow control. They are: `#on_success`, `on_failure`.
 
 The examples below show how to use them:
 
 ```ruby
-class Double < Micro::Service::Base
+class Double < Micro::Case::Base
   attributes :number
 
   def call!
@@ -305,7 +305,7 @@ Double
 Answer: The hook will be triggered if it matches the result type.
 
 ```ruby
-class Double < Micro::Service::Base
+class Double < Micro::Case::Base
   attributes :number
 
   def call!
@@ -337,7 +337,7 @@ result.value * 4 == accum # true
 
 ```ruby
 module Steps
-  class ConvertToNumbers < Micro::Service::Base
+  class ConvertToNumbers < Micro::Case::Base
     attribute :numbers
 
     def call!
@@ -349,7 +349,7 @@ module Steps
     end
   end
 
-  class Add2 < Micro::Service::Strict
+  class Add2 < Micro::Case::Strict
     attribute :numbers
 
     def call!
@@ -357,7 +357,7 @@ module Steps
     end
   end
 
-  class Double < Micro::Service::Strict
+  class Double < Micro::Case::Strict
     attribute :numbers
 
     def call!
@@ -365,7 +365,7 @@ module Steps
     end
   end
 
-  class Square < Micro::Service::Strict
+  class Square < Micro::Case::Strict
     attribute :numbers
 
     def call!
@@ -378,7 +378,7 @@ end
 # Creating a pipeline using the collection syntax #
 #-------------------------------------------------#
 
-Add2ToAllNumbers = Micro::Service::Pipeline[
+Add2ToAllNumbers = Micro::Case::Pipeline[
   Steps::ConvertToNumbers,
   Steps::Add2
 ]
@@ -393,7 +393,7 @@ p result.value    # {:numbers => [3, 3, 4, 4, 5, 6]}
 #-------------------------------------------------------#
 
 class DoubleAllNumbers
-  include Micro::Service::Pipeline
+  include Micro::Case::Pipeline
 
   pipeline Steps::ConvertToNumbers, Steps::Double
 end
@@ -436,7 +436,7 @@ Answer: Yes, it is.
 
 ```ruby
 module Steps
-  class ConvertToNumbers < Micro::Service::Base
+  class ConvertToNumbers < Micro::Case::Base
     attribute :numbers
 
     def call!
@@ -448,7 +448,7 @@ module Steps
     end
   end
 
-  class Add2 < Micro::Service::Strict
+  class Add2 < Micro::Case::Strict
     attribute :numbers
 
     def call!
@@ -456,7 +456,7 @@ module Steps
     end
   end
 
-  class Double < Micro::Service::Strict
+  class Double < Micro::Case::Strict
     attribute :numbers
 
     def call!
@@ -464,7 +464,7 @@ module Steps
     end
   end
 
-  class Square < Micro::Service::Strict
+  class Square < Micro::Case::Strict
     attribute :numbers
 
     def call!
@@ -492,7 +492,7 @@ DoubleAllNumbersAndSquareAndAdd2
   .on_success { |value| p value[:numbers] } # [6, 6, 18, 18, 38, 66]
 ```
 
-Note: You can blend any of the [syntaxes/approaches to create the pipelines](#how-to-create-a-pipeline-of-service-objects)) - [examples](https://github.com/serradura/u-service/blob/master/test/micro/service/pipeline/blend_test.rb#L7-L34).
+Note: You can blend any of the [syntaxes/approaches to create the pipelines](#how-to-create-a-pipeline-of-service-objects)) - [examples](https://github.com/serradura/u-service/blob/master/test/micro/case/pipeline/blend_test.rb#L7-L34).
 
 [⬆️ Back to Top](#table-of-contents-)
 
@@ -501,7 +501,7 @@ Note: You can blend any of the [syntaxes/approaches to create the pipelines](#ho
 Answer: Is a service object which will require all the keywords (attributes) on its initialization.
 
 ```ruby
-class Double < Micro::Service::Strict
+class Double < Micro::Case::Strict
   attribute :numbers
 
   def call!
@@ -523,14 +523,14 @@ Answer: Yes, there is!
 
 **Service objects:**
 
-Like `Micro::Service::Strict` the `Micro::Service::Safe` is another kind of service object. It has the ability to intercept an exception as a failure result. e.g:
+Like `Micro::Case::Strict` the `Micro::Case::Safe` is another kind of service object. It has the ability to intercept an exception as a failure result. e.g:
 
 ```ruby
 require 'logger'
 
 AppLogger = Logger.new(STDOUT)
 
-class Divide < Micro::Service::Safe
+class Divide < Micro::Case::Safe
   attributes :a, :b
 
   def call!
@@ -562,7 +562,7 @@ end
 # Another note:
 # ------------
 # It is possible to rescue an exception even when is a safe service.
-# Examples: https://github.com/serradura/u-service/blob/a6d0a8aa5d28d1f062484eaa0d5a17c4fb08b6fb/test/micro/service/safe_test.rb#L95-L123
+# Examples: https://github.com/serradura/u-service/blob/a6d0a8aa5d28d1f062484eaa0d5a17c4fb08b6fb/test/micro/case/safe_test.rb#L95-L123
 ```
 
 **Pipelines:**
@@ -581,7 +581,7 @@ end
 
 module Users
   class Create
-    include Micro::Service::Pipeline::Safe
+    include Micro::Case::Pipeline::Safe
 
     pipeline ProcessParams, ValidateParams, Persist, SendToCRM
   end
@@ -590,7 +590,7 @@ end
 # or
 
 module Users
-  Create = Micro::Service::Pipeline::Safe[
+  Create = Micro::Case::Pipeline::Safe[
     ProcessParams,
     ValidateParams,
     Persist,
@@ -612,7 +612,7 @@ To do this your application must have the [activemodel >= 3.2](https://rubygems.
 # By default, if your application has the activemodel as a dependency,
 # any kind of service can use it to validate their attributes.
 #
-class Multiply < Micro::Service::Base
+class Multiply < Micro::Case::Base
   attributes :a, :b
 
   validates :a, :b, presence: true, numericality: true
@@ -629,14 +629,14 @@ end
 # your services on validation errors, you can use:
 
 # In some file. e.g: A Rails initializer
-require 'micro/service/with_validation' # or require 'u-service/with_validation'
+require 'micro/case/with_validation' # or require 'u-case/with_validation'
 
 # In the Gemfile
-gem 'u-service', require: 'u-service/with_validation'
+gem 'u-case', require: 'u-case/with_validation'
 
 # Using this approach, you can rewrite the previous example with fewer lines of code. e.g:
 
-class Multiply < Micro::Service::Base
+class Multiply < Micro::Case::Base
   attributes :a, :b
 
   validates :a, :b, presence: true, numericality: true
@@ -649,7 +649,7 @@ end
 # Note:
 # ----
 # After requiring the validation mode, the
-# Micro::Service::Strict and Micro::Service::Safe classes will inherit this new behavior.
+# Micro::Case::Strict and Micro::Case::Safe classes will inherit this new behavior.
 ```
 
 [⬆️ Back to Top](#table-of-contents-)
@@ -697,4 +697,4 @@ The gem is available as open source under the terms of the [MIT License](https:/
 
 ## Code of Conduct
 
-Everyone interacting in the Micro::Service project’s codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/serradura/u-service/blob/master/CODE_OF_CONDUCT.md).
+Everyone interacting in the Micro::Case project’s codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/serradura/u-service/blob/master/CODE_OF_CONDUCT.md).
