@@ -34,9 +34,9 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
 
           # ---
 
-          pipeline = Micro::Case::Pipeline[Multiply, NumberToString]
+          flow= Micro::Case::Flow[Multiply, NumberToString]
 
-          assert_equal('4', pipeline.call(a: 2, b: 2).value)
+          assert_equal('4', flow.call(a: 2, b: 2).value)
         end
 
         def test_failure

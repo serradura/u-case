@@ -2,13 +2,13 @@
 
 module Micro
   module Case
-    module Pipeline
+    module Flow
       class Reducer
         attr_reader :use_cases
 
         def self.map_use_cases(arg)
           return arg.use_cases if arg.is_a?(Reducer)
-          return arg.__pipeline__.use_cases if arg.is_a?(Class) && arg < Micro::Case::Pipeline
+          return arg.__flow__.use_cases if arg.is_a?(Class) && arg < Micro::Case::Flow
           Array(arg)
         end
 
@@ -54,7 +54,7 @@ module Micro
 
           def arg_to_call?(arg)
             return true if arg.is_a?(Micro::Case::Base) || arg.is_a?(Reducer)
-            return true if arg.is_a?(Class) && (arg < Micro::Case::Base || arg < Micro::Case::Pipeline)
+            return true if arg.is_a?(Class) && (arg < Micro::Case::Base || arg < Micro::Case::Flow)
             return false
           end
       end
