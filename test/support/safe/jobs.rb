@@ -13,7 +13,7 @@ module Safe
     end
 
     module State
-      class Sleeping < Micro::Service::Safe
+      class Sleeping < Micro::Case::Safe
         def call!
           Success(job: Entity.new(id: nil, state: 'sleeping'))
         end
@@ -22,7 +22,7 @@ module Safe
       Default = Sleeping
     end
 
-    class SetID < Micro::Service::Strict::Safe
+    class SetID < Micro::Case::Strict::Safe
       ACCEPTABLE_UUID = %r{\A(\{)?([a-fA-F0-9]{4}-?){8}(?(1)\}|)\z}
 
       attributes :job
@@ -34,7 +34,7 @@ module Safe
       end
     end
 
-    class ValidateID < Micro::Service::Strict::Safe
+    class ValidateID < Micro::Case::Strict::Safe
       ACCEPTABLE_UUID = %r{\A(\{)?([a-fA-F0-9]{4}-?){8}(?(1)\}|)\z}
 
       attributes :job
@@ -46,7 +46,7 @@ module Safe
       end
     end
 
-    class SetStateToRunning < Micro::Service::Strict::Safe
+    class SetStateToRunning < Micro::Case::Strict::Safe
       attribute :job
 
       def call!

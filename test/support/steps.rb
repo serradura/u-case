@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Steps
-  class ConvertToNumbers < Micro::Service::Base
+  class ConvertToNumbers < Micro::Case::Base
     attribute :numbers
 
     def call!
@@ -13,7 +13,7 @@ module Steps
     end
   end
 
-  class Add2 < Micro::Service::Strict
+  class Add2 < Micro::Case::Strict
     attribute :numbers
 
     def call!
@@ -21,7 +21,7 @@ module Steps
     end
   end
 
-  class Double < Micro::Service::Strict
+  class Double < Micro::Case::Strict
     attribute :numbers
 
     def call!
@@ -29,7 +29,7 @@ module Steps
     end
   end
 
-  class Square < Micro::Service::Strict
+  class Square < Micro::Case::Strict
     attribute :numbers
 
     def call!

@@ -19,5 +19,5 @@ group :test do
   gem 'simplecov', require: false
 end
 
-# Specify your gem's dependencies in micro-service.gemspec
+# Specify your gem's dependencies in u-case.gemspec
 gemspec
