@@ -10,11 +10,11 @@ module Micro
       end
 
       def self.>>(use_case)
-        Pipeline[self, use_case]
+        Flow[self, use_case]
       end
 
       def self.&(use_case)
-        Pipeline::Safe[self, use_case]
+        Flow::Safe[self, use_case]
       end
 
       def self.call(options = {})

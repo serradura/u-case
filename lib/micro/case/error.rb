@@ -17,7 +17,7 @@ module Micro
       InvalidUseCase = TypeError.new('use case must be a kind or an instance of Micro::Case::Base'.freeze)
       InvalidUseCases = ArgumentError.new('argument must be a collection of `Micro::Case::Base` classes'.freeze)
 
-      UndefinedPipeline = ArgumentError.new("This class hasn't declared its pipeline. Please, use the `pipeline()` macro to define one.".freeze)
+      UndefinedFlow = ArgumentError.new("This class hasn't declared its flow. Please, use the `flow()` macro to define one.".freeze)
 
       class InvalidAccessToTheUseCaseObject < StandardError
         MSG = 'only a failure result can access its use case object'.freeze
