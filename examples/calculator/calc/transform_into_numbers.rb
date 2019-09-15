@@ -1,4 +1,4 @@
-class TransformIntoNumbers < Micro::Service::Base
+class TransformIntoNumbers < Micro::Case::Base
   attributes :a, :b
 
   def call!

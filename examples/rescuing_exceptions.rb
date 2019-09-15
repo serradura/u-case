@@ -3,10 +3,10 @@ require 'bundler/inline'
 gemfile do
   source 'https://rubygems.org'
 
-  gem 'u-service', '~> 1.0.0'
+  gem 'u-case', '~> 1.0.0.rc1'
 end
 
-class DivideV1 < Micro::Service::Base
+class DivideV1 < Micro::Case::Base
   attributes :a, :b
 
   def call!
@@ -18,7 +18,7 @@ class DivideV1 < Micro::Service::Base
   end
 end
 
-class DivideV2 < Micro::Service::Safe
+class DivideV2 < Micro::Case::Safe
   attributes :a, :b
 
   def call!

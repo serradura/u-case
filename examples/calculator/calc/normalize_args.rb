@@ -1,5 +1,5 @@
 module Calc
-  class NormalizeArgs < Micro::Service::Base
+  class NormalizeArgs < Micro::Case::Base
     attributes :args
 
     def call!
