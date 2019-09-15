@@ -5,7 +5,7 @@ gemfile do
 
   # NOTE: I used an older version of the Activemodel only to show the compatibility with its older versions.
   gem 'activemodel', '~> 3.2', '>= 3.2.22.5'
-  gem 'u-service', '~> 1.0.0', require: 'u-service/with_validation'
+  gem 'u-case', '~> 1.0.0.rc1', require: 'u-case/with_validation'
 end
 
 module Users
@@ -23,7 +23,7 @@ module Users
     require 'uri'
     require 'securerandom'
 
-    class ProcessParams < Micro::Service::Base
+    class ProcessParams < Micro::Case::Base
       attributes :name, :email
 
       def call!
@@ -35,7 +35,7 @@ module Users
       end
     end
 
-    class ValidateParams < Micro::Service::Base
+    class ValidateParams < Micro::Case::Base
       attributes :name, :email
 
       validates :name, presence: true
@@ -46,7 +46,7 @@ module Users
       end
     end
 
-    class Persist < Micro::Service::Base
+    class Persist < Micro::Case::Base
       attributes :name, :email
 
       def call!
@@ -58,7 +58,7 @@ module Users
       end
     end
 
-    class SendToCRM < Micro::Service::Base
+    class SendToCRM < Micro::Case::Base
       attribute :user
 
       def call!
@@ -110,8 +110,8 @@ puts "\n-- Failure scenario --\n\n"
 Users::Creation::Process
   .call(name: '', email: '')
   .on_failure { |errors| p errors.full_messages }
-  .on_failure do |_errors, service|
-    puts "#{service.class.name} was the service responsible for the failure"
+  .on_failure do |_errors, use_case|
+    puts "#{use_case.class.name} was the use case responsible for the failure"
   end
 
 
@@ -130,4 +130,4 @@ Users::Creation::Process
 # -- Failure scenarios --
 #
 # ["Name can't be blank", "Email is invalid"]
-# Users::Creation::ValidateParams was the service responsible for the failure
+# Users::Creation::ValidateParams was the use case responsible for the failure

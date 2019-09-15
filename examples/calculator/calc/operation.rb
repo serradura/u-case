@@ -1,4 +1,4 @@
-class Operation < Micro::Service::Base
+class Operation < Micro::Case::Base
   attributes :a, :b
 
   private def result_of(operation_result)
