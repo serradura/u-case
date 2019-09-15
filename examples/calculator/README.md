@@ -1,11 +1,11 @@
-# μ-service - Calculator example
+# μ-case - Calculator example
 
 This example uses [rake](http://rubygems.org/gems/rake) to expose a CLI calculator.
 
 ## Installation instructions
 ```sh
 gem install rake
-gem install u-service -v 1.0.0
+gem install u-case -v 1.0.0.rc1
 ```
 
 *Note:*
@@ -14,7 +14,7 @@ If zsh is your shell, use: [`unsetopt nomatch`](https://thoughtbot.com/blog/how-
 
 ### Usage
 
-![gif](https://github.com/serradura/u-service/blob/master/examples/calculator/assets/usage.gif?raw=true)
+![gif](https://github.com/serradura/u-case/blob/master/examples/calculator/assets/usage.gif?raw=true)
 
 #### Listing the available rake tasks
 ```sh

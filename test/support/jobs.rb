@@ -12,7 +12,7 @@ module Jobs
   end
 
   module State
-    class Sleeping < Micro::Service::Base
+    class Sleeping < Micro::Case::Base
       def call!
         Success(job: Entity.new(id: nil, state: 'sleeping'))
       end
@@ -21,7 +21,7 @@ module Jobs
     Default = Sleeping
   end
 
-  class SetID < Micro::Service::Strict
+  class SetID < Micro::Case::Strict
     ACCEPTABLE_UUID = %r{\A(\{)?([a-fA-F0-9]{4}-?){8}(?(1)\}|)\z}
 
     attributes :job
@@ -33,7 +33,7 @@ module Jobs
     end
   end
 
-  class ValidateID < Micro::Service::Strict
+  class ValidateID < Micro::Case::Strict
     ACCEPTABLE_UUID = %r{\A(\{)?([a-fA-F0-9]{4}-?){8}(?(1)\}|)\z}
 
     attributes :job
@@ -45,7 +45,7 @@ module Jobs
     end
   end
 
-  class SetStateToRunning < Micro::Service::Strict
+  class SetStateToRunning < Micro::Case::Strict
     attribute :job
 
     def call!
