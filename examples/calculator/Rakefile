@@ -1,4 +1,4 @@
-require 'u-service'
+require 'u-case'
 
 require_relative 'calc/operation'
 require_relative 'calc/normalize_args'
@@ -15,7 +15,7 @@ module Calc
   end
 end
 
-class PerformTask < Micro::Service::Base
+class PerformTask < Micro::Case::Base
   attributes :args, :operation
 
   def call!

@@ -5,7 +5,7 @@ gemfile do
 
   gem 'benchmark-ips', '~> 2.7', '>= 2.7.2'
   gem 'interactor', '~> 3.1', '>= 3.1.1'
-  gem 'u-service', '~> 1.0.0'
+  gem 'u-case', '~> 1.0.0.rc1'
 end
 
 require 'benchmark/ips'
@@ -25,7 +25,7 @@ class IT_Multiply
   end
 end
 
-class MSB_Multiply < Micro::Service::Base
+class MSB_Multiply < Micro::Case::Base
   attributes :a, :b
 
   def call!
@@ -37,7 +37,7 @@ class MSB_Multiply < Micro::Service::Base
   end
 end
 
-class MSS_Multiply < Micro::Service::Strict
+class MSS_Multiply < Micro::Case::Strict
   attributes :a, :b
 
   def call!
@@ -63,12 +63,12 @@ Benchmark.ips do |x|
     IT_Multiply.call(STRING_KEYS)
   end
 
-  x.report('Micro::Service::Base') do
+  x.report('Micro::Case::Base') do
     MSB_Multiply.call(SYMBOL_KEYS)
     MSB_Multiply.call(STRING_KEYS)
   end
 
-  x.report('Micro::Service::Strict') do
+  x.report('Micro::Case::Strict') do
     MSS_Multiply.call(SYMBOL_KEYS)
     MSS_Multiply.call(STRING_KEYS)
   end
@@ -78,16 +78,16 @@ end
 
 # Warming up --------------------------------------
 #           Interactor     2.943k i/100ms
-# Micro::Service::Base    12.267k i/100ms
-# Micro::Service::Strict
+# Micro::Case::Base    12.267k i/100ms
+# Micro::Case::Strict
 #                          9.368k i/100ms
 # Calculating -------------------------------------
 #           Interactor     29.998k (± 2.5%) i/s -    150.093k in   5.006612s
-# Micro::Service::Base    125.269k (± 3.4%) i/s -    625.617k in   5.000142s
-# Micro::Service::Strict
+# Micro::Case::Base    125.269k (± 3.4%) i/s -    625.617k in   5.000142s
+# Micro::Case::Strict
 #                          96.087k (± 2.5%) i/s -    487.136k in   5.073155s
 
 # Comparison:
-# Micro::Service::Base:   125269.5 i/s
-# Micro::Service::Strict:  96087.3 i/s - 1.30x  slower
-#           Interactor:    29997.7 i/s - 4.18x  slower
+# Micro::Case::Base:   125269.5 i/s
+# Micro::Case::Strict:  96087.3 i/s - 1.30x  slower
+#           Interactor: 29997.7 i/s - 4.18x  slower

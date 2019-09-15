@@ -13,6 +13,6 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') < '4.1'
 end
 
 $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
-require 'micro/service'
+require 'micro/case'
 
 require 'minitest/autorun'
