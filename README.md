@@ -1,7 +1,7 @@
 [![Gem](https://img.shields.io/gem/v/u-case.svg?style=flat-square)](https://rubygems.org/gems/u-case)
 [![Build Status](https://travis-ci.com/serradura/u-case.svg?branch=master)](https://travis-ci.com/serradura/u-case)
-[![Maintainability](https://api.codeclimate.com/v1/badges/a30b18528a317435c2ee/maintainability)](https://codeclimate.com/github/serradura/u-case/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/a30b18528a317435c2ee/test_coverage)](https://codeclimate.com/github/serradura/u-case/test_coverage)
+[![Maintainability](https://api.codeclimate.com/v1/badges/5c3c8ad1b0b943f88efd/maintainability)](https://codeclimate.com/github/serradura/u-case/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/5c3c8ad1b0b943f88efd/test_coverage)](https://codeclimate.com/github/serradura/u-case/test_coverage)
 
 μ-case (Micro::Case)
 ==========================
