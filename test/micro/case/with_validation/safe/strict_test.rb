@@ -34,7 +34,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
 
           # ---
 
-          flow= Micro::Case::Flow[Multiply, NumberToString]
+          flow = Micro::Case::Flow[Multiply, NumberToString]
 
           assert_equal('4', flow.call(a: 2, b: 2).value)
         end
@@ -51,7 +51,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
           result = Multiply.new(a: 1, b: nil).call
 
           assert(result.failure?)
-          assert_equal(["can't be blank", 'is not a number'], result.value[:b])
+          assert_equal(["can't be blank", 'is not a number'], result.value[:errors][:b])
           assert_instance_of(Micro::Case::Result, result)
 
           # ---
@@ -59,7 +59,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
           result = Multiply.new(a: 1, b: 'a').call
 
           assert(result.failure?)
-          assert_equal(['is not a number'], result.value[:b])
+          assert_equal(['is not a number'], result.value[:errors][:b])
           assert_instance_of(Micro::Case::Result, result)
         end
       end

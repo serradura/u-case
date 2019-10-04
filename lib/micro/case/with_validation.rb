@@ -8,7 +8,7 @@ module Micro
       include Micro::Attributes::Features::ActiveModelValidations
 
       def call
-        return Failure(:validation_error) { self.errors } unless valid?
+        return Failure(:validation_error) { {errors: self.errors} } unless valid?
 
         __call
       end
