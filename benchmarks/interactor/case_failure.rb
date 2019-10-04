@@ -5,7 +5,7 @@ gemfile do
 
   gem 'benchmark-ips', '~> 2.7', '>= 2.7.2'
   gem 'interactor', '~> 3.1', '>= 3.1.1'
-  gem 'u-case', '~> 1.0.0.rc1'
+  gem 'u-case', '~> 1.0.0'
 end
 
 require 'benchmark/ips'
@@ -20,7 +20,7 @@ class IT_Multiply
     if a.is_a?(Numeric) && b.is_a?(Numeric)
       context.number = a * b
     else
-      context.fail!(:invalid_data)
+      context.fail!(type: :invalid_data)
     end
   end
 end
@@ -49,8 +49,8 @@ class MSS_Multiply < Micro::Case::Strict
   end
 end
 
-SYMBOL_KEYS = { a: 2, b: 2 }
-STRING_KEYS = { 'a' => 1, 'b' => 1 }
+SYMBOL_KEYS = { a: nil, b: 2 }
+STRING_KEYS = { 'a' => 1, 'b' => '' }
 
 Benchmark.ips do |x|
   x.config(:time => 5, :warmup => 2)
@@ -77,17 +77,17 @@ Benchmark.ips do |x|
 end
 
 # Warming up --------------------------------------
-#           Interactor     2.943k i/100ms
-# Micro::Case::Base    12.267k i/100ms
+#           Interactor     1.521k i/100ms
+# Micro::Case::Base    11.209k i/100ms
 # Micro::Case::Strict
-#                          9.368k i/100ms
+#                          8.794k i/100ms
 # Calculating -------------------------------------
-#           Interactor     29.998k (± 2.5%) i/s -    150.093k in   5.006612s
-# Micro::Case::Base    125.269k (± 3.4%) i/s -    625.617k in   5.000142s
+#           Interactor     14.564k (± 7.8%) i/s -     73.008k in   5.048979s
+# Micro::Case::Base    116.319k (± 1.7%) i/s -    582.868k in   5.012372s
 # Micro::Case::Strict
-#                          96.087k (± 2.5%) i/s -    487.136k in   5.073155s
+#                          89.790k (± 3.4%) i/s -    448.494k in   5.001098s
 
 # Comparison:
-# Micro::Case::Base:   125269.5 i/s
-# Micro::Case::Strict:  96087.3 i/s - 1.30x  slower
-#           Interactor: 29997.7 i/s - 4.18x  slower
+# Micro::Case::Base:   116318.8 i/s
+# Micro::Case::Strict:  89790.0 i/s - 1.30x  slower
+#           Interactor: 14564.3 i/s - 7.99x  slower
