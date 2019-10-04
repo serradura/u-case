@@ -9,7 +9,7 @@ module Micro
         end
 
         def flow(*args)
-          @__flow= flow_reducer.build(args)
+          @__flow = flow_reducer.build(args)
         end
 
         def call(options = {})
@@ -20,7 +20,7 @@ module Micro
       CONSTRUCTOR = <<-RUBY
       def initialize(options)
         @options = options
-        flow= self.class.__flow__
+        flow = self.class.__flow__
         raise Error::UndefinedFlow unless flow
       end
       RUBY
