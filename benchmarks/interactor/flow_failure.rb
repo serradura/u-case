@@ -5,7 +5,7 @@ gemfile do
 
   gem 'benchmark-ips', '~> 2.7', '>= 2.7.2'
   gem 'interactor', '~> 3.1', '>= 3.1.1'
-  gem 'u-case', '~> 1.0.0.rc1'
+  gem 'u-case', '~> 1.0.0'
 end
 
 require 'benchmark/ips'
