@@ -18,7 +18,7 @@ class Micro::Case::SafeTest < Minitest::Test
 
     assert(result.success?)
     assert_equal(1, result.value)
-    assert_kind_of(Micro::Case::Result, result)
+    assert_mc_result(result)
 
     # ---
 
@@ -26,7 +26,7 @@ class Micro::Case::SafeTest < Minitest::Test
 
     assert(result.failure?)
     assert_equal(:not_an_integer, result.value)
-    assert_kind_of(Micro::Case::Result, result)
+    assert_mc_result(result)
   end
 
   def test_class_call_method
@@ -34,7 +34,7 @@ class Micro::Case::SafeTest < Minitest::Test
 
     assert(result.success?)
     assert_equal(1, result.value)
-    assert_kind_of(Micro::Case::Result, result)
+    assert_mc_result(result)
 
     # ---
 
@@ -42,7 +42,7 @@ class Micro::Case::SafeTest < Minitest::Test
 
     assert(result.failure?)
     assert_equal(:not_an_integer, result.value)
-    assert_kind_of(Micro::Case::Result, result)
+    assert_mc_result(result)
   end
 
   class Foo < Micro::Case::Safe
@@ -79,7 +79,7 @@ class Micro::Case::SafeTest < Minitest::Test
     ].each do |result|
       assert(result.failure?)
       assert_instance_of(ZeroDivisionError, result.value)
-      assert_kind_of(Micro::Case::Result, result)
+      assert_mc_result(result)
 
       counter = 0
 

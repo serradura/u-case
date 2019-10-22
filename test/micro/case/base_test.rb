@@ -35,13 +35,13 @@ class Micro::Case::BaseTest < Minitest::Test
 
     assert(result.success?)
     assert_equal(4, result.value)
-    assert_kind_of(Micro::Case::Result, result)
+    assert_mc_result(result)
 
     result = Multiply.new(a: 1, b: '1').call
 
     assert(result.failure?)
     assert_equal([1, '1'], result.value)
-    assert_kind_of(Micro::Case::Result, result)
+    assert_mc_result(result)
 
     result
       .on_failure(:invalid_data) { |(a, _b), _use_case| assert_equal(1, a) }
@@ -56,13 +56,13 @@ class Micro::Case::BaseTest < Minitest::Test
 
     assert(result.success?)
     assert_equal(6, result.value)
-    assert_kind_of(Micro::Case::Result, result)
+    assert_mc_result(result)
 
     result = Double.call(number: 0)
 
     assert(result.failure?)
     assert_equal('number must be greater than 0', result.value)
-    assert_kind_of(Micro::Case::Result, result)
+    assert_mc_result(result)
   end
 
   def test_the_data_validation_error_when_calling_the_call_class_method

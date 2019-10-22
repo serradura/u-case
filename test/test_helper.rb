@@ -16,3 +16,11 @@ $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 require 'micro/case'
 
 require 'minitest/autorun'
+
+module MicroCaseAssertions
+  def assert_mc_result(value)
+    assert_kind_of(Micro::Case::Result, value)
+  end
+end
+
+Minitest::Test.send(:include, MicroCaseAssertions)
