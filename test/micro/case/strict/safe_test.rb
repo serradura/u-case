@@ -32,7 +32,7 @@ class Micro::Case::Strict::SafeTest < Minitest::Test
 
     result = Multiply.new(a: 1, b: '1').call
 
-    assert(result.failure?)
+    assert_mc_failure(result)
     assert_equal(:invalid_data, result.value)
     assert_mc_result(result)
   end
@@ -46,7 +46,7 @@ class Micro::Case::Strict::SafeTest < Minitest::Test
 
     result = Double.call(number: 0)
 
-    assert(result.failure?)
+    assert_mc_failure(result)
     assert_equal('number must be greater than 0', result.value)
     assert_mc_result(result)
   end

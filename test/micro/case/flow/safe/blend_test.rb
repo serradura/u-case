@@ -55,7 +55,7 @@ class Micro::Case::Flow::Safe::BlendTest < Minitest::Test
     EXAMPLES.map(&:flow).each do |flow|
       result = flow.call(numbers: %w[1 1 2 a 3 4])
 
-      assert(result.failure?)
+      assert_mc_failure(result)
       assert_instance_of(Micro::Case::Result, result)
       result.on_failure { |value| assert_equal('numbers must contain only numeric types', value) }
     end
@@ -88,7 +88,7 @@ class Micro::Case::Flow::Safe::BlendTest < Minitest::Test
       DoubleAllNumbersAndDivideByZero.call(numbers: %w[6 4 8]),
       SquareAllNumbersAndDivideByZero.call(numbers: %w[8 4 6])
     ].each do |result|
-      assert(result.failure?)
+      assert_mc_failure(result)
       assert_instance_of(ZeroDivisionError, result.value)
       assert_mc_result(result)
 

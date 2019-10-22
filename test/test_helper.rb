@@ -25,6 +25,10 @@ module MicroCaseAssertions
   def assert_mc_success(result)
     assert_predicate(result, :success?)
   end
+
+  def assert_mc_failure(result)
+    assert_predicate(result, :failure?)
+  end
 end
 
 Minitest::Test.send(:include, MicroCaseAssertions)
