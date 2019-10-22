@@ -9,8 +9,8 @@ class Micro::Case::ResultTest < Minitest::Test
     result = Micro::Case::Result.new
     result.__set__(true, 1, :ok, nil)
 
-    assert result.success?
-    refute result.failure?
+    assert_success_result(result)
+    refute_failure_result(result)
 
     assert_equal(1, result.value)
     err = assert_raises(Micro::Case::Error::InvalidAccessToTheUseCaseObject) { result.use_case }
@@ -37,8 +37,8 @@ class Micro::Case::ResultTest < Minitest::Test
     result = Micro::Case::Result.new
     result.__set__(false, 0, :error, use_case)
 
-    refute result.success?
-    assert result.failure?
+    refute_success_result(result)
+    assert_failure_result(result)
 
     assert_equal(0, result.value)
     assert_same(use_case, result.use_case)

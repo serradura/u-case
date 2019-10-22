@@ -26,29 +26,29 @@ class Micro::Case::StrictTest < Minitest::Test
   def test_instance_call_method
     result = Multiply.new(a: 2, b: 2).call
 
-    assert_mc_success(result)
+    assert_success_result(result)
     assert_equal(4, result.value)
-    assert_mc_result(result)
+    assert_result(result)
 
     result = Multiply.new(a: 1, b: '1').call
 
-    assert_mc_failure(result)
+    assert_failure_result(result)
     assert_equal(:invalid_data, result.value)
-    assert_mc_result(result)
+    assert_result(result)
   end
 
   def test_class_call_method
     result = Double.call(number: 2)
 
-    assert_mc_success(result)
+    assert_success_result(result)
     assert_equal(4, result.value)
-    assert_mc_result(result)
+    assert_result(result)
 
     result = Double.call(number: 0)
 
-    assert_mc_failure(result)
+    assert_failure_result(result)
     assert_equal('number must be greater than 0', result.value)
-    assert_mc_result(result)
+    assert_result(result)
   end
 
   class Foo < Micro::Case::Strict
