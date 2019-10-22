@@ -18,24 +18,44 @@ require 'micro/case'
 require 'minitest/autorun'
 
 module MicroCaseAssertions
-  def assert_result(result)
+  def assert_kind_of_result(result)
     assert_kind_of(Micro::Case::Result, result)
   end
 
-  def assert_success_result(result)
-    assert_predicate(result, :success?)
+  # assert*result
+
+  def assert_result(result, value: :____skip____)
+    assert_kind_of_result(result)
+
+    yield if block_given?
+
+    assert_equal(value, result.value) unless value == :____skip____
   end
 
-  def refute_success_result(result)
-    refute_predicate(result, :success?)
+  def assert_success_result(result, value: :____skip____)
+    assert_result(result, value: value) { assert_predicate(result, :success?) }
   end
 
-  def assert_failure_result(result)
-    assert_predicate(result, :failure?)
+  def assert_failure_result(result, value: :____skip____)
+    assert_result(result, value: value) { assert_predicate(result, :failure?) }
   end
 
-  def refute_failure_result(result)
-    refute_predicate(result, :failure?)
+  # refute*result
+
+  def refute_result(result, value: :____skip____)
+    assert_kind_of_result(result)
+
+    yield if block_given?
+
+    refute_equal(value, result.value) unless value == :____skip____
+  end
+
+  def refute_success_result(result, value: :____skip____)
+    refute_result(result, value: value) { refute_predicate(result, :success?) }
+  end
+
+  def refute_failure_result(result, value: :____skip____)
+    refute_result(result, value: value) { refute_predicate(result, :failure?) }
   end
 end
 
