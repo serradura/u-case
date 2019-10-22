@@ -58,7 +58,7 @@ class Micro::Case::Flow::Safe::CollectionMapperTest < Minitest::Test
     EXAMPLES.each do |example|
       result = example.flow.call(numbers: %w[1 1 2 2 3 4])
 
-      assert(result.success?)
+      assert_mc_success(result)
       assert_instance_of(Micro::Case::Result, result)
       result
         .on_success { |value| assert_equal(example.result, value[:numbers]) }

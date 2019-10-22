@@ -26,7 +26,7 @@ class Micro::Case::StrictTest < Minitest::Test
   def test_instance_call_method
     result = Multiply.new(a: 2, b: 2).call
 
-    assert(result.success?)
+    assert_mc_success(result)
     assert_equal(4, result.value)
     assert_mc_result(result)
 
@@ -40,7 +40,7 @@ class Micro::Case::StrictTest < Minitest::Test
   def test_class_call_method
     result = Double.call(number: 2)
 
-    assert(result.success?)
+    assert_mc_success(result)
     assert_equal(4, result.value)
     assert_mc_result(result)
 

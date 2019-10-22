@@ -16,7 +16,7 @@ class Micro::Case::SafeTest < Minitest::Test
   def test_instance_call_method
     result = Divide.new(a: 2, b: 2).call
 
-    assert(result.success?)
+    assert_mc_success(result)
     assert_equal(1, result.value)
     assert_mc_result(result)
 
@@ -32,7 +32,7 @@ class Micro::Case::SafeTest < Minitest::Test
   def test_class_call_method
     result = Divide.call(a: 2, b: 2)
 
-    assert(result.success?)
+    assert_mc_success(result)
     assert_equal(1, result.value)
     assert_mc_result(result)
 
@@ -163,7 +163,7 @@ class Micro::Case::SafeTest < Minitest::Test
     result = GenerateZeroDivisionError.call(arg: 2)
     counter = 0
 
-    assert(result.success?)
+    assert_mc_success(result)
     assert_kind_of(ZeroDivisionError, result.value)
 
     result.on_success { counter += 1 }
