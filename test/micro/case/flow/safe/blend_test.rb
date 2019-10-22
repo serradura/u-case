@@ -90,7 +90,7 @@ class Micro::Case::Flow::Safe::BlendTest < Minitest::Test
     ].each do |result|
       assert(result.failure?)
       assert_instance_of(ZeroDivisionError, result.value)
-      assert_kind_of(Micro::Case::Result, result)
+      assert_mc_result(result)
 
       counter = 0
 
