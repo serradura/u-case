@@ -24,7 +24,7 @@ class Micro::Case::SafeTest < Minitest::Test
 
     result = Divide.new(a: 2.0, b: 2).call
 
-    assert(result.failure?)
+    assert_mc_failure(result)
     assert_equal(:not_an_integer, result.value)
     assert_mc_result(result)
   end
@@ -40,7 +40,7 @@ class Micro::Case::SafeTest < Minitest::Test
 
     result = Divide.call(a: 2.0, b: 2)
 
-    assert(result.failure?)
+    assert_mc_failure(result)
     assert_equal(:not_an_integer, result.value)
     assert_mc_result(result)
   end
@@ -77,7 +77,7 @@ class Micro::Case::SafeTest < Minitest::Test
       Divide.new(a: 2, b: 0).call,
       Divide.call(a: 2, b: 0)
     ].each do |result|
-      assert(result.failure?)
+      assert_mc_failure(result)
       assert_instance_of(ZeroDivisionError, result.value)
       assert_mc_result(result)
 
