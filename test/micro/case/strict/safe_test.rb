@@ -26,29 +26,29 @@ class Micro::Case::Strict::SafeTest < Minitest::Test
   def test_instance_call_method
     result = Multiply.new(a: 2, b: 2).call
 
-    assert_mc_success(result)
+    assert_success_result(result)
     assert_equal(4, result.value)
-    assert_mc_result(result)
+    assert_result(result)
 
     result = Multiply.new(a: 1, b: '1').call
 
-    assert_mc_failure(result)
+    assert_failure_result(result)
     assert_equal(:invalid_data, result.value)
-    assert_mc_result(result)
+    assert_result(result)
   end
 
   def test_class_call_method
     result = Double.call(number: 2)
 
-    assert_mc_success(result)
+    assert_success_result(result)
     assert_equal(4, result.value)
-    assert_mc_result(result)
+    assert_result(result)
 
     result = Double.call(number: 0)
 
-    assert_mc_failure(result)
+    assert_failure_result(result)
     assert_equal('number must be greater than 0', result.value)
-    assert_mc_result(result)
+    assert_result(result)
   end
 
   class Foo < Micro::Case::Strict::Safe
@@ -104,9 +104,9 @@ class Micro::Case::Strict::SafeTest < Minitest::Test
   def test_that_exceptions_generate_a_failure
     result_1 = Divide.new(a: 2, b: 0).call
 
-    assert(result_1.failure?)
+    assert_failure_result(result_1)
     assert_instance_of(ZeroDivisionError, result_1.value)
-    assert_kind_of(Micro::Case::Result, result_1)
+    assert_result(result_1)
 
     counter_1 = 0
 
@@ -121,9 +121,9 @@ class Micro::Case::Strict::SafeTest < Minitest::Test
 
     result_2 = Divide.call(a: 2, b: 0)
 
-    assert(result_2.failure?)
+    assert_failure_result(result_2)
     assert_instance_of(ZeroDivisionError, result_2.value)
-    assert_kind_of(Micro::Case::Result, result_2)
+    assert_result(result_2)
 
     counter_2 = 0
 

@@ -36,7 +36,7 @@ class Micro::Case::Flow::CompositionOperatorTest < Minitest::Test
     EXAMPLES.each do |example|
       result = example.flow.call(numbers: %w[1 1 2 2 3 4])
 
-      assert_mc_success(result)
+      assert_success_result(result)
       assert_instance_of(Micro::Case::Result, result)
       result
         .on_success { |value| assert_equal(example.result, value[:numbers]) }
@@ -47,7 +47,7 @@ class Micro::Case::Flow::CompositionOperatorTest < Minitest::Test
     EXAMPLES.map(&:flow).each do |flow|
       result = flow.call(numbers: %w[1 1 2 a 3 4])
 
-      assert_mc_failure(result)
+      assert_failure_result(result)
       assert_instance_of(Micro::Case::Result, result)
       result.on_failure { |value| assert_equal('numbers must contain only numeric types', value) }
     end

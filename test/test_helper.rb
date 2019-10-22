@@ -18,16 +18,24 @@ require 'micro/case'
 require 'minitest/autorun'
 
 module MicroCaseAssertions
-  def assert_mc_result(result)
+  def assert_result(result)
     assert_kind_of(Micro::Case::Result, result)
   end
 
-  def assert_mc_success(result)
+  def assert_success_result(result)
     assert_predicate(result, :success?)
   end
 
-  def assert_mc_failure(result)
+  def refute_success_result(result)
+    refute_predicate(result, :success?)
+  end
+
+  def assert_failure_result(result)
     assert_predicate(result, :failure?)
+  end
+
+  def refute_failure_result(result)
+    refute_predicate(result, :failure?)
   end
 end
 

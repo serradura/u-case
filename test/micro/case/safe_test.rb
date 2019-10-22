@@ -16,33 +16,33 @@ class Micro::Case::SafeTest < Minitest::Test
   def test_instance_call_method
     result = Divide.new(a: 2, b: 2).call
 
-    assert_mc_success(result)
+    assert_success_result(result)
     assert_equal(1, result.value)
-    assert_mc_result(result)
+    assert_result(result)
 
     # ---
 
     result = Divide.new(a: 2.0, b: 2).call
 
-    assert_mc_failure(result)
+    assert_failure_result(result)
     assert_equal(:not_an_integer, result.value)
-    assert_mc_result(result)
+    assert_result(result)
   end
 
   def test_class_call_method
     result = Divide.call(a: 2, b: 2)
 
-    assert_mc_success(result)
+    assert_success_result(result)
     assert_equal(1, result.value)
-    assert_mc_result(result)
+    assert_result(result)
 
     # ---
 
     result = Divide.call(a: 2.0, b: 2)
 
-    assert_mc_failure(result)
+    assert_failure_result(result)
     assert_equal(:not_an_integer, result.value)
-    assert_mc_result(result)
+    assert_result(result)
   end
 
   class Foo < Micro::Case::Safe
@@ -77,9 +77,9 @@ class Micro::Case::SafeTest < Minitest::Test
       Divide.new(a: 2, b: 0).call,
       Divide.call(a: 2, b: 0)
     ].each do |result|
-      assert_mc_failure(result)
+      assert_failure_result(result)
       assert_instance_of(ZeroDivisionError, result.value)
-      assert_mc_result(result)
+      assert_result(result)
 
       counter = 0
 
@@ -163,7 +163,7 @@ class Micro::Case::SafeTest < Minitest::Test
     result = GenerateZeroDivisionError.call(arg: 2)
     counter = 0
 
-    assert_mc_success(result)
+    assert_success_result(result)
     assert_kind_of(ZeroDivisionError, result.value)
 
     result.on_success { counter += 1 }
