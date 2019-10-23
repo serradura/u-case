@@ -25,8 +25,9 @@ class Micro::Case::BaseTest < Minitest::Test
 
   def test_the_initializer_data_validation
     [nil, 1, true, '', []].each do |arg|
-      err = assert_raises(ArgumentError) { Multiply.new(arg) }
-      assert_equal('argument must be a Hash', err.message)
+      assert_raises_with_message(ArgumentError, 'argument must be a Hash') do
+        Multiply.new(arg)
+      end
     end
   end
 
@@ -37,7 +38,7 @@ class Micro::Case::BaseTest < Minitest::Test
 
     result = Multiply.new(a: 1, b: '1').call
 
-    assert_failure_result(result, value: [1, '1'])
+    assert_failure_result(result, value: [1, '1'], type: :invalid_data)
 
     result
       .on_failure(:invalid_data) { |(a, _b), _use_case| assert_equal(1, a) }
@@ -54,13 +55,14 @@ class Micro::Case::BaseTest < Minitest::Test
 
     result = Double.call(number: 0)
 
-    assert_failure_result(result, value: 'number must be greater than 0')
+    assert_failure_result(result, value: 'number must be greater than 0', type: :error)
   end
 
   def test_the_data_validation_error_when_calling_the_call_class_method
     [nil, 1, true, '', []].each do |arg|
-      err = assert_raises(ArgumentError) { Multiply.call(arg) }
-      assert_equal('argument must be a Hash', err.message)
+      assert_raises_with_message(ArgumentError, 'argument must be a Hash') do
+        Multiply.call(arg)
+      end
     end
   end
 
@@ -84,11 +86,15 @@ class Micro::Case::BaseTest < Minitest::Test
   end
 
   def test_the_result_error
-    err1 = assert_raises(Micro::Case::Error::UnexpectedResult) { LoremIpsum.call(text: 'lorem ipsum') }
-    assert_equal('Micro::Case::BaseTest::LoremIpsum#call! must return an instance of Micro::Case::Result', err1.message)
+    assert_raises_with_message(
+      Micro::Case::Error::UnexpectedResult,
+      /LoremIpsum#call! must return an instance of Micro::Case::Result/
+    ) { LoremIpsum.call(text: 'lorem ipsum') }
 
-    err2 = assert_raises(Micro::Case::Error::UnexpectedResult) { LoremIpsum.new(text: 'ipsum indolor').call }
-    assert_equal('Micro::Case::BaseTest::LoremIpsum#call! must return an instance of Micro::Case::Result', err2.message)
+    assert_raises_with_message(
+      Micro::Case::Error::UnexpectedResult,
+      /LoremIpsum#call! must return an instance of Micro::Case::Result/
+    ) { LoremIpsum.new(text: 'ipsum indolor').call }
   end
 
   def test_that_sets_a_result_object_avoiding_the_use_case_to_create_one
@@ -105,16 +111,19 @@ class Micro::Case::BaseTest < Minitest::Test
   def test_the_error_when_trying_to_set_an_invalid_result_object
     use_case = Multiply.new(a: 3, b: 2)
 
-    err = assert_raises(ArgumentError) { use_case.__set_result__([]) }
-    assert_equal('argument must be an instance of Micro::Case::Result', err.message)
+    assert_raises_with_message(
+      ArgumentError,
+      'argument must be an instance of Micro::Case::Result'
+    ) { use_case.__set_result__([]) }
   end
 
   def test_when_already_exists_a_result_and_tries_to_set_a_new_one
     use_case = Multiply.new(a: 3, b: 2)
     use_case.call
 
-    err = assert_raises(ArgumentError) { use_case.__set_result__(Micro::Case::Result.new) }
-    assert_equal('result is already defined', err.message)
+    assert_raises_with_message(ArgumentError, 'result is already defined') do
+      use_case.__set_result__(Micro::Case::Result.new)
+    end
   end
 
   class Divide < Micro::Case::Base
@@ -132,8 +141,7 @@ class Micro::Case::BaseTest < Minitest::Test
     result = Divide.call(a: 2, b: 0)
     counter = 0
 
-    refute_success_result(result)
-    assert_kind_of(ZeroDivisionError, result.value)
+    assert_exception_result(result, value: ZeroDivisionError)
 
     result.on_failure(:error) { counter += 1 } # will be avoided
     result.on_failure(:exception) { counter -= 1 }

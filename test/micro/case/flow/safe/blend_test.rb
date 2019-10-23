@@ -88,9 +88,7 @@ class Micro::Case::Flow::Safe::BlendTest < Minitest::Test
       DoubleAllNumbersAndDivideByZero.call(numbers: %w[6 4 8]),
       SquareAllNumbersAndDivideByZero.call(numbers: %w[8 4 6])
     ].each do |result|
-      assert_failure_result(result)
-      assert_instance_of(ZeroDivisionError, result.value)
-      assert_result(result)
+      assert_exception_result(result, value: ZeroDivisionError)
 
       counter = 0
 
