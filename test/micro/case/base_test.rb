@@ -34,11 +34,11 @@ class Micro::Case::BaseTest < Minitest::Test
   def test_the_instance_call_method
     result = Multiply.new(a: 2, b: 2).call
 
-    assert_success_result(result, value: 4)
+    assert_result_success(result, value: 4)
 
     result = Multiply.new(a: 1, b: '1').call
 
-    assert_failure_result(result, value: [1, '1'], type: :invalid_data)
+    assert_result_failure(result, value: [1, '1'], type: :invalid_data)
 
     result
       .on_failure(:invalid_data) { |(a, _b), _use_case| assert_equal(1, a) }
@@ -51,11 +51,11 @@ class Micro::Case::BaseTest < Minitest::Test
   def test_the_class_call_method
     result = Double.call(number: 3)
 
-    assert_success_result(result, value: 6)
+    assert_result_success(result, value: 6)
 
     result = Double.call(number: 0)
 
-    assert_failure_result(result, value: 'number must be greater than 0', type: :error)
+    assert_result_failure(result, value: 'number must be greater than 0', type: :error)
   end
 
   def test_the_data_validation_error_when_calling_the_call_class_method
@@ -141,7 +141,7 @@ class Micro::Case::BaseTest < Minitest::Test
     result = Divide.call(a: 2, b: 0)
     counter = 0
 
-    assert_exception_result(result, value: ZeroDivisionError)
+    assert_result_exception(result, value: ZeroDivisionError)
 
     result.on_failure(:error) { counter += 1 } # will be avoided
     result.on_failure(:exception) { counter -= 1 }
@@ -152,7 +152,7 @@ class Micro::Case::BaseTest < Minitest::Test
     result = Divide.call(a: 2, b: 'a')
     counter = 0
 
-    assert_failure_result(result, value: :not_an_integer)
+    assert_result_failure(result, value: :not_an_integer)
 
     result.on_failure(:error) { counter += 1 } # will be avoided
     result.on_failure(:not_an_integer) { counter -= 1 }
