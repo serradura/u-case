@@ -35,26 +35,32 @@ module MicroCaseAssertions
 
   # assert*result
 
-  def assert_result(result, value: :____skip____, type: :____skip____)
+  def assert_result(result, options)
+    type = options[:type] || :____skip____
+    value = options[:value] || :____skip____
+
     assert_kind_of_result(result)
-    yield if block_given?
     assert_equal(type, result.type) if type != :____skip____
     assert_equal(value, result.value) if value != :____skip____
   end
 
-  def assert_success_result(result, value: :____skip____, type: :ok)
-    assert_result(result, value: value, type: type) do
-      assert_predicate(result, :success?)
-    end
+  def assert_result_success(result, options = { type: :ok })
+    value = (block_given? ? yield : options[:value])
+
+    assert_result(result, options.merge(value: value))
+
+    assert_predicate(result, :success?)
   end
 
-  def assert_failure_result(result, value: :____skip____, type: :____skip____)
-    assert_result(result, value: value, type: type) do
-      assert_predicate(result, :failure?)
-    end
+  def assert_result_failure(result, options = {})
+    value = (block_given? ? yield : options[:value])
+
+    assert_result(result, options.merge(value: value))
+
+    assert_predicate(result, :failure?)
   end
 
-  def assert_exception_result(result, value: :____skip____, type: :exception)
+  def assert_result_exception(result, value: :____skip____, type: :exception)
     assert_kind_of_result(result)
     assert_predicate(result, :failure?)
     assert_equal(type, result.type)
@@ -63,18 +69,27 @@ module MicroCaseAssertions
 
   # refute*result
 
-  def refute_result(result, value: :____skip____)
+  def refute_result(result, options)
+    type = options[:type] || :____skip____
+    value = options[:value] || :____skip____
+
     assert_kind_of_result(result)
-    yield if block_given?
+    refure_equal(type, result.type) if type != :____skip____
     refute_equal(value, result.value) if value != :____skip____
   end
 
-  def refute_success_result(result, value: :____skip____)
-    refute_result(result, value: value) { refute_predicate(result, :success?) }
+  def refute_result_success(result, options = {})
+    value = (block_given? ? yield : options[:value])
+
+    refute_result(result, options.merge(value: value))
+    refute_predicate(result, :success?)
   end
 
-  def refute_failure_result(result, value: :____skip____)
-    refute_result(result, value: value) { refute_predicate(result, :failure?) }
+  def refute_result_failure(result, options = {})
+    value = (block_given? ? yield : options[:value])
+
+    refute_result(result, options.merge(value: value))
+    refute_predicate(result, :failure?)
   end
 end
 
