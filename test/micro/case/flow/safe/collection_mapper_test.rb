@@ -2,37 +2,37 @@ require 'ostruct'
 require 'test_helper'
 require 'support/steps'
 
-class Micro::Case::Flow::CollectionMapperTest < Minitest::Test
-  Add2ToAllNumbers = Micro::Case::Flow[
+class Micro::Case::Flow::Safe::CollectionMapperTest < Minitest::Test
+  Add2ToAllNumbers = Micro::Case::Flow::Safe[
     Steps::ConvertToNumbers,
     Steps::Add2
   ]
 
-  DoubleAllNumbers = Micro::Case::Flow[
+  DoubleAllNumbers = Micro::Case::Flow::Safe[
     Steps::ConvertToNumbers,
     Steps::Double
   ]
 
-  SquareAllNumbers = Micro::Case::Flow[
+  SquareAllNumbers = Micro::Case::Flow::Safe[
     Steps::ConvertToNumbers,
     Steps::Square
   ]
 
-  DoubleAllNumbersAndAdd2 = Micro::Case::Flow[
+  DoubleAllNumbersAndAdd2 = Micro::Case::Flow::Safe[
     DoubleAllNumbers,
     Steps::Add2
   ]
 
-  SquareAllNumbersAndAdd2 = Micro::Case::Flow[
+  SquareAllNumbersAndAdd2 = Micro::Case::Flow::Safe[
     SquareAllNumbers,
     Steps::Add2
   ]
 
   SquareAllNumbersAndDouble =
-    Micro::Case::Flow[SquareAllNumbersAndAdd2, DoubleAllNumbers]
+    Micro::Case::Flow::Safe[SquareAllNumbersAndAdd2, DoubleAllNumbers]
 
-    DoubleAllNumbersAndSquareAndAdd2 =
-    Micro::Case::Flow[DoubleAllNumbers, SquareAllNumbersAndAdd2]
+  DoubleAllNumbersAndSquareAndAdd2 =
+    Micro::Case::Flow::Safe[DoubleAllNumbers, SquareAllNumbersAndAdd2]
 
 
   EXAMPLES = [
@@ -48,8 +48,7 @@ class Micro::Case::Flow::CollectionMapperTest < Minitest::Test
   def test_the_data_validation_error_when_calling_with_the_wrong_king_of_data
     [nil, 1, true, '', []].each do |arg|
       EXAMPLES.map(&:flow).each do |flow|
-        err = assert_raises(ArgumentError) { flow.call(arg) }
-        assert_equal('argument must be a Hash', err.message)
+        assert_raises_with_message(ArgumentError, 'argument must be a Hash') { flow.call(arg) }
       end
     end
   end
@@ -58,10 +57,7 @@ class Micro::Case::Flow::CollectionMapperTest < Minitest::Test
     EXAMPLES.each do |example|
       result = example.flow.call(numbers: %w[1 1 2 2 3 4])
 
-      assert(result.success?)
-      assert_instance_of(Micro::Case::Result, result)
-      result
-        .on_success { |value| assert_equal(example.result, value[:numbers]) }
+      assert_result_success(result, value: { numbers: example.result })
     end
   end
 
@@ -69,9 +65,7 @@ class Micro::Case::Flow::CollectionMapperTest < Minitest::Test
     EXAMPLES.map(&:flow).each do |flow|
       result = flow.call(numbers: %w[1 1 2 a 3 4])
 
-      assert(result.failure?)
-      assert_instance_of(Micro::Case::Result, result)
-      result.on_failure { |value| assert_equal('numbers must contain only numeric types', value) }
+      assert_result_failure(result, value: 'numbers must contain only numeric types')
     end
   end
 end
