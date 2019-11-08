@@ -12,7 +12,115 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') < '4.1'
   end
 end
 
+require 'minitest/reporters'
+Minitest::Reporters.use!
+
 $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 require 'micro/case'
 
 require 'minitest/autorun'
+
+module MicroCaseAssertions
+  def assert_raises_with_message(exception, msg, &block)
+    block.call
+  rescue exception => e
+    assert_match(msg, e.message)
+  else
+    raise "Expected to raise #{exception} w/ message #{msg}, none raised"
+  end
+
+  def assert_kind_of_result(result)
+    assert_kind_of(Micro::Case::Result, result)
+  end
+
+  # assert*result
+
+  def assert_result(result, options)
+    type = options[:type] || :____skip____
+    value = options[:value] || :____skip____
+
+    assert_kind_of_result(result)
+    assert_equal(type, result.type) if type != :____skip____
+    assert_equal(value, result.value) if value != :____skip____
+  end
+
+  def assert_result_success(result, options = { type: :ok })
+    value = (block_given? ? yield : options[:value])
+
+    assert_result(result, options.merge(value: value))
+
+    assert_predicate(result, :success?)
+
+    # assert the on_success hook
+    count = 0
+    result
+      .on_failure { raise } # should never be called, because is a successful result.
+      .on_success { count += 1 }
+      .on_success(options[:type]) { count += 1 }
+
+    assert_equal(2, count)
+  end
+
+  def assert_result_failure(result, options = {})
+    value = (block_given? ? yield : options[:value])
+
+    assert_result(result, options.merge(value: value))
+
+    assert_predicate(result, :failure?)
+
+    # assert the on_failure hook
+
+    count = 0
+    result
+      .on_success { raise } # should never be called, because is a failure result.
+      .on_failure { count += 1 }
+      .on_failure(options[:type]) { count += 1 }
+
+    assert_equal(2, count)
+  end
+
+  def assert_result_exception(result, value: :____skip____, type: :exception)
+    assert_kind_of_result(result)
+    assert_equal(type, result.type)
+    assert_kind_of(value, result.value) if value != :____skip____
+    assert_predicate(result, :failure?)
+
+    # assert the on_failure hook
+
+    count = 0
+    result
+      .on_success { raise } # should never be called, because is a failure result.
+      .on_failure { count += 1 }
+      .on_failure(type) { count += 1 }
+      .on_failure(:error) { raise } # will be avoided
+
+    assert_equal(2, count)
+  end
+
+  # refute*result
+
+  def refute_result(result, options)
+    type = options[:type] || :____skip____
+    value = options[:value] || :____skip____
+
+    assert_kind_of_result(result)
+    refure_equal(type, result.type) if type != :____skip____
+    refute_equal(value, result.value) if value != :____skip____
+  end
+
+  def refute_result_success(result, options = {})
+    value = (block_given? ? yield : options[:value])
+
+    refute_result(result, options.merge(value: value))
+    refute_predicate(result, :success?)
+  end
+
+  def refute_result_failure(result, options = {})
+    value = (block_given? ? yield : options[:value])
+
+    refute_result(result, options.merge(value: value))
+    refute_predicate(result, :failure?)
+  end
+end
+
+Minitest::Test.send(:include, MicroCaseAssertions)

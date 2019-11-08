@@ -16,33 +16,25 @@ class Micro::Case::SafeTest < Minitest::Test
   def test_instance_call_method
     result = Divide.new(a: 2, b: 2).call
 
-    assert(result.success?)
-    assert_equal(1, result.value)
-    assert_kind_of(Micro::Case::Result, result)
+    assert_result_success(result, value: 1)
 
     # ---
 
     result = Divide.new(a: 2.0, b: 2).call
 
-    assert(result.failure?)
-    assert_equal(:not_an_integer, result.value)
-    assert_kind_of(Micro::Case::Result, result)
+    assert_result_failure(result, value: :not_an_integer, type: :not_an_integer)
   end
 
   def test_class_call_method
     result = Divide.call(a: 2, b: 2)
 
-    assert(result.success?)
-    assert_equal(1, result.value)
-    assert_kind_of(Micro::Case::Result, result)
+    assert_result_success(result, value: 1)
 
     # ---
 
     result = Divide.call(a: 2.0, b: 2)
 
-    assert(result.failure?)
-    assert_equal(:not_an_integer, result.value)
-    assert_kind_of(Micro::Case::Result, result)
+    assert_result_failure(result, value: :not_an_integer, type: :not_an_integer)
   end
 
   class Foo < Micro::Case::Safe
@@ -65,11 +57,15 @@ class Micro::Case::SafeTest < Minitest::Test
   end
 
   def test_result_error
-    err1 = assert_raises(Micro::Case::Error::UnexpectedResult) { LoremIpsum.call(text: 'lorem ipsum') }
-    assert_equal('Micro::Case::SafeTest::LoremIpsum#call! must return an instance of Micro::Case::Result', err1.message)
+    assert_raises_with_message(
+      Micro::Case::Error::UnexpectedResult,
+      /LoremIpsum#call! must return an instance of Micro::Case::Result/
+    ) { LoremIpsum.call(text: 'lorem ipsum') }
 
-    err2 = assert_raises(Micro::Case::Error::UnexpectedResult) { LoremIpsum.new(text: 'ipsum indolor').call }
-    assert_equal('Micro::Case::SafeTest::LoremIpsum#call! must return an instance of Micro::Case::Result', err2.message)
+    assert_raises_with_message(
+      Micro::Case::Error::UnexpectedResult,
+      /LoremIpsum#call! must return an instance of Micro::Case::Result/
+    ) { LoremIpsum.new(text: 'ipsum indolor').call }
   end
 
   def test_that_exceptions_generate_a_failure
@@ -77,18 +73,7 @@ class Micro::Case::SafeTest < Minitest::Test
       Divide.new(a: 2, b: 0).call,
       Divide.call(a: 2, b: 0)
     ].each do |result|
-      assert(result.failure?)
-      assert_instance_of(ZeroDivisionError, result.value)
-      assert_kind_of(Micro::Case::Result, result)
-
-      counter = 0
-
-      result
-        .on_failure { counter += 1 }
-        .on_failure(:exception) { |value| counter += 1 if value.is_a?(ZeroDivisionError) }
-        .on_failure(:exception) { |_value, use_case| counter += 1 if use_case.is_a?(Divide) }
-
-      assert_equal(3, counter)
+      assert_result_exception(result, value: ZeroDivisionError)
     end
   end
 
@@ -137,51 +122,27 @@ class Micro::Case::SafeTest < Minitest::Test
       Divide2ByArgV1.call(arg: 0),
       Divide2ByArgV2.call(arg: 0)
     ].each do |result|
-      counter = 0
-
-      refute(result.success?)
-      assert_kind_of(ZeroDivisionError, result.value)
-
-      result.on_failure(:exception) { counter += 1 }
-      assert_equal(1, counter)
+      assert_result_exception(result, value: ZeroDivisionError)
     end
 
     # ---
 
     result = Divide2ByArgV3.call(arg: 0)
-    counter = 0
 
-    refute(result.success?)
-    assert_kind_of(ZeroDivisionError, result.value)
-
-    result.on_failure(:exception) { counter += 1 } # will be avoided
-    result.on_failure(:foo) { counter -= 1 }
-    assert_equal(-1, counter)
+    assert_result_exception(result, value: ZeroDivisionError, type: :foo)
 
     # ---
 
     result = GenerateZeroDivisionError.call(arg: 2)
-    counter = 0
+    assert_result_success(result)
 
-    assert(result.success?)
     assert_kind_of(ZeroDivisionError, result.value)
-
-    result.on_success { counter += 1 }
-    result.on_failure(:exception) { counter += 1 } # will be avoided
-    assert_equal(1, counter)
   end
 
   def test_that_when_a_failure_result_is_a_symbol_both_type_and_value_will_be_the_same
     result = Divide.call(a: 2, b: 'a')
-    counter = 0
 
-    refute(result.success?)
-    assert_equal(:not_an_integer, result.value)
-
-    result.on_failure(:error) { counter += 1 } # will be avoided
-    result.on_failure(:not_an_integer) { counter -= 1 }
-    result.on_failure { counter -= 1 }
-    assert_equal(-2, counter)
+    assert_result_failure(result, value: :not_an_integer)
   end
 
   def test_to_proc

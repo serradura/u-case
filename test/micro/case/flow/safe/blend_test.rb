@@ -44,10 +44,7 @@ class Micro::Case::Flow::Safe::BlendTest < Minitest::Test
     EXAMPLES.each do |example|
       result = example.flow.call(numbers: %w[1 1 2 2 3 4])
 
-      assert(result.success?)
-      assert_instance_of(Micro::Case::Result, result)
-      result
-        .on_success { |value| assert_equal(example.result, value[:numbers]) }
+      assert_result_success(result, value: { numbers: example.result })
     end
   end
 
@@ -55,9 +52,7 @@ class Micro::Case::Flow::Safe::BlendTest < Minitest::Test
     EXAMPLES.map(&:flow).each do |flow|
       result = flow.call(numbers: %w[1 1 2 a 3 4])
 
-      assert(result.failure?)
-      assert_instance_of(Micro::Case::Result, result)
-      result.on_failure { |value| assert_equal('numbers must contain only numeric types', value) }
+      assert_result_failure(result, value: 'numbers must contain only numeric types')
     end
   end
 
@@ -88,18 +83,7 @@ class Micro::Case::Flow::Safe::BlendTest < Minitest::Test
       DoubleAllNumbersAndDivideByZero.call(numbers: %w[6 4 8]),
       SquareAllNumbersAndDivideByZero.call(numbers: %w[8 4 6])
     ].each do |result|
-      assert(result.failure?)
-      assert_instance_of(ZeroDivisionError, result.value)
-      assert_kind_of(Micro::Case::Result, result)
-
-      counter = 0
-
-      result
-        .on_failure { counter += 1 }
-        .on_failure(:exception) { |value| counter += 1 if value.is_a?(ZeroDivisionError) }
-        .on_failure(:exception) { |_value, use_case| counter += 1 if use_case.is_a?(DivideNumbersByZero) }
-
-      assert_equal(3, counter)
+      assert_result_exception(result, value: ZeroDivisionError)
     end
   end
 
@@ -109,18 +93,17 @@ class Micro::Case::Flow::Safe::BlendTest < Minitest::Test
 
   class Add < Micro::Case::Strict
     attributes :a, :b
+
     def call!; Success(a + b); end
   end
 
   def test_that_raises_wrong_usage_exceptions
     flow_1 = EmptyHash & DivideNumbersByZero
 
-    err1 = assert_raises(ArgumentError) { flow_1.call({}) }
-    assert_equal('missing keyword: :numbers', err1.message)
+    assert_raises_with_message(ArgumentError, 'missing keyword: :numbers') { flow_1.call({}) }
 
     flow_2 = EmptyHash & Add
 
-    err2 = assert_raises(ArgumentError) { flow_2.call({}) }
-    assert_equal('missing keywords: :a, :b', err2.message)
+    assert_raises_with_message(ArgumentError, 'missing keywords: :a, :b') { flow_2.call({}) }
   end
 end
