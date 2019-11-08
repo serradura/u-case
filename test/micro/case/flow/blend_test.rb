@@ -44,10 +44,7 @@ class Micro::Case::Flow::BlendTest < Minitest::Test
     EXAMPLES.each do |example|
       result = example.flow.call(numbers: %w[1 1 2 2 3 4])
 
-      assert_result_success(result)
-      assert_instance_of(Micro::Case::Result, result)
-      result
-        .on_success { |value| assert_equal(example.result, value[:numbers]) }
+      assert_result_success(result, value: { numbers: example.result })
     end
   end
 
@@ -55,9 +52,7 @@ class Micro::Case::Flow::BlendTest < Minitest::Test
     EXAMPLES.map(&:flow).each do |flow|
       result = flow.call(numbers: %w[1 1 2 a 3 4])
 
-      assert_result_failure(result)
-      assert_instance_of(Micro::Case::Result, result)
-      result.on_failure { |value| assert_equal('numbers must contain only numeric types', value) }
+      assert_result_failure(result, value: 'numbers must contain only numeric types')
     end
   end
 end

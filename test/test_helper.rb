@@ -50,6 +50,15 @@ module MicroCaseAssertions
     assert_result(result, options.merge(value: value))
 
     assert_predicate(result, :success?)
+
+    # assert the on_success hook
+    count = 0
+    result
+      .on_failure { raise } # should never be called, because is a successful result.
+      .on_success { count += 1 }
+      .on_success(options[:type]) { count += 1 }
+
+    assert_equal(2, count)
   end
 
   def assert_result_failure(result, options = {})
@@ -58,13 +67,34 @@ module MicroCaseAssertions
     assert_result(result, options.merge(value: value))
 
     assert_predicate(result, :failure?)
+
+    # assert the on_failure hook
+
+    count = 0
+    result
+      .on_success { raise } # should never be called, because is a failure result.
+      .on_failure { count += 1 }
+      .on_failure(options[:type]) { count += 1 }
+
+    assert_equal(2, count)
   end
 
   def assert_result_exception(result, value: :____skip____, type: :exception)
     assert_kind_of_result(result)
-    assert_predicate(result, :failure?)
     assert_equal(type, result.type)
     assert_kind_of(value, result.value) if value != :____skip____
+    assert_predicate(result, :failure?)
+
+    # assert the on_failure hook
+
+    count = 0
+    result
+      .on_success { raise } # should never be called, because is a failure result.
+      .on_failure { count += 1 }
+      .on_failure(type) { count += 1 }
+      .on_failure(:error) { raise } # will be avoided
+
+    assert_equal(2, count)
   end
 
   # refute*result

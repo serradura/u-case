@@ -9,12 +9,13 @@ class Micro::Case::ResultTest < Minitest::Test
     result = Micro::Case::Result.new
     result.__set__(true, 1, :ok, nil)
 
-    assert_result_success(result)
-    refute_result_failure(result)
-
+    assert_predicate(result, :success?)
     assert_equal(1, result.value)
-    err = assert_raises(Micro::Case::Error::InvalidAccessToTheUseCaseObject) { result.use_case }
-    assert_equal('only a failure result can access its use case object', err.message)
+
+    assert_raises_with_message(
+      Micro::Case::Error::InvalidAccessToTheUseCaseObject,
+      'only a failure result can access its use case object'
+    ) { result.use_case }
 
     # ---
 
@@ -101,10 +102,10 @@ class Micro::Case::ResultTest < Minitest::Test
   end
 
   def test_the_invalid_type_error
-    type = nil
     result = Micro::Case::Result.new
 
-    err = assert_raises(TypeError) { result.__set__(true, :value, type, nil) }
-    assert_equal('type must be a Symbol', err.message)
+    assert_raises_with_message(TypeError, 'type must be a Symbol') do
+      result.__set__(true, :value, 'type', nil)
+    end
   end
 end
