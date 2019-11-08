@@ -74,15 +74,6 @@ class Micro::Case::SafeTest < Minitest::Test
       Divide.call(a: 2, b: 0)
     ].each do |result|
       assert_result_exception(result, value: ZeroDivisionError)
-
-      counter = 0
-
-      result
-        .on_failure { counter += 1 }
-        .on_failure(:exception) { |value| counter += 1 if value.is_a?(ZeroDivisionError) }
-        .on_failure(:exception) { |_value, use_case| counter += 1 if use_case.is_a?(Divide) }
-
-      assert_equal(3, counter)
     end
   end
 
@@ -131,48 +122,27 @@ class Micro::Case::SafeTest < Minitest::Test
       Divide2ByArgV1.call(arg: 0),
       Divide2ByArgV2.call(arg: 0)
     ].each do |result|
-      counter = 0
-
       assert_result_exception(result, value: ZeroDivisionError)
-
-      result.on_failure(:exception) { counter += 1 }
-      assert_equal(1, counter)
     end
 
     # ---
 
     result = Divide2ByArgV3.call(arg: 0)
-    counter = 0
 
     assert_result_exception(result, value: ZeroDivisionError, type: :foo)
-
-    result.on_failure(:exception) { counter += 1 } # will be avoided
-    result.on_failure(:foo) { counter -= 1 }
-    assert_equal(-1, counter)
 
     # ---
 
     result = GenerateZeroDivisionError.call(arg: 2)
-    counter = 0
-
     assert_result_success(result)
-    assert_kind_of(ZeroDivisionError, result.value)
 
-    result.on_success { counter += 1 }
-    result.on_failure(:exception) { counter += 1 } # will be avoided
-    assert_equal(1, counter)
+    assert_kind_of(ZeroDivisionError, result.value)
   end
 
   def test_that_when_a_failure_result_is_a_symbol_both_type_and_value_will_be_the_same
     result = Divide.call(a: 2, b: 'a')
-    counter = 0
 
     assert_result_failure(result, value: :not_an_integer)
-
-    result.on_failure(:error) { counter += 1 } # will be avoided
-    result.on_failure(:not_an_integer) { counter -= 1 }
-    result.on_failure { counter -= 1 }
-    assert_equal(-2, counter)
   end
 
   def test_to_proc

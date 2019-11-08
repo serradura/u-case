@@ -63,22 +63,23 @@ class Micro::Case::Strict::SafeTest < Minitest::Test
   end
 
   def test_result_error
-    err1 = assert_raises(Micro::Case::Error::UnexpectedResult) { LoremIpsum.call(text: 'lorem ipsum') }
-    assert_equal('Micro::Case::Strict::SafeTest::LoremIpsum#call! must return an instance of Micro::Case::Result', err1.message)
+    assert_raises_with_message(
+      Micro::Case::Error::UnexpectedResult,
+      /LoremIpsum#call! must return an instance of Micro::Case::Result/
+    ) { LoremIpsum.call(text: 'lorem ipsum') }
 
-    err2 = assert_raises(Micro::Case::Error::UnexpectedResult) { LoremIpsum.new(text: 'ipsum indolor').call }
-    assert_equal('Micro::Case::Strict::SafeTest::LoremIpsum#call! must return an instance of Micro::Case::Result', err2.message)
+    assert_raises_with_message(
+      Micro::Case::Error::UnexpectedResult,
+      /LoremIpsum#call! must return an instance of Micro::Case::Result/
+    ) { LoremIpsum.new(text: 'ipsum indolor').call }
   end
 
   def test_keywords_validation
-    err1 = assert_raises(ArgumentError) { Multiply.call({}) }
-    err2 = assert_raises(ArgumentError) { Multiply.call({a: 1}) }
+    assert_raises_with_message(ArgumentError, 'missing keywords: :a, :b') { Multiply.call({}) }
 
-    assert_equal('missing keywords: :a, :b', err1.message)
-    assert_equal('missing keyword: :b', err2.message)
+    assert_raises_with_message(ArgumentError, 'missing keyword: :b') { Multiply.call({a: 1}) }
 
-    err3 = assert_raises(ArgumentError) { Double.call({}) }
-    assert_equal('missing keyword: :number', err3.message)
+    assert_raises_with_message(ArgumentError, 'missing keyword: :number') { Double.call(a: 1) }
   end
 
   class Divide < Micro::Case::Strict::Safe
@@ -98,29 +99,11 @@ class Micro::Case::Strict::SafeTest < Minitest::Test
 
     assert_result_exception(result_1, value: ZeroDivisionError)
 
-    counter_1 = 0
-
-    result_1
-      .on_failure { counter_1 += 1 }
-      .on_failure(:exception) { |value| counter_1 += 1 if value.is_a?(ZeroDivisionError) }
-      .on_failure(:exception) { |_value, use_case| counter_1 += 1 if use_case.is_a?(Divide) }
-
-    assert_equal(3, counter_1)
-
     # ---
 
     result_2 = Divide.call(a: 2, b: 0)
 
     assert_result_exception(result_2, value: ZeroDivisionError)
-
-    counter_2 = 0
-
-    result_2
-      .on_failure { counter_2 += 1 }
-      .on_failure(:exception) { |value| counter_2 += 1 if value.is_a?(ZeroDivisionError) }
-      .on_failure(:exception) { |_value, use_case| counter_2 += 1 if use_case.is_a?(Divide) }
-
-    assert_equal(3, counter_2)
   end
 
   def test_to_proc
