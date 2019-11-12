@@ -2,30 +2,30 @@ require 'ostruct'
 require 'test_helper'
 require 'support/steps'
 
-class Micro::Case::Flow::Safe::BlendTest < Minitest::Test
+class Micro::Case::Safe::Flow::BlendTest < Minitest::Test
   Add2ToAllNumbers = Steps::ConvertToNumbers & Steps::Add2
 
-  DoubleAllNumbers = Micro::Case::Flow::Safe[
+  DoubleAllNumbers = Micro::Case::Safe::Flow[
     Steps::ConvertToNumbers,
     Steps::Double
   ]
 
   class SquareAllNumbers
-    include Micro::Case::Flow::Safe
+    include Micro::Case::Safe::Flow
 
     flow Steps::ConvertToNumbers, Steps::Square
   end
 
   DoubleAllNumbersAndAdd2 = DoubleAllNumbers & Steps::Add2
 
-  SquareAllNumbersAndAdd2 = Micro::Case::Flow::Safe[
+  SquareAllNumbersAndAdd2 = Micro::Case::Safe::Flow[
     SquareAllNumbers, Steps::Add2
   ]
 
   SquareAllNumbersAndDouble = SquareAllNumbersAndAdd2 & DoubleAllNumbers
 
   class DoubleAllNumbersAndSquareAndAdd2
-    include Micro::Case::Flow::Safe
+    include Micro::Case::Safe::Flow
 
     flow DoubleAllNumbers, SquareAllNumbersAndAdd2
   end
@@ -66,13 +66,13 @@ class Micro::Case::Flow::Safe::BlendTest < Minitest::Test
 
   Add2ToAllNumbersAndDivideByZero = Add2ToAllNumbers & DivideNumbersByZero
 
-  DoubleAllNumbersAndDivideByZero = Micro::Case::Flow::Safe[
+  DoubleAllNumbersAndDivideByZero = Micro::Case::Safe::Flow[
     DoubleAllNumbers,
     DivideNumbersByZero
   ]
 
   class SquareAllNumbersAndDivideByZero
-    include Micro::Case::Flow::Safe
+    include Micro::Case::Safe::Flow
 
     flow SquareAllNumbers, DivideNumbersByZero
   end
@@ -87,7 +87,7 @@ class Micro::Case::Flow::Safe::BlendTest < Minitest::Test
     end
   end
 
-  class EmptyHash < Micro::Case::Base
+  class EmptyHash < Micro::Case
     def call!; Success({}); end
   end
 

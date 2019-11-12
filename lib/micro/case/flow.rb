@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Micro
-  module Case
+  class Case
     module Flow
       module ClassMethods
         def __flow__
@@ -20,7 +20,9 @@ module Micro
       CONSTRUCTOR = <<-RUBY
       def initialize(options)
         @options = options
+
         flow = self.class.__flow__
+
         raise Error::UndefinedFlow unless flow
       end
       RUBY
@@ -29,7 +31,9 @@ module Micro
 
       def self.included(base)
         def base.flow_reducer; Reducer; end
+
         base.extend(ClassMethods)
+
         base.class_eval(CONSTRUCTOR)
       end
 
@@ -39,17 +43,6 @@ module Micro
 
       def call
         self.class.__flow__.call(@options)
-      end
-
-      module Safe
-        def self.included(base)
-          base.send(:include, Micro::Case::Flow)
-          def base.flow_reducer; SafeReducer; end
-        end
-
-        def self.[](*args)
-          SafeReducer.build(args)
-        end
       end
     end
   end
