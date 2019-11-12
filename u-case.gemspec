@@ -9,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ['Rodrigo Serradura']
   spec.email         = ['rodrigo.serradura@gmail.com']
 
-  spec.summary       = %q{Create simple and powerful use cases as objects (aka: service objects).}
-  spec.description   = %q{Create simple and powerful use cases as objects (aka: service objects).}
+  spec.summary       = %q{Create simple and powerful use cases as objects.}
+  spec.description   = %q{Create simple and powerful use cases as objects.}
   spec.homepage      = 'https://github.com/serradura/u-case'
   spec.license       = 'MIT'
 

@@ -12,7 +12,7 @@ module Jobs
   end
 
   module State
-    class Sleeping < Micro::Case::Base
+    class Sleeping < Micro::Case
       def call!
         Success(job: Entity.new(id: nil, state: 'sleeping'))
       end

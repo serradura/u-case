@@ -2,16 +2,38 @@ require 'ostruct'
 require 'test_helper'
 require 'support/steps'
 
-class Micro::Case::Flow::Safe::CompositionOperatorTest < Minitest::Test
-  Add2ToAllNumbers = Steps::ConvertToNumbers & Steps::Add2
-  DoubleAllNumbers = Steps::ConvertToNumbers & Steps::Double
-  SquareAllNumbers = Steps::ConvertToNumbers & Steps::Square
+class Micro::Case::Safe::Flow::CollectionMapperTest < Minitest::Test
+  Add2ToAllNumbers = Micro::Case::Safe::Flow[
+    Steps::ConvertToNumbers,
+    Steps::Add2
+  ]
 
-  DoubleAllNumbersAndAdd2 = DoubleAllNumbers & Steps::Add2
-  SquareAllNumbersAndAdd2 = SquareAllNumbers & Steps::Add2
+  DoubleAllNumbers = Micro::Case::Safe::Flow[
+    Steps::ConvertToNumbers,
+    Steps::Double
+  ]
 
-  SquareAllNumbersAndDouble = SquareAllNumbersAndAdd2 & DoubleAllNumbers
-  DoubleAllNumbersAndSquareAndAdd2 = DoubleAllNumbers & SquareAllNumbersAndAdd2
+  SquareAllNumbers = Micro::Case::Safe::Flow[
+    Steps::ConvertToNumbers,
+    Steps::Square
+  ]
+
+  DoubleAllNumbersAndAdd2 = Micro::Case::Safe::Flow[
+    DoubleAllNumbers,
+    Steps::Add2
+  ]
+
+  SquareAllNumbersAndAdd2 = Micro::Case::Safe::Flow[
+    SquareAllNumbers,
+    Steps::Add2
+  ]
+
+  SquareAllNumbersAndDouble =
+    Micro::Case::Safe::Flow[SquareAllNumbersAndAdd2, DoubleAllNumbers]
+
+  DoubleAllNumbersAndSquareAndAdd2 =
+    Micro::Case::Safe::Flow[DoubleAllNumbers, SquareAllNumbersAndAdd2]
+
 
   EXAMPLES = [
     { flow: Add2ToAllNumbers, result: [3, 3, 4, 4, 5, 6] },
@@ -45,14 +67,5 @@ class Micro::Case::Flow::Safe::CompositionOperatorTest < Minitest::Test
 
       assert_result_failure(result, value: 'numbers must contain only numeric types')
     end
-  end
-
-  def test_the_error_when_using_the_regular_composition_operator
-    double_all_numbers = Steps::ConvertToNumbers & Steps::Double
-
-    assert_raises_with_message(
-      NoMethodError,
-      /undefined method `>>' for #<Micro::Case::Flow::SafeReducer.*>. Please, use the method `&' to avoid this error\./
-    ) { double_all_numbers >> Steps::Add2 }
   end
 end

@@ -6,13 +6,13 @@
 μ-case (Micro::Case)
 ==========================
 
-Create simple and powerful use cases as objects (aka: service objects).
+Create simple and powerful use cases as objects.
 
 The main goals of this project are:
 1. Be simple to use and easy to learn (input **>>** process/transform **>>** output).
-2. Referential transparency and data integrity.
+2. Promove referential transparency (transforming instead of modifying) and data integrity.
 3. No callbacks (before, after, around...).
-4. Represent complex business logic using a composition of use cases.
+4. Solve complex business logic using a composition of use cases.
 
 ## Table of Contents <!-- omit in toc -->
 - [μ-case (Micro::Case)](#%ce%bc-case-microcase)
@@ -64,7 +64,7 @@ Or install it yourself as:
 ### How to define a use case?
 
 ```ruby
-class Multiply < Micro::Case::Base
+class Multiply < Micro::Case
   # 1. Define its input as attributes
   attributes :a, :b
 
@@ -108,7 +108,7 @@ result.value # 6
 
 # Note:
 # ----
-# The result of a Micro::Case::Base.call
+# The result of a Micro::Case.call
 # is an instance of Micro::Case::Result
 ```
 
@@ -133,7 +133,7 @@ Every result has a type and these are the defaults:
 - `:error`/`:exception` when failures
 
 ```ruby
-class Divide < Micro::Case::Base
+class Divide < Micro::Case
   attributes :a, :b
 
   def call!
@@ -187,7 +187,7 @@ err_result.use_case # #<Divide:0x0000 @__attributes={"a"=>2, "b"=>0}, @a=2, @b=0
 Answer: Use a symbol as the argument of `Success()`, `Failure()` methods and declare a block to set their values.
 
 ```ruby
-class Multiply < Micro::Case::Base
+class Multiply < Micro::Case
   attributes :a, :b
 
   def call!
@@ -223,7 +223,7 @@ bad_result.failure? # true
 Answer: Yes, it is. But only for failure results!
 
 ```ruby
-class Multiply < Micro::Case::Base
+class Multiply < Micro::Case
   attributes :a, :b
 
   def call!
@@ -255,7 +255,7 @@ As mentioned earlier, the `Micro::Case::Result` has two methods to improve the f
 The examples below show how to use them:
 
 ```ruby
-class Double < Micro::Case::Base
+class Double < Micro::Case
   attributes :number
 
   def call!
@@ -307,7 +307,7 @@ Double
 Answer: The hook will be triggered if it matches the result type.
 
 ```ruby
-class Double < Micro::Case::Base
+class Double < Micro::Case
   attributes :number
 
   def call!
@@ -341,7 +341,7 @@ In this case, this will be is a **flow**, because the idea is to use/reuse use c
 
 ```ruby
 module Steps
-  class ConvertToNumbers < Micro::Case::Base
+  class ConvertToNumbers < Micro::Case
     attribute :numbers
 
     def call!
@@ -440,7 +440,7 @@ Answer: Yes, it is.
 
 ```ruby
 module Steps
-  class ConvertToNumbers < Micro::Case::Base
+  class ConvertToNumbers < Micro::Case
     attribute :numbers
 
     def call!
@@ -585,7 +585,7 @@ end
 
 module Users
   class Create
-    include Micro::Case::Flow::Safe
+    include Micro::Case::Safe::Flow
 
     flow ProcessParams, ValidateParams, Persist, SendToCRM
   end
@@ -594,7 +594,7 @@ end
 # or
 
 module Users
-  Create = Micro::Case::Flow::Safe[
+  Create = Micro::Case::Safe::Flow[
     ProcessParams,
     ValidateParams,
     Persist,
@@ -616,7 +616,7 @@ To do this your application must have the [activemodel >= 3.2](https://rubygems.
 # By default, if your application has the activemodel as a dependency,
 # any kind of use case can use it to validate their attributes.
 #
-class Multiply < Micro::Case::Base
+class Multiply < Micro::Case
   attributes :a, :b
 
   validates :a, :b, presence: true, numericality: true
@@ -640,7 +640,7 @@ gem 'u-case', require: 'u-case/with_validation'
 
 # Using this approach, you can rewrite the previous example with less code. e.g:
 
-class Multiply < Micro::Case::Base
+class Multiply < Micro::Case
   attributes :a, :b
 
   validates :a, :b, presence: true, numericality: true
