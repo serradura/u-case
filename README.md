@@ -6,13 +6,13 @@
 μ-case (Micro::Case)
 ==========================
 
-Create simple and powerful use cases as objects (aka: service objects).
+Create simple and powerful use cases as objects.
 
 The main goals of this project are:
 1. Be simple to use and easy to learn (input **>>** process/transform **>>** output).
-2. Referential transparency and data integrity.
+2. Promove referential transparency (transforming instead of modifying) and data integrity.
 3. No callbacks (before, after, around...).
-4. Represent complex business logic using a composition of use cases.
+4. Solve complex business logic using a composition of use cases.
 
 ## Table of Contents <!-- omit in toc -->
 - [μ-case (Micro::Case)](#%ce%bc-case-microcase)
