@@ -3,15 +3,13 @@
 require 'micro/case'
 
 module Micro
-  module Case
-    class Base
-      include Micro::Attributes::Features::ActiveModelValidations
+  class Case
+    include Micro::Attributes::Features::ActiveModelValidations
 
-      def call
-        return Failure(:validation_error) { {errors: self.errors} } unless valid?
+    def call
+      return Failure(:validation_error) { { errors: self.errors } } unless valid?
 
-        __call
-      end
+      __call
     end
   end
 end

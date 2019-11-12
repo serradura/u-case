@@ -2,7 +2,7 @@ require 'test_helper'
 
 class Micro::Case::ResultTest < Minitest::Test
   def build_use_case
-    Micro::Case::Base.new({})
+    Micro::Case.new({})
   end
 
   def test_success_result

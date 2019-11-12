@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Steps
-  class ConvertToNumbers < Micro::Case::Base
+  class ConvertToNumbers < Micro::Case
     attribute :numbers
 
     def call!

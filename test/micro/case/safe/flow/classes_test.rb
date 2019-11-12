@@ -2,45 +2,45 @@ require 'ostruct'
 require 'test_helper'
 require 'support/steps'
 
-class Micro::Case::Flow::Safe::ClassesTest < Minitest::Test
+class Micro::Case::Safe::Flow::ClassesTest < Minitest::Test
   class Add2ToAllNumbers
-    include Micro::Case::Flow::Safe
+    include Micro::Case::Safe::Flow
 
     flow Steps::ConvertToNumbers, Steps::Add2
   end
 
   class DoubleAllNumbers
-    include Micro::Case::Flow::Safe
+    include Micro::Case::Safe::Flow
 
     flow Steps::ConvertToNumbers, Steps::Double
   end
 
   class SquareAllNumbers
-    include Micro::Case::Flow::Safe
+    include Micro::Case::Safe::Flow
 
     flow Steps::ConvertToNumbers, Steps::Square
   end
 
   class DoubleAllNumbersAndAdd2
-    include Micro::Case::Flow::Safe
+    include Micro::Case::Safe::Flow
 
     flow DoubleAllNumbers, Steps::Add2
   end
 
   class SquareAllNumbersAndAdd2
-    include Micro::Case::Flow::Safe
+    include Micro::Case::Safe::Flow
 
     flow SquareAllNumbers, Steps::Add2
   end
 
   class SquareAllNumbersAndDouble
-    include Micro::Case::Flow::Safe
+    include Micro::Case::Safe::Flow
 
     flow SquareAllNumbersAndAdd2, DoubleAllNumbers
   end
 
   class DoubleAllNumbersAndSquareAndAdd2
-    include Micro::Case::Flow::Safe
+    include Micro::Case::Safe::Flow
 
     flow DoubleAllNumbers, SquareAllNumbersAndAdd2
   end
