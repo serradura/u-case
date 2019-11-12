@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
 module Micro
-  module Case
+  class Case
     class Result
       attr_reader :value, :type
 
       def __set__(is_success, value, type, use_case)
         raise Error::InvalidResultType unless type.is_a?(Symbol)
-        raise Error::InvalidUseCase if !is_success && !is_an_use_case?(use_case)
+        raise Error::InvalidUseCase if !is_success && !is_a_use_case?(use_case)
 
         @success, @value, @type, @use_case = is_success, value, type, use_case
 
@@ -46,8 +46,8 @@ module Micro
           failure? && (arg.nil? || arg == type)
         end
 
-        def is_an_use_case?(arg)
-          (arg.is_a?(Class) && arg < Case::Base) || arg.is_a?(Case::Base)
+        def is_a_use_case?(arg)
+          (arg.is_a?(Class) && arg < ::Micro::Case) || arg.is_a?(::Micro::Case)
         end
     end
   end

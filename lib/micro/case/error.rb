@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Micro
-  module Case
+  class Case
     module Error
       class UnexpectedResult < TypeError
         MESSAGE = '#call! must return an instance of Micro::Case::Result'.freeze
@@ -14,8 +14,8 @@ module Micro
       InvalidResultType = TypeError.new('type must be a Symbol'.freeze)
       InvalidResultInstance = ArgumentError.new('argument must be an instance of Micro::Case::Result'.freeze)
 
-      InvalidUseCase = TypeError.new('use case must be a kind or an instance of Micro::Case::Base'.freeze)
-      InvalidUseCases = ArgumentError.new('argument must be a collection of `Micro::Case::Base` classes'.freeze)
+      InvalidUseCase = TypeError.new('use case must be a kind or an instance of Micro::Case'.freeze)
+      InvalidUseCases = ArgumentError.new('argument must be a collection of `Micro::Case` classes'.freeze)
 
       UndefinedFlow = ArgumentError.new("This class hasn't declared its flow. Please, use the `flow()` macro to define one.".freeze)
 
