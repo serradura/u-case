@@ -31,7 +31,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
 
         # ---
 
-        flow = Micro::Case::Flow[Multiply, NumberToString]
+        flow = Micro::Case::Flow([Multiply, NumberToString])
 
         assert_result_success(flow.call(a: 2, b: 2), value: '4')
       end
