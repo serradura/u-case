@@ -37,10 +37,6 @@ module Micro
         base.class_eval(CONSTRUCTOR)
       end
 
-      def self.[](*args)
-        Reducer.build(args)
-      end
-
       def call
         self.class.__flow__.call(@options)
       end

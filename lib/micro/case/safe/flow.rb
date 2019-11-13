@@ -10,8 +10,8 @@ module Micro
           def base.flow_reducer; Reducer; end
         end
 
-        def self.[](*args)
-          Reducer.build(args)
+        def self.Flow(args)
+          Reducer.build(Array(args))
         end
 
         class Reducer < ::Micro::Case::Flow::Reducer

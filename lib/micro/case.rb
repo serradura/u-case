@@ -20,12 +20,16 @@ module Micro
       Proc.new { |arg| call(arg) }
     end
 
+    def self.Flow(args)
+      Flow::Reducer.build(Array(args))
+    end
+
     def self.>>(use_case)
-      Flow[self, use_case]
+      Flow([self, use_case])
     end
 
     def self.&(use_case)
-      Safe::Flow[self, use_case]
+      Safe::Flow([self, use_case])
     end
 
     def self.call(options = {})
