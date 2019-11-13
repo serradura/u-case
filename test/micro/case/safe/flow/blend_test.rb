@@ -5,10 +5,10 @@ require 'support/steps'
 class Micro::Case::Safe::Flow::BlendTest < Minitest::Test
   Add2ToAllNumbers = Steps::ConvertToNumbers & Steps::Add2
 
-  DoubleAllNumbers = Micro::Case::Safe::Flow[
+  DoubleAllNumbers = Micro::Case::Safe::Flow([
     Steps::ConvertToNumbers,
     Steps::Double
-  ]
+  ])
 
   class SquareAllNumbers
     include Micro::Case::Safe::Flow
@@ -18,9 +18,9 @@ class Micro::Case::Safe::Flow::BlendTest < Minitest::Test
 
   DoubleAllNumbersAndAdd2 = DoubleAllNumbers & Steps::Add2
 
-  SquareAllNumbersAndAdd2 = Micro::Case::Safe::Flow[
+  SquareAllNumbersAndAdd2 = Micro::Case::Safe::Flow([
     SquareAllNumbers, Steps::Add2
-  ]
+  ])
 
   SquareAllNumbersAndDouble = SquareAllNumbersAndAdd2 & DoubleAllNumbers
 
@@ -66,10 +66,10 @@ class Micro::Case::Safe::Flow::BlendTest < Minitest::Test
 
   Add2ToAllNumbersAndDivideByZero = Add2ToAllNumbers & DivideNumbersByZero
 
-  DoubleAllNumbersAndDivideByZero = Micro::Case::Safe::Flow[
+  DoubleAllNumbersAndDivideByZero = Micro::Case::Safe::Flow([
     DoubleAllNumbers,
     DivideNumbersByZero
-  ]
+  ])
 
   class SquareAllNumbersAndDivideByZero
     include Micro::Case::Safe::Flow
