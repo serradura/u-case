@@ -382,10 +382,10 @@ end
 # Creating a flow using the collection syntax #
 #---------------------------------------------#
 
-Add2ToAllNumbers = Micro::Case::Flow[
+Add2ToAllNumbers = Micro::Case::Flow([
   Steps::ConvertToNumbers,
   Steps::Add2
-]
+])
 
 result = Add2ToAllNumbers.call(numbers: %w[1 1 2 2 3 4])
 
@@ -594,12 +594,12 @@ end
 # or
 
 module Users
-  Create = Micro::Case::Safe::Flow[
+  Create = Micro::Case::Safe::Flow([
     ProcessParams,
     ValidateParams,
     Persist,
     SendToCRM
-  ]
+  ])
 end
 ```
 
