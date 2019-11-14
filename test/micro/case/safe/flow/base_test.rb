@@ -15,7 +15,7 @@ class Micro::Case::Safe::Flow::BaseTest < Minitest::Test
     Jobs::Run
       .call(result)
       .on_success { raise }
-      .on_failure { |value| assert_equal(:invalid_state_transition, value) }
+      .on_failure { |(value, type)| assert_equal(:invalid_state_transition, value) }
   end
 
   def test_calling_with_a_flow
@@ -29,7 +29,7 @@ class Micro::Case::Safe::Flow::BaseTest < Minitest::Test
     Jobs::Run
       .call(result)
       .on_success { raise }
-      .on_failure { |value| assert_equal(:invalid_state_transition, value) }
+      .on_failure { |data| assert_equal(:invalid_state_transition, data.value) }
   end
 
   def test_calling_with_a_flow
@@ -43,7 +43,7 @@ class Micro::Case::Safe::Flow::BaseTest < Minitest::Test
     Jobs::Run
       .call(result)
       .on_success { raise }
-      .on_failure { |value| assert_equal(:invalid_state_transition, value) }
+      .on_failure { |(value, *)| assert_equal(:invalid_state_transition, value) }
   end
 
   def test_calling_with_a_use_case_instance
@@ -61,7 +61,7 @@ class Micro::Case::Safe::Flow::BaseTest < Minitest::Test
     Jobs::Run
       .call(result)
       .on_success { raise }
-      .on_failure { |value| assert_equal(:invalid_state_transition, value) }
+      .on_failure { |(value, _type)| assert_equal(:invalid_state_transition, value) }
   end
 
   def test_calling_with_a_use_case_class
