@@ -1,13 +1,22 @@
 require 'test_helper'
 
 class Micro::Case::ResultTest < Minitest::Test
-  def build_use_case
-    Micro::Case.new({})
+  def build_result(success:, value:, type:, use_case: nil)
+    result = Micro::Case::Result.new
+    result.__set__(success, value, type, use_case)
+    result
+  end
+
+  def failure_result(options = {})
+    build_result(**options.merge(success: false))
+  end
+
+  def success_result(options = {})
+    build_result(**options.merge(success: true))
   end
 
   def test_success_result
-    result = Micro::Case::Result.new
-    result.__set__(true, 1, :ok, nil)
+    result = success_result(value: 1, type: :ok)
 
     assert_predicate(result, :success?)
     assert_equal(1, result.value)
@@ -24,7 +33,7 @@ class Micro::Case::ResultTest < Minitest::Test
       result
         .on_failure { raise }
         .on_success { assert(true) }
-        .on_success { |value| assert_equal(1, value) }
+        .on_success { |(value, _type)| assert_equal(1, value) }
     )
 
     # ---
@@ -33,13 +42,12 @@ class Micro::Case::ResultTest < Minitest::Test
   end
 
   def test_failure_result
-    use_case = build_use_case
+    use_case = Micro::Case.new({})
 
-    result = Micro::Case::Result.new
-    result.__set__(false, 0, :error, use_case)
+    result = failure_result(value: 0, type: :error, use_case: use_case)
 
-    refute_result_success(result)
-    assert_result_failure(result)
+    refute_predicate(result, :success?)
+    assert_predicate(result, :failure?)
 
     assert_equal(0, result.value)
     assert_same(use_case, result.use_case)
@@ -50,8 +58,8 @@ class Micro::Case::ResultTest < Minitest::Test
       result,
       result
         .on_failure { assert(true) }
-        .on_failure { |value| assert_equal(0, value) }
-        .on_failure { |_value, serv| assert_same(serv, use_case) }
+        .on_failure { |data| assert_equal(0, data.value) }
+        .on_failure { |_data, ucase| assert_same(ucase, use_case) }
         .on_success { raise }
     )
 
@@ -60,22 +68,21 @@ class Micro::Case::ResultTest < Minitest::Test
     assert_instance_of(Micro::Case::Result, result)
   end
 
-  def test_value
+  def test_the_result_value
     success_number = rand(1..1_000_000)
+    success = success_result(value: success_number, type: :ok, use_case: nil)
+
     failure_number = rand(1..1_000_000)
-
-    success = Micro::Case::Result.new.tap { |r| r.__set__(true, success_number, :ok, nil) }
-
-    failure = Micro::Case::Result.new.tap { |r| r.__set__(false, failure_number, :error, build_use_case) }
+    failure = failure_result(value: failure_number, type: :error, use_case: Micro::Case.new({}))
 
     assert_equal(success_number, success.value)
     assert_equal(failure_number, failure.value)
   end
 
-  def test_success_hook
+  def test_the_on_success_hook
     counter = 0
     number = rand(1..1_000_000)
-    result = Micro::Case::Result.new.tap { |r| r.__set__(true, number, :valid, nil) }
+    result = success_result(value: number, type: :valid, use_case: nil)
 
     result
       .on_failure { raise }
@@ -87,10 +94,10 @@ class Micro::Case::ResultTest < Minitest::Test
     assert_equal(2, counter)
   end
 
-  def test_failure_hook
+  def test_the_on_failure_hook
     counter = 0
     number = rand(1..1_000_000)
-    result = Micro::Case::Result.new.tap { |r| r.__set__(false, number, :invalid, build_use_case) }
+    result = failure_result(value: number, type: :invalid, use_case: Micro::Case.new({}))
 
     result
       .on_success { raise }
@@ -99,6 +106,21 @@ class Micro::Case::ResultTest < Minitest::Test
       .on_failure { counter += 1 }
 
     assert_equal(2, counter)
+  end
+
+  def test_the_result_data_of_a_failure_hook_without_a_type
+    acc = 0
+    number = rand(1..1_000_000)
+    result = failure_result(value: number, type: :invalid, use_case: Micro::Case.new({}))
+
+    result
+      .on_failure(:invalid) { |value| acc += value }
+      .on_failure { |data| acc += data.value if data.type == :invalid }
+      .on_failure { |(value, type)| acc += value if type == :invalid }
+      .on_failure { |(value, _type)| acc += value }
+      .on_failure { |(value, *)| acc += value }
+
+    assert_equal(number * 5, acc)
   end
 
   def test_the_invalid_type_error
