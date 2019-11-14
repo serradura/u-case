@@ -17,6 +17,7 @@ The main goals of this project are:
 ## Table of Contents <!-- omit in toc -->
 - [μ-case (Micro::Case)](#%ce%bc-case-microcase)
   - [Required Ruby version](#required-ruby-version)
+  - [Dependencies](#dependencies)
   - [Installation](#installation)
   - [Usage](#usage)
     - [How to define a use case?](#how-to-define-a-use-case)
@@ -25,6 +26,7 @@ The main goals of this project are:
       - [How to define custom result types?](#how-to-define-custom-result-types)
       - [Is it possible to define a custom result type without a block?](#is-it-possible-to-define-a-custom-result-type-without-a-block)
       - [How to use the result hooks?](#how-to-use-the-result-hooks)
+      - [Why the on_failure result hook exposes a different kind of data?](#why-the-onfailure-result-hook-exposes-a-different-kind-of-data)
       - [What happens if a result hook is declared multiple times?](#what-happens-if-a-result-hook-is-declared-multiple-times)
     - [How to compose uses cases to represents complex ones?](#how-to-compose-uses-cases-to-represents-complex-ones)
       - [Is it possible to compose a use case flow with other ones?](#is-it-possible-to-compose-a-use-case-flow-with-other-ones)
@@ -42,6 +44,11 @@ The main goals of this project are:
 ## Required Ruby version
 
 > \>= 2.2.0
+
+## Dependencies
+
+This project depends on [Micro::Attribute](https://github.com/serradura/u-attributes) gem.
+It is used to define the use case attributes.
 
 ## Installation
 
@@ -71,7 +78,7 @@ class Multiply < Micro::Case
   # 2. Define the method `call!` with its business logic
   def call!
 
-    # 3. Wrap the use case result/output using the `Success()` and `Failure()` methods
+    # 3. Wrap the use case result/output using the `Success()` or `Failure()` methods
     if a.is_a?(Numeric) && b.is_a?(Numeric)
       Success(a * b)
     else
@@ -116,12 +123,12 @@ result.value # 6
 
 ### What is a `Micro::Case::Result`?
 
-A `Micro::Case::Result` stores use cases output data. These are their main methods:
+A `Micro::Case::Result` stores the use cases output data. These are their main methods:
 - `#success?` returns true if is a successful result.
 - `#failure?` returns true if is an unsuccessful result.
 - `#value` the result value itself.
 - `#type` a Symbol which gives meaning for the result, this is useful to declare different types of failures or success.
-- `#on_success` or `#on_failure` are hook methods which help you define the application flow.
+- `#on_success` or `#on_failure` are hook methods that help you define the application flow.
 - `#use_case` if is a failure result, the use case responsible for it will be accessible through this method. This feature is handy to handle a flow failure (this topic will be covered ahead).
 
 [⬆️ Back to Top](#table-of-contents-)
@@ -256,7 +263,7 @@ The examples below show how to use them:
 
 ```ruby
 class Double < Micro::Case
-  attributes :number
+  attribute :number
 
   def call!
     return Failure(:invalid) { 'the number must be a numeric value' } unless number.is_a?(Numeric)
@@ -286,25 +293,85 @@ Double
 Double
   .call(number: -1)
   .on_success { |number| p number }
-  .on_failure { |_msg, use_case| puts "#{use_case.class.name} was the use case responsible for the failure" }
+  .on_failure { |_result, use_case| puts "#{use_case.class.name} was the use case responsible for the failure" }
   .on_failure(:invalid) { |msg| raise TypeError, msg }
   .on_failure(:lte_zero) { |msg| raise ArgumentError, msg }
 
-# The outputs because it is a failure:
-#   Double was the use case responsible for the failure
-# (throws the error)
-#   ArgumentError (the number must be greater than 0)
+# The outputs will be:
+#
+# 1. Prints the message: Double was the use case responsible for the failure
+# 2. Raises the exception: ArgumentError (the number must be greater than 0)
 
 # Note:
 # ----
 # The use case responsible for the failure will be accessible as the second hook argument
 ```
 
+#### Why the on_failure result hook exposes a different kind of data?
+
+Answer: To allow you to define how to handle the program flow using some
+conditional statement (like an `if`, `case/when`).
+
+```ruby
+class Double < Micro::Case
+  attribute :number
+
+  def call!
+    return Failure(:invalid) unless number.is_a?(Numeric)
+    return Failure(:lte_zero) if number <= 0
+
+    Success(number * 2)
+  end
+end
+
+#=================================#
+# Using the result type and value #
+#=================================#
+
+Double
+  .call(-1)
+  .on_failure do |result, use_case|
+    case result.type
+    when :invalid then raise TypeError, 'the number must be a numeric value'
+    when :lte_zero then raise ArgumentError, "the number `#{result.value}` must be greater than 0"
+    else raise NotImplementedError
+    end
+  end
+
+# The output will be the exception:
+#
+# ArgumentError (the number `-1` must be greater than 0)
+
+#=====================================================#
+# Using decomposition to access result value and type #
+#=====================================================#
+
+# The syntax to decompose an Array can be used in methods, blocks and assigments.
+# If you doesn't know that, check out:
+# https://ruby-doc.org/core-2.2.0/doc/syntax/assignment_rdoc.html#label-Array+Decomposition
+#
+# And the object exposed in the hook failure can be decomposed using this syntax. e.g:
+
+Double
+  .call(-2)
+  .on_failure do |(value, type), use_case|
+    case type
+    when :invalid then raise TypeError, 'the number must be a numeric value'
+    when :lte_zero then raise ArgumentError, "the number `#{value}` must be greater than 0"
+    else raise NotImplementedError
+    end
+  end
+
+# The output will be the exception:
+#
+# ArgumentError (the number `-2` must be greater than 0)
+```
+
 [⬆️ Back to Top](#table-of-contents-)
 
 #### What happens if a result hook is declared multiple times?
 
-Answer: The hook will be triggered if it matches the result type.
+Answer: The hook always will be triggered if it matches the result type.
 
 ```ruby
 class Double < Micro::Case
@@ -337,11 +404,11 @@ result.value * 4 == accum # true
 
 ### How to compose uses cases to represents complex ones?
 
-In this case, this will be is a **flow**, because the idea is to use/reuse use cases as steps which will define a more complex one.
+In this case, this will be a **flow**. The main idea is to use/reuse use cases as steps of a new use case.
 
 ```ruby
 module Steps
-  class ConvertToNumbers < Micro::Case
+  class ConvertTextToNumbers < Micro::Case
     attribute :numbers
 
     def call!
@@ -383,7 +450,7 @@ end
 #---------------------------------------------#
 
 Add2ToAllNumbers = Micro::Case::Flow([
-  Steps::ConvertToNumbers,
+  Steps::ConvertTextToNumbers,
   Steps::Add2
 ])
 
@@ -399,7 +466,7 @@ p result.value    # {:numbers => [3, 3, 4, 4, 5, 6]}
 class DoubleAllNumbers
   include Micro::Case::Flow
 
-  flow Steps::ConvertToNumbers, Steps::Double
+  flow Steps::ConvertTextToNumbers, Steps::Double
 end
 
 DoubleAllNumbers
@@ -411,7 +478,7 @@ DoubleAllNumbers
 #-------------------------------------------------------------#
 
 SquareAllNumbers =
-  Steps::ConvertToNumbers >> Steps::Square
+  Steps::ConvertTextToNumbers >> Steps::Square
 
 SquareAllNumbers
   .call(numbers: %w[1 1 2 2 3 4])
@@ -425,10 +492,10 @@ SquareAllNumbers
 result = SquareAllNumbers.call(numbers: %w[1 1 b 2 3 4])
 
 result.failure?                                # true
-result.use_case.is_a?(Steps::ConvertToNumbers) # true
+result.use_case.is_a?(Steps::ConvertTextToNumbers) # true
 
 result.on_failure do |_message, use_case|
-  puts "#{use_case.class.name} was the use case responsible for the failure" # Steps::ConvertToNumbers was the use case responsible for the failure
+  puts "#{use_case.class.name} was the use case responsible for the failure" # Steps::ConvertTextToNumbers was the use case responsible for the failure
 end
 ```
 
@@ -440,7 +507,7 @@ Answer: Yes, it is.
 
 ```ruby
 module Steps
-  class ConvertToNumbers < Micro::Case
+  class ConvertTextToNumbers < Micro::Case
     attribute :numbers
 
     def call!
@@ -477,9 +544,9 @@ module Steps
   end
 end
 
-Add2ToAllNumbers = Steps::ConvertToNumbers >> Steps::Add2
-DoubleAllNumbers = Steps::ConvertToNumbers >> Steps::Double
-SquareAllNumbers = Steps::ConvertToNumbers >> Steps::Square
+Add2ToAllNumbers = Steps::ConvertTextToNumbers >> Steps::Add2
+DoubleAllNumbers = Steps::ConvertTextToNumbers >> Steps::Double
+SquareAllNumbers = Steps::ConvertTextToNumbers >> Steps::Square
 
 DoubleAllNumbersAndAdd2 = DoubleAllNumbers >> Steps::Add2
 SquareAllNumbersAndAdd2 = SquareAllNumbers >> Steps::Add2
@@ -515,7 +582,7 @@ end
 
 Double.call({})
 
-# The output (raised an error):
+# The output will be the following exception:
 # ArgumentError (missing keyword: :numbers)
 ```
 
