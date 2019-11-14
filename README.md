@@ -318,7 +318,7 @@ class Double < Micro::Case
 
   def call!
     return Failure(:invalid) unless number.is_a?(Numeric)
-    return Failure(:lte_zero) if number <= 0
+    return Failure(:lte_zero) { number } if number <= 0
 
     Success(number * 2)
   end
