@@ -3,6 +3,18 @@
 module Micro
   class Case
     class Result
+      class Data
+        attr_reader :value, :type
+
+        def initialize(value, type)
+          @value, @type = value, type
+        end
+
+        def to_ary; [value, type]; end
+      end
+
+      private_constant :Data
+
       attr_reader :value, :type
 
       def __set__(is_success, value, type, use_case)
@@ -28,22 +40,26 @@ module Micro
         raise Error::InvalidAccessToTheUseCaseObject
       end
 
-      def on_success(arg = nil)
-        self.tap { yield(value) if success_type?(arg) }
+      def on_success(expected_type = nil)
+        self.tap { yield(value) if success_type?(expected_type) }
       end
 
-      def on_failure(arg = nil)
-        self.tap{ yield(value, @use_case) if failure_type?(arg) }
+      def on_failure(expected_type = nil)
+        return self unless failure_type?(expected_type)
+
+        data = expected_type.nil? ? Data.new(value, type).tap(&:freeze) : value
+
+        self.tap { yield(data, @use_case) }
       end
 
       private
 
-        def success_type?(arg)
-          success? && (arg.nil? || arg == type)
+        def success_type?(expected_type)
+          success? && (expected_type.nil? || expected_type == type)
         end
 
-        def failure_type?(arg)
-          failure? && (arg.nil? || arg == type)
+        def failure_type?(expected_type)
+          failure? && (expected_type.nil? || expected_type == type)
         end
 
         def is_a_use_case?(arg)
