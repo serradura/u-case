@@ -10,10 +10,6 @@ module Micro
           def base.flow_reducer; Reducer; end
         end
 
-        def self.Flow(args)
-          Reducer.build(Array(args))
-        end
-
         class Reducer < ::Micro::Case::Flow::Reducer
           def call(arg = {})
             @use_cases.reduce(initial_result(arg)) do |result, use_case|
@@ -42,6 +38,10 @@ module Micro
               end
             end
         end
+      end
+
+      def self.Flow(args)
+        Flow::Reducer.build(Array(args))
       end
     end
   end
