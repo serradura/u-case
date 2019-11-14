@@ -16,25 +16,25 @@ class Micro::Case::SafeTest < Minitest::Test
   def test_instance_call_method
     result = Divide.new(a: 2, b: 2).call
 
-    assert_result_success(result, value: 1)
+    assert_success_result(result, value: 1)
 
     # ---
 
     result = Divide.new(a: 2.0, b: 2).call
 
-    assert_result_failure(result, value: :not_an_integer, type: :not_an_integer)
+    assert_failure_result(result, value: :not_an_integer, type: :not_an_integer)
   end
 
   def test_class_call_method
     result = Divide.call(a: 2, b: 2)
 
-    assert_result_success(result, value: 1)
+    assert_success_result(result, value: 1)
 
     # ---
 
     result = Divide.call(a: 2.0, b: 2)
 
-    assert_result_failure(result, value: :not_an_integer, type: :not_an_integer)
+    assert_failure_result(result, value: :not_an_integer, type: :not_an_integer)
   end
 
   class Foo < Micro::Case::Safe
@@ -73,7 +73,7 @@ class Micro::Case::SafeTest < Minitest::Test
       Divide.new(a: 2, b: 0).call,
       Divide.call(a: 2, b: 0)
     ].each do |result|
-      assert_result_exception(result, value: ZeroDivisionError)
+      assert_exception_result(result, value: ZeroDivisionError)
     end
   end
 
@@ -122,19 +122,19 @@ class Micro::Case::SafeTest < Minitest::Test
       Divide2ByArgV1.call(arg: 0),
       Divide2ByArgV2.call(arg: 0)
     ].each do |result|
-      assert_result_exception(result, value: ZeroDivisionError)
+      assert_exception_result(result, value: ZeroDivisionError)
     end
 
     # ---
 
     result = Divide2ByArgV3.call(arg: 0)
 
-    assert_result_exception(result, value: ZeroDivisionError, type: :foo)
+    assert_exception_result(result, value: ZeroDivisionError, type: :foo)
 
     # ---
 
     result = GenerateZeroDivisionError.call(arg: 2)
-    assert_result_success(result)
+    assert_success_result(result)
 
     assert_kind_of(ZeroDivisionError, result.value)
   end
@@ -142,7 +142,7 @@ class Micro::Case::SafeTest < Minitest::Test
   def test_that_when_a_failure_result_is_a_symbol_both_type_and_value_will_be_the_same
     result = Divide.call(a: 2, b: 'a')
 
-    assert_result_failure(result, value: :not_an_integer)
+    assert_failure_result(result, value: :not_an_integer)
   end
 
   def test_to_proc

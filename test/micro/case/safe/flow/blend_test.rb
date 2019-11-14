@@ -44,7 +44,7 @@ class Micro::Case::Safe::Flow::BlendTest < Minitest::Test
     EXAMPLES.each do |example|
       result = example.flow.call(numbers: %w[1 1 2 2 3 4])
 
-      assert_result_success(result, value: { numbers: example.result })
+      assert_success_result(result, value: { numbers: example.result })
     end
   end
 
@@ -52,7 +52,7 @@ class Micro::Case::Safe::Flow::BlendTest < Minitest::Test
     EXAMPLES.map(&:flow).each do |flow|
       result = flow.call(numbers: %w[1 1 2 a 3 4])
 
-      assert_result_failure(result, value: 'numbers must contain only numeric types')
+      assert_failure_result(result, value: 'numbers must contain only numeric types')
     end
   end
 
@@ -83,7 +83,7 @@ class Micro::Case::Safe::Flow::BlendTest < Minitest::Test
       DoubleAllNumbersAndDivideByZero.call(numbers: %w[6 4 8]),
       SquareAllNumbersAndDivideByZero.call(numbers: %w[8 4 6])
     ].each do |result|
-      assert_result_exception(result, value: ZeroDivisionError)
+      assert_exception_result(result, value: ZeroDivisionError)
     end
   end
 

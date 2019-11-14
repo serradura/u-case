@@ -27,13 +27,13 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
       def test_success
         calculation = Multiply.new(a: 2, b: 2).call
 
-        assert_result_success(calculation, value: { number: 4 })
+        assert_success_result(calculation, value: { number: 4 })
 
         # ---
 
         flow = Micro::Case::Flow([Multiply, NumberToString])
 
-        assert_result_success(flow.call(a: 2, b: 2), value: '4')
+        assert_success_result(flow.call(a: 2, b: 2), value: '4')
       end
 
       def test_failure
@@ -45,14 +45,14 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
 
         result = Multiply.new(a: 1, b: nil).call
 
-        assert_result_failure(result, type: :validation_error)
+        assert_failure_result(result, type: :validation_error)
         assert_equal(["can't be blank", 'is not a number'], result.value[:errors][:b])
 
         # ---
 
         result = Multiply.new(a: 1, b: 'a').call
 
-        assert_result_failure(result, type: :validation_error)
+        assert_failure_result(result, type: :validation_error)
         assert_equal(['is not a number'], result.value[:errors][:b])
       end
     end
