@@ -44,7 +44,7 @@ module MicroCaseAssertions
     assert_equal(value, result.value) if value != :____skip____
   end
 
-  def assert_result_success(result, options = { type: :ok })
+  def assert_success_result(result, options = { type: :ok })
     value = (block_given? ? yield : options[:value])
 
     assert_result(result, options.merge(value: value))
@@ -61,7 +61,7 @@ module MicroCaseAssertions
     assert_equal(2, count)
   end
 
-  def assert_result_failure(result, options = {})
+  def assert_failure_result(result, options = {})
     value = (block_given? ? yield : options[:value])
 
     assert_result(result, options.merge(value: value))
@@ -79,7 +79,7 @@ module MicroCaseAssertions
     assert_equal(2, count)
   end
 
-  def assert_result_exception(result, value: :____skip____, type: :exception)
+  def assert_exception_result(result, value: :____skip____, type: :exception)
     assert_kind_of_result(result)
     assert_equal(type, result.type)
     assert_kind_of(value, result.value) if value != :____skip____
@@ -108,14 +108,14 @@ module MicroCaseAssertions
     refute_equal(value, result.value) if value != :____skip____
   end
 
-  def refute_result_success(result, options = {})
+  def refute_success_result(result, options = {})
     value = (block_given? ? yield : options[:value])
 
     refute_result(result, options.merge(value: value))
     refute_predicate(result, :success?)
   end
 
-  def refute_result_failure(result, options = {})
+  def refute_failure_result(result, options = {})
     value = (block_given? ? yield : options[:value])
 
     refute_result(result, options.merge(value: value))
