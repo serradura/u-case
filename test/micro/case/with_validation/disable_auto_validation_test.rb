@@ -34,7 +34,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
 
         # ---
 
-        assert_raises_with_message(TypeError, "String can't be coerced into Integer") do
+        assert_raises_with_message(TypeError, /String can't be coerced into (Integer|Fixnum)/) do
           Multiply.call(a: 2, b: 'a')
         end
       end
