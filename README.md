@@ -30,6 +30,7 @@ The main goals of this project are:
       - [What happens if a result hook is declared multiple times?](#what-happens-if-a-result-hook-is-declared-multiple-times)
     - [How to compose uses cases to represents complex ones?](#how-to-compose-uses-cases-to-represents-complex-ones)
       - [Is it possible to compose a use case flow with other ones?](#is-it-possible-to-compose-a-use-case-flow-with-other-ones)
+      - [Is it possible a flow accumulates its input and merges each success result to use as the argument of their use cases?](#is-it-possible-a-flow-accumulates-its-input-and-merges-each-success-result-to-use-as-the-argument-of-their-use-cases)
     - [What is a strict use case?](#what-is-a-strict-use-case)
     - [Is there some feature to auto handle exceptions inside of a use case or flow?](#is-there-some-feature-to-auto-handle-exceptions-inside-of-a-use-case-or-flow)
     - [How to validate use case attributes?](#how-to-validate-use-case-attributes)
@@ -404,7 +405,8 @@ result.value * 4 == accum # true
 
 ### How to compose uses cases to represents complex ones?
 
-In this case, this will be a **flow**. The main idea is to use/reuse use cases as steps of a new use case.
+In this case, this will be a **flow** (`Micro::Case::Flow`).
+The main idea of this feature is to use/reuse use cases as steps of a new use case.
 
 ```ruby
 module Steps
@@ -566,6 +568,10 @@ DoubleAllNumbersAndSquareAndAdd2
 Note: You can blend any of the [available syntaxes/approaches](#how-to-create-a-flow-which-has-reusable-steps-to-define-a-complex-use-case) to create use case flows - [examples](https://github.com/serradura/u-case/blob/master/test/micro/case/flow/blend_test.rb#L7-L34).
 
 [⬆️ Back to Top](#table-of-contents-)
+
+#### Is it possible a flow accumulates its input and merges each success result to use as the argument of their use cases?
+
+Answer: Yes, it is! Check out these test examples [Micro::Case::Flow](https://github.com/serradura/u-case/blob/e0066d8a6e3a9404069dfcb9bf049b854f08a33c/test/micro/case/flow/reducer_test.rb) and [Micro::Case::Safe::Flow](https://github.com/serradura/u-case/blob/e0066d8a6e3a9404069dfcb9bf049b854f08a33c/test/micro/case/safe/flow/reducer_test.rb) to see different use cases sharing their own data.
 
 ### What is a strict use case?
 
