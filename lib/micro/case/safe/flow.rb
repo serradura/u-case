@@ -11,14 +11,6 @@ module Micro
         end
 
         class Reducer < ::Micro::Case::Flow::Reducer
-          def call(arg = {})
-            @use_cases.reduce(initial_result(arg)) do |result, use_case|
-              break result if result.failure?
-
-              use_case_result(use_case, result)
-            end
-          end
-
           alias_method :&, :>>
 
           def >>(arg)
@@ -27,9 +19,9 @@ module Micro
 
           private
 
-            def use_case_result(use_case, result)
+            def use_case_result(use_case, result, input)
               begin
-                instance = use_case.__new__(result, result.value)
+                instance = use_case.__new__(result, input)
                 instance.call
               rescue => exception
                 raise exception if Error::ByWrongUsage.check(exception)

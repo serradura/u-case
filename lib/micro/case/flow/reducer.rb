@@ -26,10 +26,15 @@ module Micro
         end
 
         def call(arg = {})
+          memo = arg.is_a?(Hash) ? arg.dup : {}
+
           @use_cases.reduce(initial_result(arg)) do |result, use_case|
             break result if result.failure?
 
-            use_case.__new__(result, result.value).call
+            value = result.value
+            input = value.is_a?(Hash) ? memo.tap { |data| data.merge!(value) } : value
+
+            use_case_result(use_case, result, input)
           end
         end
 
@@ -46,6 +51,10 @@ module Micro
         end
 
         private
+
+          def use_case_result(use_case, result, input)
+            use_case.__new__(result, input).call
+          end
 
           def initial_result(arg)
             return arg.call if arg_to_call?(arg)
