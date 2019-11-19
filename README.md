@@ -34,6 +34,7 @@ The main goals of this project are:
     - [What is a strict use case?](#what-is-a-strict-use-case)
     - [Is there some feature to auto handle exceptions inside of a use case or flow?](#is-there-some-feature-to-auto-handle-exceptions-inside-of-a-use-case-or-flow)
     - [How to validate use case attributes?](#how-to-validate-use-case-attributes)
+      - [If I enable the auto validation, is it possible to disable it only in some specific use case classes?](#if-i-enable-the-auto-validation-is-it-possible-to-disable-it-only-in-some-specific-use-case-classes)
     - [Examples](#examples)
   - [Comparisons](#comparisons)
   - [Benchmarks](#benchmarks)
@@ -727,6 +728,31 @@ end
 # ----
 # After requiring the validation mode, the
 # Micro::Case::Strict and Micro::Case::Safe classes will inherit this new behavior.
+```
+
+#### If I enable the auto validation, is it possible to disable it only in some specific use case classes?
+
+Answer: Yes, it is. To do this, you only need to use the `disable_auto_validation` macro. e.g:
+
+```ruby
+require 'u-case/with_validation'
+
+class Multiply < Micro::Case
+  disable_auto_validation
+
+  attribute :a
+  attribute :b
+  validates :a, :b, presence: true, numericality: true
+
+  def call!
+    Success(number: a * b)
+  end
+end
+
+Multiply.call(a: 2, b: 'a')
+
+# The output will be the following exception:
+# TypeError (String can't be coerced into Integer)
 ```
 
 [⬆️ Back to Top](#table-of-contents-)
