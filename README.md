@@ -20,24 +20,29 @@ The main goals of this project are:
   - [Dependencies](#dependencies)
   - [Installation](#installation)
   - [Usage](#usage)
-    - [How to define a use case?](#how-to-define-a-use-case)
-    - [What is a `Micro::Case::Result`?](#what-is-a-microcaseresult)
-      - [What are the default `Micro::Case::Result` types?](#what-are-the-default-microcaseresult-types)
+    - [`Micro::Case` - How to define a use case?](#microcase---how-to-define-a-use-case)
+    - [`Micro::Case::Result` - What is a use case result?](#microcaseresult---what-is-a-use-case-result)
+      - [What are the default result types?](#what-are-the-default-result-types)
       - [How to define custom result types?](#how-to-define-custom-result-types)
       - [Is it possible to define a custom result type without a block?](#is-it-possible-to-define-a-custom-result-type-without-a-block)
       - [How to use the result hooks?](#how-to-use-the-result-hooks)
-      - [Why the on_failure result hook exposes a different kind of data?](#why-the-onfailure-result-hook-exposes-a-different-kind-of-data)
-      - [What happens if a result hook is declared multiple times?](#what-happens-if-a-result-hook-is-declared-multiple-times)
-    - [How to compose uses cases to represents complex ones?](#how-to-compose-uses-cases-to-represents-complex-ones)
+      - [Why the failure hook (without a type) exposes a different kind of data?](#why-the-failure-hook-without-a-type-exposes-a-different-kind-of-data)
+      - [What happens if a result hook was declared multiple times?](#what-happens-if-a-result-hook-was-declared-multiple-times)
+    - [`Micro::Case::Flow` - How to compose use cases?](#microcaseflow---how-to-compose-use-cases)
       - [Is it possible to compose a use case flow with other ones?](#is-it-possible-to-compose-a-use-case-flow-with-other-ones)
       - [Is it possible a flow accumulates its input and merges each success result to use as the argument of their use cases?](#is-it-possible-a-flow-accumulates-its-input-and-merges-each-success-result-to-use-as-the-argument-of-their-use-cases)
-    - [What is a strict use case?](#what-is-a-strict-use-case)
-    - [Is there some feature to auto handle exceptions inside of a use case or flow?](#is-there-some-feature-to-auto-handle-exceptions-inside-of-a-use-case-or-flow)
-    - [How to validate use case attributes?](#how-to-validate-use-case-attributes)
-      - [If I enable the auto validation, is it possible to disable it only in some specific use case classes?](#if-i-enable-the-auto-validation-is-it-possible-to-disable-it-only-in-some-specific-use-case-classes)
-    - [Examples](#examples)
-  - [Comparisons](#comparisons)
+    - [`Micro::Case::Strict` - What is a strict use case?](#microcasestrict---what-is-a-strict-use-case)
+    - [`Micro::Case::Safe` - Is there some feature to auto handle exceptions inside of a use case or flow?](#microcasesafe---is-there-some-feature-to-auto-handle-exceptions-inside-of-a-use-case-or-flow)
+    - [`u-case/with_validation` - How to validate use case attributes?](#u-casewithvalidation---how-to-validate-use-case-attributes)
+      - [If I enabled the auto validation, is it possible to disable it only in specific use case classes?](#if-i-enabled-the-auto-validation-is-it-possible-to-disable-it-only-in-specific-use-case-classes)
+  - [Examples](#examples)
   - [Benchmarks](#benchmarks)
+    - [`Micro::Case`](#microcase)
+      - [Best overall](#best-overall)
+      - [Success results](#success-results)
+      - [Failure results](#failure-results)
+    - [`Micro::Case::Flow`](#microcaseflow)
+    - [Comparisons](#comparisons)
   - [Development](#development)
   - [Contributing](#contributing)
   - [License](#license)
@@ -70,7 +75,7 @@ Or install it yourself as:
 
 ## Usage
 
-### How to define a use case?
+### `Micro::Case` - How to define a use case?
 
 ```ruby
 class Multiply < Micro::Case
@@ -123,7 +128,7 @@ result.value # 6
 
 [⬆️ Back to Top](#table-of-contents-)
 
-### What is a `Micro::Case::Result`?
+### `Micro::Case::Result` - What is a use case result?
 
 A `Micro::Case::Result` stores the use cases output data. These are their main methods:
 - `#success?` returns true if is a successful result.
@@ -135,7 +140,7 @@ A `Micro::Case::Result` stores the use cases output data. These are their main m
 
 [⬆️ Back to Top](#table-of-contents-)
 
-#### What are the default `Micro::Case::Result` types?
+#### What are the default result types?
 
 Every result has a type and these are the defaults:
 - `:ok` when success
@@ -309,7 +314,7 @@ Double
 # The use case responsible for the failure will be accessible as the second hook argument
 ```
 
-#### Why the on_failure result hook exposes a different kind of data?
+#### Why the failure hook (without a type) exposes a different kind of data?
 
 Answer: To allow you to define how to handle the program flow using some
 conditional statement (like an `if`, `case/when`).
@@ -371,7 +376,7 @@ Double
 
 [⬆️ Back to Top](#table-of-contents-)
 
-#### What happens if a result hook is declared multiple times?
+#### What happens if a result hook was declared multiple times?
 
 Answer: The hook always will be triggered if it matches the result type.
 
@@ -404,7 +409,7 @@ result.value * 4 == accum # true
 
 [⬆️ Back to Top](#table-of-contents-)
 
-### How to compose uses cases to represents complex ones?
+### `Micro::Case::Flow` - How to compose use cases?
 
 In this case, this will be a **flow** (`Micro::Case::Flow`).
 The main idea of this feature is to use/reuse use cases as steps of a new use case.
@@ -574,7 +579,9 @@ Note: You can blend any of the [available syntaxes/approaches](#how-to-create-a-
 
 Answer: Yes, it is! Check out these test examples [Micro::Case::Flow](https://github.com/serradura/u-case/blob/e0066d8a6e3a9404069dfcb9bf049b854f08a33c/test/micro/case/flow/reducer_test.rb) and [Micro::Case::Safe::Flow](https://github.com/serradura/u-case/blob/e0066d8a6e3a9404069dfcb9bf049b854f08a33c/test/micro/case/safe/flow/reducer_test.rb) to see different use cases sharing their own data.
 
-### What is a strict use case?
+[⬆️ Back to Top](#table-of-contents-)
+
+### `Micro::Case::Strict` - What is a strict use case?
 
 Answer: Is a use case which will require all the keywords (attributes) on its initialization.
 
@@ -595,7 +602,7 @@ Double.call({})
 
 [⬆️ Back to Top](#table-of-contents-)
 
-### Is there some feature to auto handle exceptions inside of a use case or flow?
+### `Micro::Case::Safe` - Is there some feature to auto handle exceptions inside of a use case or flow?
 
 Answer: Yes, there is!
 
@@ -679,7 +686,7 @@ end
 
 [⬆️ Back to Top](#table-of-contents-)
 
-### How to validate use case attributes?
+### `u-case/with_validation` - How to validate use case attributes?
 
 **Requirement:**
 
@@ -730,7 +737,7 @@ end
 # Micro::Case::Strict and Micro::Case::Safe classes will inherit this new behavior.
 ```
 
-#### If I enable the auto validation, is it possible to disable it only in some specific use case classes?
+#### If I enabled the auto validation, is it possible to disable it only in specific use case classes?
 
 Answer: Yes, it is. To do this, you only need to use the `disable_auto_validation` macro. e.g:
 
@@ -757,7 +764,7 @@ Multiply.call(a: 2, b: 'a')
 
 [⬆️ Back to Top](#table-of-contents-)
 
-### Examples
+## Examples
 
 1. [Rescuing an exception inside of use cases](https://github.com/serradura/u-case/blob/master/examples/rescuing_exceptions.rb)
 2. [Users creation](https://github.com/serradura/u-case/blob/master/examples/users_creation.rb)
@@ -769,20 +776,180 @@ Multiply.call(a: 2, b: 'a')
 
 [⬆️ Back to Top](#table-of-contents-)
 
-## Comparisons
+## Benchmarks
+
+### `Micro::Case`
+
+#### Best overall
+
+The table below contains the average between the [Success results](#success-results) and [Failure results](#failure-results) benchmarks.
+
+| Gem / Abstraction | Iterations per second  |    Comparison    |
+| ----------------- | ---------------------: |----------------: |
+| **Micro::Case**   |               126135.2 | _**The Faster**_ |
+| Dry::Monads       |               110841.9 |     1.13x slower |
+| Interactor        |                23028.6 |     5.47x slower |
+| Dry::Transaction  |                 5528.1 |    22.81x slower |
+
+---
+
+#### Success results
+
+| Gem / Abstraction | Iterations per second  |    Comparison    |
+| ----------------- | ---------------------: |----------------: |
+| Dry::Monads       |               150389.4 | _**The Faster**_ |
+| **Micro::Case**   |               133608.8 |     1.13x slower |
+| Interactor        |                30490.3 |     4.93x slower |
+| Dry::Transaction  |                 5899.8 |    25.49x slower |
+
+<details>
+  <summary>Show the full <a href="https://github.com/evanphx/benchmark-ips">benchmark/ips</a> results.</summary>
+
+  ```ruby
+  # Warming up --------------------------------------
+  #           Interactor     3.017k i/100ms
+  #          Micro::Case    12.671k i/100ms
+  #  Micro::Case::Strict     9.881k i/100ms
+  #    Micro::Case::Safe    12.501k i/100ms
+  #          Dry::Monads    14.360k i/100ms
+  #      Dry::Monads.new    13.772k i/100ms
+  #     Dry::Transaction     5.277k i/100ms
+  # Dry::Transaction.new   581.000  i/100ms
+  # Calculating -------------------------------------
+  #           Interactor     30.490k (± 2.2%) i/s -    153.867k in   5.049013s
+  #          Micro::Case    133.609k (± 1.9%) i/s -    671.563k in   5.028303s
+  #  Micro::Case::Strict    101.804k (± 1.7%) i/s -    513.812k in   5.048625s
+  #    Micro::Case::Safe    132.174k (± 1.0%) i/s -    662.553k in   5.013220s
+  #          Dry::Monads    150.389k (± 1.1%) i/s -    761.080k in   5.061395s
+  #      Dry::Monads.new    143.296k (± 1.1%) i/s -    729.916k in   5.094455s
+  #     Dry::Transaction     53.897k (± 1.4%) i/s -    274.404k in   5.092316s
+  # Dry::Transaction.new      5.900k (± 1.0%) i/s -     29.631k in   5.022947s
+
+  # Comparison:
+  #          Dry::Monads:   150389.4 i/s
+  #      Dry::Monads.new:   143295.9 i/s - 1.05x  slower
+  #          Micro::Case:   133608.8 i/s - 1.13x  slower
+  #    Micro::Case::Safe:   132173.6 i/s - 1.14x  slower
+  #  Micro::Case::Strict:   101803.5 i/s - 1.48x  slower
+  #     Dry::Transaction:    53896.8 i/s - 2.79x  slower
+  #           Interactor:    30490.3 i/s - 4.93x  slower
+  # Dry::Transaction.new:     5899.8 i/s - 25.49x  slower
+  ```
+</details>
+
+https://github.com/serradura/u-case/blob/master/benchmarks/use_case/with_success_result.rb
+
+#### Failure results
+
+| Gem / Abstraction | iterations per second  |    Comparison    |
+| ----------------- | ---------------------: |----------------: |
+| **Micro::Case**   |               118661.7 | _**The Faster**_ |
+| Dry::Monads       |                71294.4 |     1.66x slower |
+| Interactor        |                15567.0 |     7.62x slower |
+| Dry::Transaction  |                 5156.5 |    23.01x slower |
+
+<details>
+  <summary>Show the full <a href="https://github.com/evanphx/benchmark-ips">benchmark/ips</a> results.</summary>
+
+  ```ruby
+  # Warming up --------------------------------------
+  #           Interactor    1.530k i/100ms
+  #          Micro::Case   11.423k i/100ms
+  #  Micro::Case::Strict    8.969k i/100ms
+  #    Micro::Case::Safe   11.166k i/100ms
+  #          Dry::Monads    6.909k i/100ms
+  #      Dry::Monads.new    6.775k i/100ms
+  #     Dry::Transaction    2.991k i/100ms
+  # Dry::Transaction.new  515.000  i/100ms
+  # Calculating -------------------------------------
+  #           Interactor    15.567k (± 1.7%) i/s -     78.030k in   5.013901s
+  #          Micro::Case   118.662k (± 1.8%) i/s -    593.996k in   5.007457s
+  #  Micro::Case::Strict    93.161k (± 1.3%) i/s -    466.388k in   5.007143s
+  #    Micro::Case::Safe   115.906k (± 1.6%) i/s -    580.632k in   5.010863s
+  #          Dry::Monads    71.294k (± 1.4%) i/s -    359.268k in   5.040143s
+  #      Dry::Monads.new    69.793k (± 1.7%) i/s -    352.300k in   5.049263s
+  #     Dry::Transaction    30.256k (± 1.1%) i/s -    152.541k in   5.042370s
+  # Dry::Transaction.new     5.156k (± 1.8%) i/s -     26.265k in   5.095326s
+
+  # Comparison:
+  #          Micro::Case:  118661.7 i/s
+  #    Micro::Case::Safe:  115906.0 i/s - same-ish: difference falls within error
+  #  Micro::Case::Strict:   93160.8 i/s - 1.27x  slower
+  #          Dry::Monads:   71294.4 i/s - 1.66x  slower
+  #      Dry::Monads.new:   69793.0 i/s - 1.70x  slower
+  #     Dry::Transaction:   30255.8 i/s - 3.92x  slower
+  #           Interactor:   15567.0 i/s - 7.62x  slower
+  # Dry::Transaction.new:    5156.5 i/s - 23.01x  slower
+  ```
+</details>
+
+https://github.com/serradura/u-case/blob/master/benchmarks/use_case/with_failure_result.rb
+
+---
+
+### `Micro::Case::Flow`
+
+| Gems / Abstraction      | [Success results](https://github.com/serradura/u-case/blob/master/benchmarks/flow/with_success_result.rb#L40) | [Failure results](https://github.com/serradura/u-case/blob/master/benchmarks/flow/with_failure_result.rb#L40) |
+| ------------------      | ---------------: | ---------------: |
+| Micro::Case::Flow       | _**The Faster**_ | _**The Faster**_ |
+| Micro::Case::Safe::Flow |        0x slower |        0x slower |
+| Interactor::Organizer   |     1.47x slower |     5.51x slower |
+
+\* The `Dry::Monads` and `Dry::Transaction` are out of this analysis, because both of them doesn't have this kind of feature.
+
+<details>
+  <summary><strong>Success results</strong> - Show the full benchmark/ips results.</summary>
+
+  ```ruby
+  # Warming up --------------------------------------
+  #   Interactor::Organizer  4.880k i/100ms
+  #       Micro::Case::Flow  7.035k i/100ms
+  # Micro::Case::Safe::Flow  7.059k i/100ms
+
+  # Calculating -------------------------------------
+  #   Interactor::Organizer  50.208k (± 1.3%) i/s -    253.760k in   5.055099s
+  #       Micro::Case::Flow  73.791k (± 0.9%) i/s -    372.855k in   5.053311s
+  # Micro::Case::Safe::Flow  73.314k (± 1.1%) i/s -    367.068k in   5.007473s
+
+  # Comparison:
+  #       Micro::Case::Flow: 73790.7 i/s
+  # Micro::Case::Safe::Flow: 73313.7 i/s - same-ish: difference falls within error
+  #   Interactor::Organizer: 50207.7 i/s - 1.47x  slower
+  ```
+</details>
+
+<details>
+  <summary><strong>Failure results</strong> - Show the full benchmark/ips results.</summary>
+
+  ```ruby
+  # Warming up --------------------------------------
+  #   Interactor::Organizer   2.372k i/100ms
+  #       Micro::Case::Flow   12.802k i/100ms
+  # Micro::Case::Safe::Flow   12.673k i/100ms
+
+  # Calculating -------------------------------------
+  #   Interactor::Organizer   24.522k (± 2.0%) i/s -    123.344k in   5.032159s
+  #       Micro::Case::Flow   135.122k (± 1.7%) i/s -    678.506k in   5.022903s
+  # Micro::Case::Safe::Flow   133.980k (± 1.4%) i/s -    671.669k in   5.014181s
+
+  # Comparison:
+  #       Micro::Case::Flow:   135122.0 i/s
+  # Micro::Case::Safe::Flow:   133979.8 i/s - same-ish: difference falls within error
+  #   Interactor::Organizer:   24521.8 i/s - 5.51x  slower
+  ```
+</details>
+
+https://github.com/serradura/u-case/tree/master/benchmarks/flow
+
+### Comparisons
 
 Check it out implementations of the same use case with different gems/abstractions.
 
 * [interactor](https://github.com/serradura/u-case/blob/master/comparisons/interactor.rb)
 * [u-case](https://github.com/serradura/u-case/blob/master/comparisons/u-case.rb)
 
-## Benchmarks
 
-**[interactor](https://github.com/collectiveidea/interactor)** VS **[u-case](https://github.com/serradura/u-case)**
-
-https://github.com/serradura/u-case/tree/master/benchmarks/interactor
-
-![interactor VS u-case](https://github.com/serradura/u-case/blob/master/assets/u-case_benchmarks.png?raw=true)
+[⬆️ Back to Top](#table-of-contents-)
 
 ## Development
 
