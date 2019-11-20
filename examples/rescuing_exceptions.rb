@@ -3,10 +3,10 @@ require 'bundler/inline'
 gemfile do
   source 'https://rubygems.org'
 
-  gem 'u-case', '~> 1.0.0'
+  gem 'u-case', '~> 2.0.0'
 end
 
-class DivideV1 < Micro::Case::Base
+class DivideV1 < Micro::Case
   attributes :a, :b
 
   def call!
