@@ -26,7 +26,7 @@ The main goals of this project are:
       - [How to define custom result types?](#how-to-define-custom-result-types)
       - [Is it possible to define a custom result type without a block?](#is-it-possible-to-define-a-custom-result-type-without-a-block)
       - [How to use the result hooks?](#how-to-use-the-result-hooks)
-      - [Why the on_failure result hook exposes a different kind of data?](#why-the-onfailure-result-hook-exposes-a-different-kind-of-data)
+      - [Why the `on_failure` result hook exposes a different kind of data?](#why-the-onfailure-result-hook-exposes-a-different-kind-of-data)
       - [What happens if a result hook is declared multiple times?](#what-happens-if-a-result-hook-is-declared-multiple-times)
     - [How to compose uses cases to represents complex ones?](#how-to-compose-uses-cases-to-represents-complex-ones)
       - [Is it possible to compose a use case flow with other ones?](#is-it-possible-to-compose-a-use-case-flow-with-other-ones)
@@ -38,6 +38,8 @@ The main goals of this project are:
     - [Examples](#examples)
   - [Comparisons](#comparisons)
   - [Benchmarks](#benchmarks)
+    - [Micro::Case](#microcase)
+    - [Micro::Case::Flow](#microcaseflow)
   - [Development](#development)
   - [Contributing](#contributing)
   - [License](#license)
@@ -309,7 +311,7 @@ Double
 # The use case responsible for the failure will be accessible as the second hook argument
 ```
 
-#### Why the on_failure result hook exposes a different kind of data?
+#### Why the `on_failure` result hook exposes a different kind of data?
 
 Answer: To allow you to define how to handle the program flow using some
 conditional statement (like an `if`, `case/when`).
@@ -776,13 +778,34 @@ Check it out implementations of the same use case with different gems/abstractio
 * [interactor](https://github.com/serradura/u-case/blob/master/comparisons/interactor.rb)
 * [u-case](https://github.com/serradura/u-case/blob/master/comparisons/u-case.rb)
 
+[⬆️ Back to Top](#table-of-contents-)
+
 ## Benchmarks
 
-**[interactor](https://github.com/collectiveidea/interactor)** VS **[u-case](https://github.com/serradura/u-case)**
+### Micro::Case
 
-https://github.com/serradura/u-case/tree/master/benchmarks/interactor
+https://github.com/serradura/u-case/tree/master/benchmarks/use_case
 
-![interactor VS u-case](https://github.com/serradura/u-case/blob/master/assets/u-case_benchmarks.png?raw=true)
+| Gems / Abstraction | Success results | Failure results |
+| ------------------ | --------------- | --------------- |
+| Interactor         | 4.93x slower    | 7.62x slower    |
+| Dry::Monads        | _**Faster**_    | 1.66x slower    |
+| Dry::Transaction   | 25.49x slower   | 23.01x slower   |
+| Micro::Case        | 1.13x slower    | _**Faster**_    |
+
+---
+
+### Micro::Case::Flow
+
+https://github.com/serradura/u-case/tree/master/benchmarks/flow
+
+| Gems / Abstraction      | Success results | Failure results |
+| ------------------      | --------------- | --------------- |
+| Interactor::Organizer   | 1.47x slower    | 5.51x slower    |
+| Micro::Case::Flow       | _**Faster**_    | _**Faster**_    |
+| Micro::Case::Safe::Flow | 0x slower       | 0x slower       |
+
+[⬆️ Back to Top](#table-of-contents-)
 
 ## Development
 
