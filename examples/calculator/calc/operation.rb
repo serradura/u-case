@@ -1,8 +1,9 @@
-class Operation < Micro::Case::Base
+class Operation < Micro::Case
   attributes :a, :b
 
   private def result_of(operation_result)
-    attributes(:a, :operator, :b).merge(result: operation_result)
+    attributes(:a, :operator, :b)
+      .merge(result: operation_result)
   end
 
   class Add < Operation
