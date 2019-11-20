@@ -1,6 +1,6 @@
 module Calc
-  class NormalizeArgs < Micro::Case::Base
-    attributes :args
+  class NormalizeArgs < Micro::Case
+    attribute :args
 
     def call!
       a, b = normalize(args[:a]), normalize(args[:b])

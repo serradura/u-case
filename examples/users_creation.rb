@@ -5,7 +5,8 @@ gemfile do
 
   # NOTE: I used an older version of the Activemodel only to show the compatibility with its older versions.
   gem 'activemodel', '~> 3.2', '>= 3.2.22.5'
-  gem 'u-case', '~> 1.0.0', require: 'u-case/with_validation'
+
+  gem 'u-case', '~> 2.0.0', require: 'u-case/with_validation'
 end
 
 module Users
@@ -23,7 +24,7 @@ module Users
     require 'uri'
     require 'securerandom'
 
-    class ProcessParams < Micro::Case::Base
+    class ProcessParams < Micro::Case
       attributes :name, :email
 
       def call!
@@ -35,7 +36,7 @@ module Users
       end
     end
 
-    class ValidateParams < Micro::Case::Base
+    class ValidateParams < Micro::Case
       attributes :name, :email
 
       validates :name, presence: true
@@ -46,7 +47,7 @@ module Users
       end
     end
 
-    class Persist < Micro::Case::Base
+    class Persist < Micro::Case
       attributes :name, :email
 
       def call!
@@ -58,22 +59,22 @@ module Users
       end
     end
 
-    class SendToCRM < Micro::Case::Base
+    class SyncWithCRM < Micro::Case
       attribute :user
 
       def call!
-        return Success(user_id: user.id, crm_id: send_to_crm) if user.persisted?
+        return Success(user_id: user.id, crm_id: sync_with_crm) if user.persisted?
 
         Failure(:crm_error) { 'User can\'t be sent to the CRM' }
       end
 
-      private def send_to_crm
+      private def sync_with_crm
         # Do some integration stuff...
         SecureRandom.uuid
       end
     end
 
-    Process = ProcessParams >> ValidateParams >> Persist >> SendToCRM
+    Process = ProcessParams >> ValidateParams >> Persist >> SyncWithCRM
   end
 end
 
@@ -90,7 +91,10 @@ print 'Before: '
 p params
 
 print ' After: '
-Users::Creation::ProcessParams.call(params).on_success { |value| p value }
+
+Users::Creation::ProcessParams
+  .call(params)
+  .on_success { |value| p value }
 
 #---------------------------------#
 puts "\n-- Success scenario --\n\n"
@@ -109,8 +113,8 @@ puts "\n-- Failure scenario --\n\n"
 
 Users::Creation::Process
   .call(name: '', email: '')
-  .on_failure { |errors| p errors.full_messages }
-  .on_failure do |_errors, use_case|
+  .on_failure { |(value, _type)| p value[:errors].full_messages }
+  .on_failure do |_result, use_case|
     puts "#{use_case.class.name} was the use case responsible for the failure"
   end
 

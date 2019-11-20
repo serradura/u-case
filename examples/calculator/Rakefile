@@ -15,7 +15,7 @@ module Calc
   end
 end
 
-class PerformTask < Micro::Case::Base
+class PerformTask < Micro::Case
   attributes :args, :operation
 
   def call!
