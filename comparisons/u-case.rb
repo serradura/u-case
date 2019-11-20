@@ -1,4 +1,4 @@
-class CreateResponse < Micro::Case::Strict
+class CreateResponse < Micro::Case
   attributes :responder, :answers, :survey
 
   def call!
@@ -14,7 +14,7 @@ class CreateResponse < Micro::Case::Strict
   end
 end
 
-class AddRewardPoints < Micro::Case::Strict
+class AddRewardPoints < Micro::Case
   attributes :responder, :survey
 
   def call!
@@ -27,7 +27,7 @@ class AddRewardPoints < Micro::Case::Strict
   end
 end
 
-class SendNotifications < Micro::Case::Strict
+class SendNotifications < Micro::Case
   attributes :responder, :survey
 
   def call!
@@ -46,11 +46,11 @@ ReplyToSurvey = CreateResponse >> AddRewardPoints >> SendNotifications
 
 # or
 
-ReplyToSurvey = Micro::Case::Flow[
+ReplyToSurvey = Micro::Case::Flow([
   CreateResponse,
   AddRewardPoints,
   SendNotifications
-]
+])
 
 # or
 
