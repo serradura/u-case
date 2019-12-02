@@ -102,4 +102,23 @@ module Multiply
       Failure(:invalid_data)
     end
   end
+  class WithTrailblazerOperation < Trailblazer::Operation
+    step :normalize
+    step :calculate
+
+    private
+
+    def normalize(options, params:, **)
+      input = params.map { |key, value| [key.to_s, value] }.to_h
+
+      options[:a] = params['a']
+      options[:b] = params['b']
+    end
+
+    def calculate(options, a:, b:, **)
+      return unless !a.is_a?(Numeric) && !b.is_a?(Numeric)
+
+      options[:number] = a * b
+    end
+  end
 end
