@@ -12,17 +12,14 @@ gemfile do
 
   gem 'interactor', '~> 3.1', '>= 3.1.1'
 
+  gem 'trailblazer-operation', '~> 0.6.0'
+
   gem 'u-case', '~> 2.0.0'
 end
 
 require 'benchmark/ips'
 
 require_relative 'multiply'
-
-module Multiply
-  WithDryMonadsSingleton = WithDryMonads.new
-  WithDryTransactionSingleton = WithDryTransaction.new
-end
 
 SYMBOL_KEYS = { a: nil, b: 2 }
 STRING_KEYS = { 'a' => 1, 'b' => '' }
@@ -36,6 +33,21 @@ Benchmark.ips do |x|
   x.report('Interactor') do
     Multiply::WithInteractor.call(SYMBOL_KEYS)
     Multiply::WithInteractor.call(STRING_KEYS)
+  end
+
+  x.report('Trailblazer::Operation') do
+    Multiply::WithTrailblazerOperation.call(params: SYMBOL_KEYS)
+    Multiply::WithTrailblazerOperation.call(params: STRING_KEYS)
+  end
+
+  x.report('Dry::Monads') do
+    Multiply::WithDryMonads.new.call(SYMBOL_KEYS)
+    Multiply::WithDryMonads.new.call(STRING_KEYS)
+  end
+
+  x.report('Dry::Transaction') do
+    Multiply::WithDryTransaction.new.call(SYMBOL_KEYS)
+    Multiply::WithDryTransaction.new.call(STRING_KEYS)
   end
 
   x.report('Micro::Case') do
@@ -53,54 +65,33 @@ Benchmark.ips do |x|
     Multiply::WithMicroCaseSafe.call(STRING_KEYS)
   end
 
-  x.report('Dry::Monads') do
-    Multiply::WithDryMonadsSingleton.call(SYMBOL_KEYS)
-    Multiply::WithDryMonadsSingleton.call(STRING_KEYS)
-  end
-
-  x.report('Dry::Monads.new') do
-    Multiply::WithDryMonads.new.call(SYMBOL_KEYS)
-    Multiply::WithDryMonads.new.call(STRING_KEYS)
-  end
-
-  x.report('Dry::Transaction') do
-    Multiply::WithDryTransactionSingleton.call(SYMBOL_KEYS)
-    Multiply::WithDryTransactionSingleton.call(STRING_KEYS)
-  end
-
-  x.report('Dry::Transaction.new') do
-    Multiply::WithDryTransaction.new.call(SYMBOL_KEYS)
-    Multiply::WithDryTransaction.new.call(STRING_KEYS)
-  end
-
   x.compare!
 end
 
 # Warming up --------------------------------------
-#           Interactor     1.530k i/100ms
-#          Micro::Case    11.423k i/100ms
-#  Micro::Case::Strict     8.969k i/100ms
-#    Micro::Case::Safe    11.166k i/100ms
-#          Dry::Monads     6.909k i/100ms
-#      Dry::Monads.new     6.775k i/100ms
-#     Dry::Transaction     2.991k i/100ms
-# Dry::Transaction.new   515.000  i/100ms
+#           Interactor     1.331k i/100ms
+# Trailblazer::Operation
+#                          1.544k i/100ms
+#          Dry::Monads     6.343k i/100ms
+#     Dry::Transaction   456.000  i/100ms
+#          Micro::Case    10.429k i/100ms
+#  Micro::Case::Strict     8.109k i/100ms
+#    Micro::Case::Safe    10.280k i/100ms
 # Calculating -------------------------------------
-#           Interactor     15.567k (± 1.7%) i/s -     78.030k in   5.013901s
-#          Micro::Case    118.662k (± 1.8%) i/s -    593.996k in   5.007457s
-#  Micro::Case::Strict     93.161k (± 1.3%) i/s -    466.388k in   5.007143s
-#    Micro::Case::Safe    115.906k (± 1.6%) i/s -    580.632k in   5.010863s
-#          Dry::Monads     71.294k (± 1.4%) i/s -    359.268k in   5.040143s
-#      Dry::Monads.new     69.793k (± 1.7%) i/s -    352.300k in   5.049263s
-#     Dry::Transaction     30.256k (± 1.1%) i/s -    152.541k in   5.042370s
-# Dry::Transaction.new      5.156k (± 1.8%) i/s -     26.265k in   5.095326s
+#           Interactor     13.487k (± 1.9%) i/s -     67.881k in   5.035059s
+# Trailblazer::Operation
+#                          15.658k (± 1.6%) i/s -     78.744k in   5.030427s
+#          Dry::Monads     64.240k (± 1.8%) i/s -    323.493k in   5.037461s
+#     Dry::Transaction      4.567k (± 1.3%) i/s -     23.256k in   5.092699s
+#          Micro::Case    108.510k (± 2.3%) i/s -    542.308k in   5.000605s
+#  Micro::Case::Strict     83.527k (± 1.4%) i/s -    421.668k in   5.049245s
+#    Micro::Case::Safe    105.641k (± 3.7%) i/s -    534.560k in   5.067836s
 
 # Comparison:
-#          Micro::Case:   118661.7 i/s
-#    Micro::Case::Safe:   115906.0 i/s - same-ish: difference falls within error
-#  Micro::Case::Strict:    93160.8 i/s - 1.27x  slower
-#          Dry::Monads:    71294.4 i/s - 1.66x  slower
-#      Dry::Monads.new:    69793.0 i/s - 1.70x  slower
-#     Dry::Transaction:    30255.8 i/s - 3.92x  slower
-#           Interactor:    15567.0 i/s - 7.62x  slower
-# Dry::Transaction.new:     5156.5 i/s - 23.01x  slower
+#          Micro::Case:   108510.0 i/s
+#    Micro::Case::Safe:   105640.6 i/s - same-ish: difference falls within error
+#  Micro::Case::Strict:    83526.8 i/s - 1.30x  slower
+#          Dry::Monads:    64240.1 i/s - 1.69x  slower
+# Trailblazer::Operation:  15657.7 i/s - 6.93x  slower
+#           Interactor:    13486.7 i/s - 8.05x  slower
+#     Dry::Transaction:     4567.3 i/s - 23.76x  slower
