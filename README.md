@@ -18,7 +18,7 @@ The main project goals are:
 > Note: Check out the repo https://github.com/serradura/from-fat-controllers-to-use-cases to see a Rails application that uses this gem to handle its business logic.
 
 ## Table of Contents <!-- omit in toc -->
-- [μ-case (Micro::Case)](#μ-case-microcase)
+- [μ-case (Micro::Case)](#%ce%bc-case-microcase)
   - [Required Ruby version](#required-ruby-version)
   - [Dependencies](#dependencies)
   - [Installation](#installation)
@@ -34,10 +34,10 @@ The main project goals are:
     - [Micro::Case::Flow - How to compose use cases?](#microcaseflow---how-to-compose-use-cases)
       - [Is it possible to compose a use case flow with other ones?](#is-it-possible-to-compose-a-use-case-flow-with-other-ones)
       - [Is it possible a flow accumulates its input and merges each success result to use as the argument of their use cases?](#is-it-possible-a-flow-accumulates-its-input-and-merges-each-success-result-to-use-as-the-argument-of-their-use-cases)
-      - [Is it possible to declare a flow using the use case itself?](#is-it-possible-to-declare-a-flow-using-the-use-case-itself)
+      - [Is it possible to declare a flow which includes the use case itself?](#is-it-possible-to-declare-a-flow-which-includes-the-use-case-itself)
     - [Micro::Case::Strict - What is a strict use case?](#microcasestrict---what-is-a-strict-use-case)
     - [Micro::Case::Safe - Is there some feature to auto handle exceptions inside of a use case or flow?](#microcasesafe---is-there-some-feature-to-auto-handle-exceptions-inside-of-a-use-case-or-flow)
-    - [u-case/with_validation - How to validate use case attributes?](#u-casewith_validation---how-to-validate-use-case-attributes)
+    - [u-case/with_validation - How to validate use case attributes?](#u-casewithvalidation---how-to-validate-use-case-attributes)
       - [If I enabled the auto validation, is it possible to disable it only in specific use case classes?](#if-i-enabled-the-auto-validation-is-it-possible-to-disable-it-only-in-specific-use-case-classes)
   - [Benchmarks](#benchmarks)
     - [Micro::Case](#microcase)
@@ -47,10 +47,10 @@ The main project goals are:
     - [Micro::Case::Flow](#microcaseflow)
     - [Comparisons](#comparisons)
   - [Examples](#examples)
-    - [1️⃣ Rails App (API)](#1️⃣-rails-app-api)
-    - [2️⃣ CLI calculator](#2️⃣-cli-calculator)
-    - [3️⃣ Users creation](#3️⃣-users-creation)
-    - [4️⃣ Rescuing exception inside of the use cases](#4️⃣-rescuing-exception-inside-of-the-use-cases)
+    - [1️⃣ Rails App (API)](#1%ef%b8%8f%e2%83%a3-rails-app-api)
+    - [2️⃣ CLI calculator](#2%ef%b8%8f%e2%83%a3-cli-calculator)
+    - [3️⃣ Users creation](#3%ef%b8%8f%e2%83%a3-users-creation)
+    - [4️⃣ Rescuing exception inside of the use cases](#4%ef%b8%8f%e2%83%a3-rescuing-exception-inside-of-the-use-cases)
   - [Development](#development)
   - [Contributing](#contributing)
   - [License](#license)
@@ -604,7 +604,7 @@ Answer: Yes, it is! Check out these test examples [Micro::Case::Flow](https://gi
 
 [⬆️ Back to Top](#table-of-contents-)
 
-#### Is it possible to declare a flow using the use case itself?
+#### Is it possible to declare a flow which includes the use case itself?
 
 Answer: Yes, it is! You can use the `self.call!` macro. e.g:
 
@@ -626,16 +626,15 @@ class ConvertNumberToText < Micro::Case
 end
 
 class Double < Micro::Case
+  flow ConvertTextToNumber,
+       self.call!,
+       ConvertNumberToText
+
   attribute :number
 
   def call!
     Success { { number: number * 2 } }
   end
-
-  # NOTE: You need to declare the flow after the definition of the attributes.
-  flow ConvertTextToNumber,
-       self.call!,
-       ConvertNumberToText
 end
 
 result = Double.call(text: '4')
