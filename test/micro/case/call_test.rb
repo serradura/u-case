@@ -2,7 +2,7 @@ require 'ostruct'
 require 'test_helper'
 require 'support/steps'
 
-class Micro::Case::CallingTest < Minitest::Test
+class Micro::Case::CallTest < Minitest::Test
   Failure = Micro::Case::Result
 
   Add2ToAllNumbers1 = Micro::Case::Flow([

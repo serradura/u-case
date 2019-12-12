@@ -176,9 +176,7 @@ class Micro::Case::Flow::ReducerTest < Minitest::Test
   module UserTodos
     Create = Micro::Case::Flow([Users::Authenticate, Todos::Create])
 
-    class MarkAsDone
-      include Micro::Case::Flow
-
+    class MarkAsDone < Micro::Case
       flow Users::Authenticate,
            Todos::FetchByUser,
            Todos::SetToDone
