@@ -1,7 +1,6 @@
 require 'test_helper'
 
 if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
-  require 'u-case/with_validation'
 
   module Micro::Case::WithValidation::Safe
     class StrictTest < Minitest::Test
