@@ -14,6 +14,12 @@ module Micro
       @disable_auto_validation = true
     end
 
+    def initialize(input)
+      @__input = input
+      self.attributes = input
+      run_validations! if respond_to?(:run_validations!, true)
+    end
+
     def call
       return failure_by_validation_error(self) if !self.class.auto_validation_disabled? && invalid?
 

@@ -42,14 +42,35 @@ module Micro
       instance
     end
 
-    def self.__failure_type(arg, type)
-      return type if type != :error
+    def self.__get_flow__
+      @__flow
+    end
 
-      case arg
-      when Exception then :exception
-      when Symbol then arg
-      else type
-      end
+    private_class_method def self.__set_flow__(reducer, args)
+      def self.use_cases; __get_flow__.use_cases; end
+
+      self.class_eval('def use_cases; self.class.use_cases; end')
+
+      reducer.build(args)
+    end
+
+    def self.flow(*args)
+      @__flow ||= __set_flow__(Flow::Reducer, args)
+    end
+
+    def self.call!
+      return const_get(:Flow_Step) if const_defined?(:Flow_Step)
+
+      const_set(:Flow_Step, Class.new(self) do
+        private def __call
+          __call_use_case
+        end
+      end)
+    end
+
+    def initialize(input)
+      @__input = input
+      self.attributes = input
     end
 
     def call!
@@ -70,15 +91,17 @@ module Micro
     private
 
       def __call
+        return self.class.__get_flow__.call(@__input) if self.class.__get_flow__
+
+        __call_use_case
+      end
+
+      def __call_use_case
         result = call!
 
         return result if result.is_a?(Result)
 
         raise Error::UnexpectedResult.new(self.class)
-      end
-
-      def __get_result__
-        @__result ||= Result.new
       end
 
       def Success(arg = :ok)
@@ -89,9 +112,21 @@ module Micro
 
       def Failure(arg = :error)
         value = block_given? ? yield : arg
-        type = self.class.__failure_type(value, block_given? ? arg : :error)
+        type = __map_failure_type(value, block_given? ? arg : :error)
 
         __get_result__.__set__(false, value, type, self)
+      end
+
+      def __get_result__
+        @__result ||= Result.new
+      end
+
+      def __map_failure_type(arg, type)
+        return type if type != :error
+        return arg if arg.is_a?(Symbol)
+        return :exception if arg.is_a?(Exception)
+
+        type
       end
   end
 end
