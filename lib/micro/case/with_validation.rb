@@ -20,16 +20,22 @@ module Micro
       run_validations! if respond_to?(:run_validations!, true)
     end
 
-    def call
-      return failure_by_validation_error(self) if !self.class.auto_validation_disabled? && invalid?
+    private
 
-      __call
-    end
+      def __call_use_case
+        return failure_by_validation_error(self) if !self.class.auto_validation_disabled? && invalid?
 
-    private def failure_by_validation_error(object)
-      errors = object.respond_to?(:errors) ? object.errors : object
+        result = call!
 
-      Failure(:validation_error) { { errors: errors } }
-    end
+        return result if result.is_a?(Result)
+
+        raise Error::UnexpectedResult.new(self.class)
+      end
+
+      def failure_by_validation_error(object)
+        errors = object.respond_to?(:errors) ? object.errors : object
+
+        Failure(:validation_error) { { errors: errors } }
+      end
   end
 end
