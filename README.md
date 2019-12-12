@@ -15,6 +15,8 @@ The main project goals are:
 4. Solve complex business logic, by allowing the composition of use cases.
 5. Be fast and optimized (Check out the [benchmarks](#benchmarks) section).
 
+> Note: Check out the repo https://github.com/serradura/from-fat-controllers-to-use-cases to see a Rails application that uses this gem to handle its business logic.
+
 ## Table of Contents <!-- omit in toc -->
 - [μ-case (Micro::Case)](#μ-case-microcase)
   - [Required Ruby version](#required-ruby-version)
@@ -45,6 +47,10 @@ The main project goals are:
     - [Micro::Case::Flow](#microcaseflow)
     - [Comparisons](#comparisons)
   - [Examples](#examples)
+    - [1️⃣ Rails App (API)](#1️⃣-rails-app-api)
+    - [2️⃣ CLI calculator](#2️⃣-cli-calculator)
+    - [3️⃣ Users creation](#3️⃣-users-creation)
+    - [4️⃣ Rescuing exception inside of the use cases](#4️⃣-rescuing-exception-inside-of-the-use-cases)
   - [Development](#development)
   - [Contributing](#contributing)
   - [License](#license)
@@ -1022,13 +1028,27 @@ Check it out implementations of the same use case with different gems/abstractio
 
 ## Examples
 
-1. [Rescuing an exception inside of use cases](https://github.com/serradura/u-case/blob/master/examples/rescuing_exceptions.rb)
-2. [Users creation](https://github.com/serradura/u-case/blob/master/examples/users_creation.rb)
+### 1️⃣ Rails App (API)
 
-    An example of flow in how to define steps to sanitize, validate, and persist some input data.
-3. [CLI calculator](https://github.com/serradura/u-case/tree/master/examples/calculator)
+> This project shows different kinds of architecture (one per commit), and in the last one, how to use the Micro::Case gem to handle the application business logic.
+>
+> Link: https://github.com/serradura/from-fat-controllers-to-use-cases
 
-    A more complex example which use rake tasks to demonstrate how to handle user data, and how to use different failures type to control the program flow.
+### 2️⃣ CLI calculator
+
+> Rake tasks to demonstrate how to handle user data, and how to use different failure types to control the program flow.
+>
+> Link: https://github.com/serradura/u-case/tree/master/examples/calculator
+
+### 3️⃣ Users creation
+
+> An example of a use case flow that define steps to sanitize, validate, and persist its input data.
+>
+> Link: https://github.com/serradura/u-case/blob/master/examples/users_creation.rb
+
+### 4️⃣ Rescuing exception inside of the use cases
+
+> Link: https://github.com/serradura/u-case/blob/master/examples/rescuing_exceptions.rb
 
 [⬆️ Back to Top](#table-of-contents-)
 
