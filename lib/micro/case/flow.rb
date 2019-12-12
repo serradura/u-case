@@ -29,7 +29,10 @@ module Micro
 
       private_constant :ClassMethods, :CONSTRUCTOR
 
+      # Deprecated: Classes with flows are now defined via `Micro::Case` inheritance
       def self.included(base)
+        warn 'Deprecation: Micro::Case::Flow mixin is being deprecated, please use `Micro::Case` inheritance instead.'
+
         def base.flow_reducer; Reducer; end
 
         base.extend(ClassMethods)
