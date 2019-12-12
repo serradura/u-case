@@ -19,15 +19,15 @@ module Micro::Case::Flow::WithClasses
     end
 
     class Double < Micro::Case
+      flow ConvertTextToNumber,
+           self.call!,
+           ConvertNumberToText
+
       attribute :number
 
       def call!
         Success { { number: number * 2 } }
       end
-
-      flow ConvertTextToNumber,
-           self.call!,
-           ConvertNumberToText
     end
 
     def test_the_use_case_result

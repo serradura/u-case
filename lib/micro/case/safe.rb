@@ -4,7 +4,7 @@ module Micro
   class Case
     class Safe < ::Micro::Case
       def call
-        super
+        __call
       rescue => exception
         raise exception if Error::ByWrongUsage.check(exception)
 

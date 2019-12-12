@@ -15,21 +15,19 @@ module Micro
     end
 
     def initialize(input)
-      @__input = input
-      self.attributes = input
+      __setup_use_case(input)
+
       run_validations! if respond_to?(:run_validations!, true)
     end
 
     private
 
-      def __call_use_case
+      def __call
+        return __call_use_case_flow if __call_use_case_flow?
+
         return failure_by_validation_error(self) if !self.class.auto_validation_disabled? && invalid?
 
-        result = call!
-
-        return result if result.is_a?(Result)
-
-        raise Error::UnexpectedResult.new(self.class)
+        __call_use_case
       end
 
       def failure_by_validation_error(object)
