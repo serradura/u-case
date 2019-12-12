@@ -10,10 +10,9 @@ class Micro::Case::Safe::Flow::BlendTest < Minitest::Test
     Steps::Double
   ])
 
-  class SquareAllNumbers
-    include Micro::Case::Safe::Flow
-
-    flow Steps::ConvertToNumbers, Steps::Square
+  class SquareAllNumbers < Micro::Case::Safe
+    flow Steps::ConvertToNumbers,
+         Steps::Square
   end
 
   DoubleAllNumbersAndAdd2 = DoubleAllNumbers & Steps::Add2
@@ -24,10 +23,9 @@ class Micro::Case::Safe::Flow::BlendTest < Minitest::Test
 
   SquareAllNumbersAndDouble = SquareAllNumbersAndAdd2 & DoubleAllNumbers
 
-  class DoubleAllNumbersAndSquareAndAdd2
-    include Micro::Case::Safe::Flow
-
-    flow DoubleAllNumbers, SquareAllNumbersAndAdd2
+  class DoubleAllNumbersAndSquareAndAdd2 < Micro::Case::Safe
+    flow DoubleAllNumbers,
+         SquareAllNumbersAndAdd2
   end
 
   EXAMPLES = [
@@ -71,10 +69,9 @@ class Micro::Case::Safe::Flow::BlendTest < Minitest::Test
     DivideNumbersByZero
   ])
 
-  class SquareAllNumbersAndDivideByZero
-    include Micro::Case::Safe::Flow
-
-    flow SquareAllNumbers, DivideNumbersByZero
+  class SquareAllNumbersAndDivideByZero < Micro::Case::Safe
+    flow SquareAllNumbers,
+         DivideNumbersByZero
   end
 
   def test_the_expection_interception

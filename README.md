@@ -8,7 +8,7 @@
 
 Create simple and powerful use cases as objects.
 
-The main goals of this project are:
+The main project goals are:
 1. Be simple to use and easy to learn (input **>>** process / transform **>>** output).
 2. Promote referential transparency (transforming instead of modifying) and data integrity.
 3. No callbacks (e.g: before, after, around).
@@ -21,27 +21,28 @@ The main goals of this project are:
   - [Dependencies](#dependencies)
   - [Installation](#installation)
   - [Usage](#usage)
-    - [`Micro::Case` - How to define a use case?](#microcase---how-to-define-a-use-case)
-    - [`Micro::Case::Result` - What is a use case result?](#microcaseresult---what-is-a-use-case-result)
+    - [Micro::Case - How to define a use case?](#microcase---how-to-define-a-use-case)
+    - [Micro::Case::Result - What is a use case result?](#microcaseresult---what-is-a-use-case-result)
       - [What are the default result types?](#what-are-the-default-result-types)
       - [How to define custom result types?](#how-to-define-custom-result-types)
       - [Is it possible to define a custom result type without a block?](#is-it-possible-to-define-a-custom-result-type-without-a-block)
       - [How to use the result hooks?](#how-to-use-the-result-hooks)
       - [Why the failure hook (without a type) exposes a different kind of data?](#why-the-failure-hook-without-a-type-exposes-a-different-kind-of-data)
       - [What happens if a result hook was declared multiple times?](#what-happens-if-a-result-hook-was-declared-multiple-times)
-    - [`Micro::Case::Flow` - How to compose use cases?](#microcaseflow---how-to-compose-use-cases)
+    - [Micro::Case::Flow - How to compose use cases?](#microcaseflow---how-to-compose-use-cases)
       - [Is it possible to compose a use case flow with other ones?](#is-it-possible-to-compose-a-use-case-flow-with-other-ones)
       - [Is it possible a flow accumulates its input and merges each success result to use as the argument of their use cases?](#is-it-possible-a-flow-accumulates-its-input-and-merges-each-success-result-to-use-as-the-argument-of-their-use-cases)
-    - [`Micro::Case::Strict` - What is a strict use case?](#microcasestrict---what-is-a-strict-use-case)
-    - [`Micro::Case::Safe` - Is there some feature to auto handle exceptions inside of a use case or flow?](#microcasesafe---is-there-some-feature-to-auto-handle-exceptions-inside-of-a-use-case-or-flow)
-    - [`u-case/with_validation` - How to validate use case attributes?](#u-casewith_validation---how-to-validate-use-case-attributes)
+      - [Is it possible to declare a flow using the use case itself?](#is-it-possible-to-declare-a-flow-using-the-use-case-itself)
+    - [Micro::Case::Strict - What is a strict use case?](#microcasestrict---what-is-a-strict-use-case)
+    - [Micro::Case::Safe - Is there some feature to auto handle exceptions inside of a use case or flow?](#microcasesafe---is-there-some-feature-to-auto-handle-exceptions-inside-of-a-use-case-or-flow)
+    - [u-case/with_validation - How to validate use case attributes?](#u-casewith_validation---how-to-validate-use-case-attributes)
       - [If I enabled the auto validation, is it possible to disable it only in specific use case classes?](#if-i-enabled-the-auto-validation-is-it-possible-to-disable-it-only-in-specific-use-case-classes)
   - [Benchmarks](#benchmarks)
-    - [`Micro::Case`](#microcase)
+    - [Micro::Case](#microcase)
       - [Best overall](#best-overall)
       - [Success results](#success-results)
       - [Failure results](#failure-results)
-    - [`Micro::Case::Flow`](#microcaseflow)
+    - [Micro::Case::Flow](#microcaseflow)
     - [Comparisons](#comparisons)
   - [Examples](#examples)
   - [Development](#development)
@@ -472,15 +473,30 @@ p result.value    # {:numbers => [3, 3, 4, 4, 5, 6]}
 # An alternative way to create a flow using classes #
 #---------------------------------------------------#
 
-class DoubleAllNumbers
-  include Micro::Case::Flow
-
-  flow Steps::ConvertTextToNumbers, Steps::Double
+class DoubleAllNumbers < Micro::Case
+  flow Steps::ConvertTextToNumbers,
+       Steps::Double
 end
 
 DoubleAllNumbers
   .call(numbers: %w[1 1 b 2 3 4])
   .on_failure { |message| p message } # "numbers must contain only numeric types"
+
+# !------------------------------------ ! #
+# ! Deprecated: Micro::Case::Flow mixin ! #
+# !-------------------------------------! #
+
+# The code below still works, but it will output a warning message:
+# Deprecation: Micro::Case::Flow mixin is being deprecated, please use `Micro::Case` inheritance instead.
+
+class DoubleAllNumbers
+  include Micro::Case::Flow
+
+  flow Steps::ConvertTextToNumbers,
+       Steps::Double
+end
+
+# Note: This feature will be removed in the next major release (3.0)
 
 #-------------------------------------------------------------#
 # Another way to create a flow using the composition operator #
@@ -582,6 +598,51 @@ Answer: Yes, it is! Check out these test examples [Micro::Case::Flow](https://gi
 
 [⬆️ Back to Top](#table-of-contents-)
 
+#### Is it possible to declare a flow using the use case itself?
+
+Answer: Yes, it is! You can use the `self.call!` macro. e.g:
+
+```ruby
+class ConvertTextToNumber < Micro::Case
+  attribute :text
+
+  def call!
+    Success { { number: text.to_i } }
+  end
+end
+
+class ConvertNumberToText < Micro::Case
+  attribute :number
+
+  def call!
+    Success { { text: number.to_s } }
+  end
+end
+
+class Double < Micro::Case
+  attribute :number
+
+  def call!
+    Success { { number: number * 2 } }
+  end
+
+  # NOTE: You need to declare the flow after the definition of the attributes.
+  flow ConvertTextToNumber,
+       self.call!,
+       ConvertNumberToText
+end
+
+result = Double.call(text: '4')
+
+result.success? # true
+result.value    # "8"
+
+# NOTE: This feature can be used with the Micro::Case::Safe.
+#       Checkout the test: test/micro/case/safe/flow/with_classes/using_itself_test.rb
+```
+
+[⬆️ Back to Top](#table-of-contents-)
+
 ### `Micro::Case::Strict` - What is a strict use case?
 
 Answer: Is a use case which will require all the keywords (attributes) on its initialization.
@@ -663,17 +724,7 @@ end
 # Note:
 # The ampersand is based on the safe navigation operator. https://ruby-doc.org/core-2.6/doc/syntax/calling_methods_rdoc.html#label-Safe+navigation+operator
 
-# The alternatives are:
-
-module Users
-  class Create
-    include Micro::Case::Safe::Flow
-
-    flow ProcessParams, ValidateParams, Persist, SendToCRM
-  end
-end
-
-# or
+# The alternatives to declare a safe flow are:
 
 module Users
   Create = Micro::Case::Safe::Flow([
@@ -683,6 +734,35 @@ module Users
     SendToCRM
   ])
 end
+
+# or within classes
+
+module Users
+  class Create < Micro::Case::Safe
+    flow ProcessParams,
+         ValidateParams,
+         Persist,
+         SendToCRM
+  end
+end
+
+
+# !------------------------------------------ ! #
+# ! Deprecated: Micro::Case::Safe::Flow mixin ! #
+# !-------------------------------------------! #
+
+# The code below still works, but it will output a warning message:
+# Deprecation: Micro::Case::Flow mixin is being deprecated, please use `Micro::Case` inheritance instead.
+
+module Users
+  class Create
+    include Micro::Case::Safe::Flow
+
+    flow ProcessParams, ValidateParams, Persist, SendToCRM
+  end
+end
+
+# Note: This feature will be removed in the next major release (3.0)
 ```
 
 [⬆️ Back to Top](#table-of-contents-)

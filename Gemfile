@@ -2,14 +2,14 @@ source "https://rubygems.org"
 
 git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
 
-activemodel_version = ENV.fetch('ACTIVEMODEL_VERSION', '6.1')
+activemodel_version = ENV.fetch('ACTIVEMODEL_VERSION', '6.1.0')
 
 activemodel = case activemodel_version
               when '3.2' then '3.2.22'
               when '5.2' then '5.2.3'
               end
 
-if activemodel_version < '6.1'
+if activemodel_version < '6.1.0'
   gem 'activemodel', activemodel, require: false
   gem 'activesupport', activemodel, require: false
 end
