@@ -10,10 +10,9 @@ class Micro::Case::Flow::BlendTest < Minitest::Test
     Steps::Double
   ])
 
-  class SquareAllNumbers
-    include Micro::Case::Flow
-
-    flow Steps::ConvertToNumbers, Steps::Square
+  class SquareAllNumbers < Micro::Case
+    flow Steps::ConvertToNumbers,
+         Steps::Square
   end
 
   DoubleAllNumbersAndAdd2 = DoubleAllNumbers >> Steps::Add2
@@ -24,10 +23,9 @@ class Micro::Case::Flow::BlendTest < Minitest::Test
 
   SquareAllNumbersAndDouble = SquareAllNumbersAndAdd2 >> DoubleAllNumbers
 
-  class DoubleAllNumbersAndSquareAndAdd2
-    include Micro::Case::Flow
-
-    flow DoubleAllNumbers, SquareAllNumbersAndAdd2
+  class DoubleAllNumbersAndSquareAndAdd2 < Micro::Case
+    flow DoubleAllNumbers,
+         SquareAllNumbersAndAdd2
   end
 
   EXAMPLES = [
