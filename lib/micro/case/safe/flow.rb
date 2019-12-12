@@ -36,8 +36,8 @@ module Micro
         Flow::Reducer.build(Array(args))
       end
 
-      def self.flow(*args)
-        @__flow ||= __set_flow__(Flow::Reducer, args)
+      def self.__flow_reducer
+        Flow::Reducer
       end
     end
   end

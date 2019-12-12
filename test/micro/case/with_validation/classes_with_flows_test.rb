@@ -21,6 +21,10 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
       end
 
       class Double < Micro::Case
+        flow ConvertTextToNumber,
+            self.call!,
+            ConvertNumberToText
+
         attribute :number
 
         validates :number, numericality: { only_integer: true }
@@ -28,10 +32,6 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
         def call!
           Success { { number: number * 2 } }
         end
-
-        flow ConvertTextToNumber,
-            self.call!,
-            ConvertNumberToText
       end
 
       def test_the_use_case_result

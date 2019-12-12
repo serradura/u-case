@@ -42,23 +42,7 @@ module Micro
       instance
     end
 
-    def self.__get_flow__
-      @__flow
-    end
-
-    private_class_method def self.__set_flow__(reducer, args)
-      def self.use_cases; __get_flow__.use_cases; end
-
-      self.class_eval('def use_cases; self.class.use_cases; end')
-
-      reducer.build(args)
-    end
-
-    def self.flow(*args)
-      @__flow ||= __set_flow__(Flow::Reducer, args)
-    end
-
-    def self.call!
+    def self.__call!
       return const_get(:Flow_Step) if const_defined?(:Flow_Step)
 
       const_set(:Flow_Step, Class.new(self) do
@@ -68,9 +52,47 @@ module Micro
       end)
     end
 
+    def self.call!
+      self
+    end
+
+    def self.__flow_reducer
+      Flow::Reducer
+    end
+
+    def self.__flow_get
+      @__flow
+    end
+
+    private_class_method def self.__flow_use_cases_set(args)
+      @__flow_use_cases = args
+    end
+
+    private_class_method def self.__flow_use_cases_get
+      Array(@__flow_use_cases)
+        .map { |use_case| use_case == self ? self.__call! : use_case }
+    end
+
+    private_class_method def self.__flow_set(args)
+      return if __flow_get
+
+      def self.use_cases; __flow_get.use_cases; end
+
+      self.class_eval('def use_cases; self.class.use_cases; end')
+
+      @__flow = __flow_reducer.build(args)
+    end
+
+    def self.__flow_set!
+      __flow_set(__flow_use_cases_get) if !__flow_get && @__flow_use_cases
+    end
+
+    def self.flow(*args)
+      __flow_use_cases_set(args)
+    end
+
     def initialize(input)
-      @__input = input
-      self.attributes = input
+      __setup_use_case(input)
     end
 
     def call!
@@ -90,8 +112,16 @@ module Micro
 
     private
 
+      def __setup_use_case(input)
+        self.class.__flow_set!
+
+        @__input = input
+
+        self.attributes = input
+      end
+
       def __call
-        return self.class.__get_flow__.call(@__input) if self.class.__get_flow__
+        return __call_use_case_flow if __call_use_case_flow?
 
         __call_use_case
       end
@@ -102,6 +132,14 @@ module Micro
         return result if result.is_a?(Result)
 
         raise Error::UnexpectedResult.new(self.class)
+      end
+
+      def __call_use_case_flow?
+        self.class.__flow_get
+      end
+
+      def __call_use_case_flow
+        self.class.__flow_get.call(@__input)
       end
 
       def Success(arg = :ok)
