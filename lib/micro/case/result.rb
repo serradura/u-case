@@ -3,17 +3,27 @@
 module Micro
   class Case
     class Result
-      class Data
-        attr_reader :value, :type
+      module DataMethods
+        def to_h; data; end
 
-        def initialize(value, type)
-          @value, @type = value, type
+        def [](name); data[name]; end
+      end
+
+      class State
+        include DataMethods
+
+        attr_reader :value, :type, :data
+
+        def initialize(value, type, data)
+          @value, @type, @data = value, type, data
         end
 
         def to_ary; [value, type]; end
       end
 
-      private_constant :Data
+      private_constant :State, :DataMethods
+
+      include DataMethods
 
       attr_reader :value, :type
 
@@ -40,6 +50,12 @@ module Micro
         raise Error::InvalidAccessToTheUseCaseObject
       end
 
+      def data
+        return { value => true } if value == type
+
+        value.is_a?(::Hash) ? value : { value: value }
+      end
+
       def on_success(expected_type = nil)
         self.tap { yield(value) if success_type?(expected_type) }
       end
@@ -47,9 +63,10 @@ module Micro
       def on_failure(expected_type = nil)
         return self unless failure_type?(expected_type)
 
-        data = expected_type.nil? ? Data.new(value, type).tap(&:freeze) : value
+        output =
+          expected_type.nil? ? State.new(value, type, data).tap(&:freeze) : value
 
-        self.tap { yield(data, @use_case) }
+        self.tap { yield(output, @use_case) }
       end
 
       def then(arg = nil, &block)

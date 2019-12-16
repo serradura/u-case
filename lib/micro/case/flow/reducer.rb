@@ -26,13 +26,12 @@ module Micro
         end
 
         def call(arg = {})
-          memo = arg.is_a?(Hash) ? arg.dup : {}
+          input = arg.is_a?(Hash) ? arg.dup : {}
 
           @use_cases.reduce(initial_result(arg)) do |result, use_case|
             break result if result.failure?
 
-            value = result.value
-            input = value.is_a?(Hash) ? memo.tap { |data| data.merge!(value) } : value
+            input.merge!(result.data)
 
             use_case_result(use_case, result, input)
           end
@@ -61,7 +60,7 @@ module Micro
             return arg if arg.is_a?(Micro::Case::Result)
 
             result = ::Micro::Case::Result.new
-            result.__set__(true, arg, :ok, nil)
+            result.__set__(true, Attributes::AttributesUtils.hash_argument!(arg), :ok, nil)
           end
 
           def arg_to_call?(arg)

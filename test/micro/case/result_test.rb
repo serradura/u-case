@@ -130,4 +130,63 @@ class Micro::Case::ResultTest < Minitest::Test
       result.__set__(true, :value, 'type', nil)
     end
   end
+
+  def test_the_data_method
+    use_case = Micro::Case.new({})
+
+    # ---
+
+    result0 = success_result(value: 0, type: :ok)
+
+    assert_equal({ value: 0 }, result0.data)
+    assert_equal(result0.data, result0.to_h)
+    assert_equal(0, result0[:value])
+
+    # ---
+
+    result1 = failure_result(value: 1, type: :error, use_case: use_case)
+
+    assert_equal({ value: 1 }, result1.data)
+    assert_equal(result1.data, result1.to_h)
+    assert_equal(1, result1[:value])
+
+    assert_predicate(result1, :failure?)
+
+    result1.on_failure do |result|
+      assert_equal({ value: 1 }, result.data)
+      assert_equal(result1.data, result1.to_h)
+      assert_equal(1, result1[:value])
+    end
+
+    # ---
+
+    result2 = failure_result(value: :invalid_data, type: :invalid_data, use_case: use_case)
+
+    assert_equal({ invalid_data: true }, result2.data)
+    assert_equal(result2.data, result2.to_h)
+    assert_equal(true, result2[:invalid_data])
+
+    assert_predicate(result2, :failure?)
+
+    result2.on_failure do |result|
+      assert_equal({ invalid_data: true }, result.data)
+      assert_equal(result2.data, result2.to_h)
+      assert_equal(true, result2[:invalid_data])
+    end
+
+    # ---
+
+    result3 = failure_result(value: { one: 1, two: 2 }, type: :error, use_case: use_case)
+
+    assert_equal({ one: 1, two: 2 }, result3.data)
+
+    assert_predicate(result3, :failure?)
+
+    result3.on_failure do |result|
+      assert_equal({ one: 1, two: 2 }, result.data)
+      assert_equal(result3.data, result3.to_h)
+      assert_equal(1, result3[:one])
+      assert_equal(2, result3[:two])
+    end
+  end
 end
