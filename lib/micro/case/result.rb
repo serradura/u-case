@@ -56,13 +56,14 @@ module Micro
         can_yield_self = respond_to?(:yield_self)
 
         if block
-          raise NotImplementedError if !can_yield_self || (can_yield_self && arg)
+          raise Error::InvalidInvocationOfTheThenMethod if arg
+          raise NotImplementedError if !can_yield_self
 
           yield_self(&block)
         else
           return yield_self if !arg && can_yield_self
 
-          raise NotImplementedError if !is_a_use_case?(arg)
+          raise Error::InvalidInvocationOfTheThenMethod if !is_a_use_case?(arg)
 
           return self if failure?
 

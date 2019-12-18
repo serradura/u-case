@@ -23,16 +23,16 @@ class Micro::Case::Result::ThenTest < Minitest::Test
       assert_raises(NotImplementedError) { result1.then { 0 } }
       assert_raises(NotImplementedError) { result2.then { 0 } }
 
-      assert_raises(NotImplementedError) { result1.then(1) { 0 } }
-      assert_raises(NotImplementedError) { result2.then(1) { 0 } }
+      assert_raises(Micro::Case::Error::InvalidInvocationOfTheThenMethod) { result1.then(1) { 0 } }
+      assert_raises(Micro::Case::Error::InvalidInvocationOfTheThenMethod) { result2.then(1) { 0 } }
     end
   else
     def test_not_implemented_error
       result1 = success_result(value: 0)
       result2 = failure_result(value: 1)
 
-      assert_raises(NotImplementedError) { result1.then(1) { 0 } }
-      assert_raises(NotImplementedError) { result2.then(1) { 0 } }
+      assert_raises(Micro::Case::Error::InvalidInvocationOfTheThenMethod) { result1.then(1) { 0 } }
+      assert_raises(Micro::Case::Error::InvalidInvocationOfTheThenMethod) { result2.then(1) { 0 } }
     end
 
     def test_the_method_then_with_a_block
@@ -56,8 +56,8 @@ class Micro::Case::Result::ThenTest < Minitest::Test
     result1 = success_result(value: 0)
     result2 = failure_result(value: 1)
 
-    assert_raises(NotImplementedError) { result1.then(1) }
-    assert_raises(NotImplementedError) { result2.then(1) }
+    assert_raises(Micro::Case::Error::InvalidInvocationOfTheThenMethod) { result1.then(1) }
+    assert_raises(Micro::Case::Error::InvalidInvocationOfTheThenMethod) { result2.then(1) }
   end
 
   class Add3 < Micro::Case
