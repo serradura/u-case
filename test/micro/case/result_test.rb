@@ -3,16 +3,16 @@ require 'test_helper'
 class Micro::Case::ResultTest < Minitest::Test
   def build_result(success:, value:, type:, use_case: nil)
     result = Micro::Case::Result.new
-    result.__set__(success, value, type, use_case)
+    result.__set__(success, value, type, use_case || Micro::Case.new({}))
     result
   end
 
   def failure_result(options = {})
-    build_result(**options.merge(success: false))
+    build_result(**{ type: :error }.merge(options).merge(success: false))
   end
 
   def success_result(options = {})
-    build_result(**options.merge(success: true))
+    build_result(**{ type: :ok }.merge(options).merge(success: true))
   end
 
   def test_success_result
