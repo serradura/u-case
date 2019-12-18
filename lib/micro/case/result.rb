@@ -52,6 +52,24 @@ module Micro
         self.tap { yield(data, @use_case) }
       end
 
+      def then(arg = nil, &block)
+        can_yield_self = respond_to?(:yield_self)
+
+        if block
+          raise NotImplementedError if !can_yield_self || (can_yield_self && arg)
+
+          yield_self(&block)
+        else
+          return yield_self if !arg && can_yield_self
+
+          raise NotImplementedError if !is_a_use_case?(arg)
+
+          return self if failure?
+
+          arg.call(self.value)
+        end
+      end
+
       private
 
         def success_type?(expected_type)
