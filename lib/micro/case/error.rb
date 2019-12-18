@@ -9,20 +9,36 @@ module Micro
         def initialize(klass); super(klass.name + MESSAGE); end
       end
 
-      ResultIsAlreadyDefined = ArgumentError.new('result is already defined'.freeze)
+      class ResultIsAlreadyDefined < ArgumentError
+        def initialize; super('result is already defined'.freeze); end
+      end
 
-      InvalidResultType = TypeError.new('type must be a Symbol'.freeze)
-      InvalidResultInstance = ArgumentError.new('argument must be an instance of Micro::Case::Result'.freeze)
+      class InvalidResultType < TypeError
+        def initialize; super('type must be a Symbol'.freeze); end
+      end
 
-      InvalidUseCase = TypeError.new('use case must be a kind or an instance of Micro::Case'.freeze)
-      InvalidUseCases = ArgumentError.new('argument must be a collection of `Micro::Case` classes'.freeze)
+      class InvalidResultInstance < ArgumentError
+        def initialize; super('argument must be an instance of Micro::Case::Result'.freeze); end
+      end
 
-      UndefinedFlow = ArgumentError.new("This class hasn't declared its flow. Please, use the `flow()` macro to define one.".freeze)
+      class InvalidUseCase < TypeError
+        def initialize; super('use case must be a kind or an instance of Micro::Case'.freeze); end
+      end
+
+      class InvalidUseCases < ArgumentError
+        def initialize; super('argument must be a collection of `Micro::Case` classes'.freeze); end
+      end
+
+      class InvalidInvocationOfTheThenMethod < StandardError
+        def initialize; super('Invalid invocation of the Micro::Case::Result#then method'); end
+      end
+
+      class UndefinedFlow < ArgumentError
+        def initialize; super("This class hasn't declared its flow. Please, use the `flow()` macro to define one.".freeze); end
+      end
 
       class InvalidAccessToTheUseCaseObject < StandardError
-        MSG = 'only a failure result can access its use case object'.freeze
-
-        def initialize(message = MSG); super; end
+        def initialize; super('only a failure result can access its use case object'.freeze); end
       end
 
       module ByWrongUsage
