@@ -18,7 +18,7 @@ The main project goals are:
 > Note: Check out the repo https://github.com/serradura/from-fat-controllers-to-use-cases to see a Rails application that uses this gem to handle its business logic.
 
 ## Table of Contents <!-- omit in toc -->
-- [μ-case (Micro::Case)](#%ce%bc-case-microcase)
+- [μ-case (Micro::Case)](#μ-case-microcase)
   - [Required Ruby version](#required-ruby-version)
   - [Dependencies](#dependencies)
   - [Installation](#installation)
@@ -31,13 +31,14 @@ The main project goals are:
       - [How to use the result hooks?](#how-to-use-the-result-hooks)
       - [Why the failure hook (without a type) exposes a different kind of data?](#why-the-failure-hook-without-a-type-exposes-a-different-kind-of-data)
       - [What happens if a result hook was declared multiple times?](#what-happens-if-a-result-hook-was-declared-multiple-times)
+      - [How to use the Micro::Case::Result#then method?](#how-to-use-the-microcaseresultthen-method)
     - [Micro::Case::Flow - How to compose use cases?](#microcaseflow---how-to-compose-use-cases)
       - [Is it possible to compose a use case flow with other ones?](#is-it-possible-to-compose-a-use-case-flow-with-other-ones)
       - [Is it possible a flow accumulates its input and merges each success result to use as the argument of their use cases?](#is-it-possible-a-flow-accumulates-its-input-and-merges-each-success-result-to-use-as-the-argument-of-their-use-cases)
       - [Is it possible to declare a flow which includes the use case itself?](#is-it-possible-to-declare-a-flow-which-includes-the-use-case-itself)
     - [Micro::Case::Strict - What is a strict use case?](#microcasestrict---what-is-a-strict-use-case)
     - [Micro::Case::Safe - Is there some feature to auto handle exceptions inside of a use case or flow?](#microcasesafe---is-there-some-feature-to-auto-handle-exceptions-inside-of-a-use-case-or-flow)
-    - [u-case/with_validation - How to validate use case attributes?](#u-casewithvalidation---how-to-validate-use-case-attributes)
+    - [u-case/with_validation - How to validate use case attributes?](#u-casewith_validation---how-to-validate-use-case-attributes)
       - [If I enabled the auto validation, is it possible to disable it only in specific use case classes?](#if-i-enabled-the-auto-validation-is-it-possible-to-disable-it-only-in-specific-use-case-classes)
   - [Benchmarks](#benchmarks)
     - [Micro::Case](#microcase)
@@ -47,10 +48,10 @@ The main project goals are:
     - [Micro::Case::Flow](#microcaseflow)
     - [Comparisons](#comparisons)
   - [Examples](#examples)
-    - [1️⃣ Rails App (API)](#1%ef%b8%8f%e2%83%a3-rails-app-api)
-    - [2️⃣ CLI calculator](#2%ef%b8%8f%e2%83%a3-cli-calculator)
-    - [3️⃣ Users creation](#3%ef%b8%8f%e2%83%a3-users-creation)
-    - [4️⃣ Rescuing exception inside of the use cases](#4%ef%b8%8f%e2%83%a3-rescuing-exception-inside-of-the-use-cases)
+    - [1️⃣ Rails App (API)](#1️⃣-rails-app-api)
+    - [2️⃣ CLI calculator](#2️⃣-cli-calculator)
+    - [3️⃣ Users creation](#3️⃣-users-creation)
+    - [4️⃣ Rescuing exception inside of the use cases](#4️⃣-rescuing-exception-inside-of-the-use-cases)
   - [Development](#development)
   - [Contributing](#contributing)
   - [License](#license)
@@ -145,6 +146,7 @@ A `Micro::Case::Result` stores the use cases output data. These are their main m
 - `#type` a Symbol which gives meaning for the result, this is useful to declare different types of failures or success.
 - `#on_success` or `#on_failure` are hook methods that help you define the application flow.
 - `#use_case` if is a failure result, the use case responsible for it will be accessible through this method. This feature is handy to handle a flow failure (this topic will be covered ahead).
+- `#then` allows if the current result is a success, the `then` method will allow to applying a new use case for its value.
 
 [⬆️ Back to Top](#table-of-contents-)
 
@@ -413,6 +415,48 @@ result.on_success { |number| accum += number }
 accum # 24
 
 result.value * 4 == accum # true
+```
+
+#### How to use the `Micro::Case::Result#then` method?
+
+```ruby
+class ForbidNegativeNumber < Micro::Case
+  attribute :number
+
+  def call!
+    return Success { attributes } if number >= 0
+
+    Failure { attributes }
+  end
+end
+
+class Add3 < Micro::Case
+  attribute :number
+
+  def call!
+    Success { { number: number + 3 } }
+  end
+end
+
+result1 =
+  ForbidNegativeNumber
+    .call(number: -1)
+    .then(Add3)
+
+result1.type     # :error
+result1.value    # {'number' => -1}
+result1.failure? # true
+
+# ---
+
+result2 =
+  ForbidNegativeNumber
+    .call(number: 1)
+    .then(Add3)
+
+result2.type     # :ok
+result2.value    # {'number' => 4}
+result2.success? # true
 ```
 
 [⬆️ Back to Top](#table-of-contents-)
