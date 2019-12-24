@@ -5,14 +5,14 @@ require 'micro/attributes'
 
 module Micro
   class Case
-    require 'micro/case/version'
-    require 'micro/case/result'
-    require 'micro/case/error'
-    require 'micro/case/safe'
-    require 'micro/case/strict'
-    require 'micro/case/flow/reducer'
-    require 'micro/case/flow'
-    require 'micro/case/safe/flow'
+    require_relative 'case/version'
+    require_relative 'case/result'
+    require_relative 'case/error'
+    require_relative 'case/safe'
+    require_relative 'case/strict'
+    require_relative 'case/flow/reducer'
+    require_relative 'case/flow'
+    require_relative 'case/safe/flow'
 
     include Micro::Attributes.without(:strict_initialize)
 
