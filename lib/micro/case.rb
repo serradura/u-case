@@ -37,9 +37,7 @@ module Micro
     end
 
     def self.__new__(result, arg)
-      instance = new(arg)
-      instance.__set_result__(result)
-      instance
+      new(arg).tap { |instance| instance.__set_result__(result) }
     end
 
     def self.__call!
