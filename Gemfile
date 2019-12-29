@@ -7,6 +7,7 @@ activemodel_version = ENV.fetch('ACTIVEMODEL_VERSION', '6.1.0')
 activemodel = case activemodel_version
               when '3.2' then '3.2.22'
               when '5.2' then '5.2.3'
+              when '6.0' then '6.0.2'
               end
 
 if activemodel_version < '6.1.0'
