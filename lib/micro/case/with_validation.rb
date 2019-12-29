@@ -22,12 +22,14 @@ module Micro
 
     private
 
-      def __call
-        return __call_use_case_flow if __call_use_case_flow?
-
+      def __call_use_case
         return failure_by_validation_error(self) if !self.class.auto_validation_disabled? && invalid?
 
-        __call_use_case
+        result = call!
+
+        return result if result.is_a?(Result)
+
+        raise Error::UnexpectedResult.new(self.class)
       end
 
       def failure_by_validation_error(object)
