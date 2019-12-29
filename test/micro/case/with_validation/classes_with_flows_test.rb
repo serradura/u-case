@@ -8,7 +8,9 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
         attribute :text
 
         def call!
-          Success { { number: text.to_i } }
+          number = text.include?('.') ? text.to_f : text.to_i
+
+          Success { { number: number } }
         end
       end
 
@@ -43,6 +45,14 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
           [ConvertTextToNumber, Double::Flow_Step, ConvertNumberToText],
           Double.use_cases
         )
+
+        # ---
+
+        result = Double.call(text: '4.0')
+
+        assert_failure_result(result, type: :validation_error)
+
+        assert_equal(['must be an integer'], result.value[:errors][:number])
 
         # ---
 
