@@ -18,7 +18,6 @@ end
 group :test do
   gem 'minitest', activemodel_version < '4.1' ? '~> 4.2' : '~> 5.0'
   gem 'simplecov', require: false
-  gem 'minitest-reporters', require: false
 end
 
 # Specify your gem's dependencies in u-case.gemspec
