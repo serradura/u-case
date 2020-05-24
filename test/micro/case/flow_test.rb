@@ -31,20 +31,6 @@ class Micro::Case::FlowTest < Minitest::Test
     Jobs::Run
       .call(result)
       .on_success { raise }
-      .on_failure { |value| assert_equal(:invalid_state_transition, value) }
-  end
-
-  def test_calling_with_a_flow
-    result = Jobs::Run.call(Jobs::Build)
-
-    result.on_success(:state_updated) do |job:, changes:|
-      refute(job.sleeping?)
-      assert(changes.changed?(:state, from: 'sleeping', to: 'running'))
-    end
-
-    Jobs::Run
-      .call(result)
-      .on_success { raise }
       .on_failure { |(value, _type)| assert_equal(:invalid_state_transition, value) }
   end
 
