@@ -5,7 +5,7 @@ module Micro
     module Flow
       module ClassMethods
         def __flow__
-          @__flow
+          return @__flow if defined?(@__flow)
         end
 
         def flow(*args)
