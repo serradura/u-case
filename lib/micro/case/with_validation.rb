@@ -7,7 +7,7 @@ module Micro
     include Micro::Attributes::Features::ActiveModelValidations
 
     def self.auto_validation_disabled?
-      @disable_auto_validation
+      return @disable_auto_validation if defined?(@disable_auto_validation)
     end
 
     def self.disable_auto_validation
