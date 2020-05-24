@@ -12,14 +12,12 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') < '4.1'
   end
 end
 
-require 'minitest/reporters'
-Minitest::Reporters.use!
-
 $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 
 require 'u-case/with_validation' if ENV.fetch('ACTIVEMODEL_VERSION', '6.1.0') < '6.1.0'
 require 'micro/case'
 
+require 'minitest/pride'
 require 'minitest/autorun'
 
 module MicroCaseAssertions

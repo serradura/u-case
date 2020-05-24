@@ -40,19 +40,10 @@ class Micro::Case::CallTest < Minitest::Test
     assert_instance_of(Failure, Add2ToAllNumbers2.call)
   end
 
-  def test_the_calling_of_flow_classes
-    assert_raises(ArgumentError) { Add2ToAllNumbers2.new() }
-    assert_instance_of(Failure, Add2ToAllNumbers2.new({}).call)
-    assert_instance_of(Failure, Add2ToAllNumbers2.call({}))
-    assert_instance_of(Failure, Add2ToAllNumbers2.call)
-  end
-
   def test_the_calling_of_a_flow_created_from_composition_operators
-    def test_the_calling_of_collection_mapper_flows
-      assert_raises(NoMethodError) { Add2ToAllNumbers3.new({}).call }
+    assert_raises(NoMethodError) { Add2ToAllNumbers3.new({}).call }
 
-      assert_instance_of(Failure, Add2ToAllNumbers3.call({}))
-      assert_instance_of(Failure, Add2ToAllNumbers3.call)
-    end
+    assert_instance_of(Failure, Add2ToAllNumbers3.call({}))
+    assert_instance_of(Failure, Add2ToAllNumbers3.call)
   end
 end

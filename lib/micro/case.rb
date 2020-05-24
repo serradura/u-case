@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'micro/attributes'
-# frozen_string_literal: true
 
 module Micro
   class Case
@@ -61,16 +60,20 @@ module Micro
     end
 
     def self.__flow_get
-      @__flow
+      return @__flow if defined?(@__flow)
+    end
+
+    private_class_method def self.__flow_use_cases
+      return @__flow_use_cases if defined?(@__flow_use_cases)
+    end
+
+    private_class_method def self.__flow_use_cases_get
+      Array(__flow_use_cases)
+        .map { |use_case| use_case == self ? self.__call! : use_case }
     end
 
     private_class_method def self.__flow_use_cases_set(args)
       @__flow_use_cases = args
-    end
-
-    private_class_method def self.__flow_use_cases_get
-      Array(@__flow_use_cases)
-        .map { |use_case| use_case == self ? self.__call! : use_case }
     end
 
     private_class_method def self.__flow_set(args)
@@ -84,7 +87,7 @@ module Micro
     end
 
     def self.__flow_set!
-      __flow_set(__flow_use_cases_get) if !__flow_get && @__flow_use_cases
+      __flow_set(__flow_use_cases_get) if !__flow_get && __flow_use_cases
     end
 
     def self.flow(*args)
@@ -105,7 +108,7 @@ module Micro
 
     def __set_result__(result)
       raise Error::InvalidResultInstance unless result.is_a?(Result)
-      raise Error::ResultIsAlreadyDefined if @__result
+      raise Error::ResultIsAlreadyDefined if defined?(@__result)
 
       @__result = result
     end
