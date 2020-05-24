@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'micro/attributes'
-# frozen_string_literal: true
 
 module Micro
   class Case
