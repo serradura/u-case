@@ -15,7 +15,7 @@ class Micro::Case::FlowTest < Minitest::Test
     Jobs::Run
       .call(result)
       .on_success { raise }
-      .on_failure do |(value, type)|
+      .on_failure do |(value, _type)|
         assert_equal(:invalid_state_transition, value)
       end
   end
