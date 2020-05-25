@@ -148,18 +148,14 @@ module Micro
       def Success(arg = :ok)
         value, type = block_given? ? [yield, arg] : [arg, :ok]
 
-        __get_result__.__set__(true, value, type, nil)
+        __get_result_with(true, value, type)
       end
 
       def Failure(arg = :error)
         value = block_given? ? yield : arg
         type = __map_failure_type(value, block_given? ? arg : :error)
 
-        __get_result__.__set__(false, value, type, self)
-      end
-
-      def __get_result__
-        @__result ||= Result.new
+        __get_result_with(false, value, type)
       end
 
       def __map_failure_type(arg, type)
@@ -168,6 +164,14 @@ module Micro
         return :exception if arg.is_a?(Exception)
 
         type
+      end
+
+      def __get_result__
+        @__result ||= Result.new
+      end
+
+      def __get_result_with(is_success, value, type)
+        __get_result__.__set__(is_success, value, type, self)
       end
   end
 end

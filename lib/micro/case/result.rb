@@ -19,7 +19,7 @@ module Micro
 
       def __set__(is_success, value, type, use_case)
         raise Error::InvalidResultType unless type.is_a?(Symbol)
-        raise Error::InvalidUseCase if !is_success && !is_a_use_case?(use_case)
+        raise Error::InvalidUseCase if !is_a_use_case?(use_case)
 
         @success, @value, @type, @use_case = is_success, value, type, use_case
 
