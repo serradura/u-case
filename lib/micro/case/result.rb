@@ -3,6 +3,12 @@
 module Micro
   class Case
     class Result
+      @@transition_tracking_disabled = false
+
+      def self.disable_transition_tracking
+        @@transition_tracking_disabled = true
+      end
+
       class Data
         attr_reader :value, :type
 
@@ -17,11 +23,17 @@ module Micro
 
       attr_reader :value, :type
 
+      def initialize
+        @__transitions__ = {}
+      end
+
       def __set__(is_success, value, type, use_case)
         raise Error::InvalidResultType unless type.is_a?(Symbol)
         raise Error::InvalidUseCase if !is_a_use_case?(use_case)
 
         @success, @value, @type, @use_case = is_success, value, type, use_case
+
+        __set_transition__ unless @@transition_tracking_disabled
 
         self
       end
@@ -71,6 +83,12 @@ module Micro
         end
       end
 
+      def transitions
+        return [] if @__transitions__.empty?
+
+        @__transitions__.map { |_use_case, transition| transition }
+      end
+
       private
 
         def success_type?(expected_type)
@@ -83,6 +101,17 @@ module Micro
 
         def is_a_use_case?(arg)
           (arg.is_a?(Class) && arg < ::Micro::Case) || arg.is_a?(::Micro::Case)
+        end
+
+        def __set_transition__
+          use_case_class = @use_case.class
+
+          result = @success ? :success : :failure
+
+          @__transitions__[use_case_class] = {
+            use_case: { class: use_case_class, attributes: @use_case.attributes },
+            result => { type: @type, value: @value }
+          }.freeze
         end
     end
   end

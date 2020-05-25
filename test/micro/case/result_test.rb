@@ -39,6 +39,12 @@ class Micro::Case::ResultTest < Minitest::Test
     # ---
 
     assert_instance_of(Micro::Case::Result, result)
+
+    # ---
+
+    assert_equal(result.transitions, [
+      {use_case: { class: Micro::Case, attributes: {}}, success: {type: :ok, value: 1 }}
+    ])
   end
 
   def test_failure_result
@@ -66,6 +72,12 @@ class Micro::Case::ResultTest < Minitest::Test
     # ---
 
     assert_instance_of(Micro::Case::Result, result)
+
+    # ---
+
+    assert_equal(result.transitions, [
+      {use_case: { class: Micro::Case, attributes: {}}, failure: {type: :error, value: 0 }}
+    ])
   end
 
   def test_the_result_value
@@ -129,5 +141,15 @@ class Micro::Case::ResultTest < Minitest::Test
     assert_raises_with_message(TypeError, 'type must be a Symbol') do
       result.__set__(true, :value, 'type', nil)
     end
+  end
+
+  def test_the_disable_transition_tracking_config
+    Micro::Case::Result.disable_transition_tracking
+
+    result = success_result(value: 1, type: :ok)
+
+    assert_predicate(result.transitions, :empty?)
+
+    Micro::Case::Result.class_variable_set(:@@transition_tracking_disabled, false)
   end
 end
