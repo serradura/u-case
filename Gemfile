@@ -20,5 +20,18 @@ group :test do
   gem 'simplecov', require: false
 end
 
+pry_byebug_version =
+  case RUBY_VERSION
+  when /\A2.2/ then '3.6'
+  when /\A2.3/ then '3.7'
+  else '3.9'
+  end
+
+group :development, :test do
+  gem 'awesome_print', '~> 1.8'
+
+  gem 'pry-byebug', "~> #{pry_byebug_version}"
+end
+
 # Specify your gem's dependencies in u-case.gemspec
 gemspec
