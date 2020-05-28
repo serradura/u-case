@@ -23,29 +23,29 @@ The main project goals are:
 - [Dependencies](#dependencies)
 - [Installation](#installation)
 - [Usage](#usage)
-  - [Micro::Case - How to define a use case?](#microcase---how-to-define-a-use-case)
-  - [Micro::Case::Result - What is a use case result?](#microcaseresult---what-is-a-use-case-result)
+  - [`Micro::Case` - How to define a use case?](#microcase---how-to-define-a-use-case)
+  - [`Micro::Case::Result` - What is a use case result?](#microcaseresult---what-is-a-use-case-result)
     - [What are the default result types?](#what-are-the-default-result-types)
     - [How to define custom result types?](#how-to-define-custom-result-types)
     - [Is it possible to define a custom result type without a block?](#is-it-possible-to-define-a-custom-result-type-without-a-block)
     - [How to use the result hooks?](#how-to-use-the-result-hooks)
     - [Why the failure hook (without a type) exposes a different kind of data?](#why-the-failure-hook-without-a-type-exposes-a-different-kind-of-data)
     - [What happens if a result hook was declared multiple times?](#what-happens-if-a-result-hook-was-declared-multiple-times)
-    - [How to use the Micro::Case::Result#then method?](#how-to-use-the-microcaseresultthen-method)
-  - [Micro::Case::Flow - How to compose use cases?](#microcaseflow---how-to-compose-use-cases)
+    - [How to use the `Micro::Case::Result#then` method?](#how-to-use-the-microcaseresultthen-method)
+  - [`Micro::Case::Flow` - How to compose use cases?](#microcaseflow---how-to-compose-use-cases)
     - [Is it possible to compose a use case flow with other ones?](#is-it-possible-to-compose-a-use-case-flow-with-other-ones)
     - [Is it possible a flow accumulates its input and merges each success result to use as the argument of their use cases?](#is-it-possible-a-flow-accumulates-its-input-and-merges-each-success-result-to-use-as-the-argument-of-their-use-cases)
     - [Is it possible to declare a flow which includes the use case itself?](#is-it-possible-to-declare-a-flow-which-includes-the-use-case-itself)
-  - [Micro::Case::Strict - What is a strict use case?](#microcasestrict---what-is-a-strict-use-case)
-  - [Micro::Case::Safe - Is there some feature to auto handle exceptions inside of a use case or flow?](#microcasesafe---is-there-some-feature-to-auto-handle-exceptions-inside-of-a-use-case-or-flow)
-  - [u-case/with_validation - How to validate use case attributes?](#u-casewith_validation---how-to-validate-use-case-attributes)
+  - [`Micro::Case::Strict` - What is a strict use case?](#microcasestrict---what-is-a-strict-use-case)
+  - [`Micro::Case::Safe` - Is there some feature to auto handle exceptions inside of a use case or flow?](#microcasesafe---is-there-some-feature-to-auto-handle-exceptions-inside-of-a-use-case-or-flow)
+  - [`u-case/with_activemodel_validation` - How to validate use case attributes?](#u-casewith_activemodel_validation---how-to-validate-use-case-attributes)
     - [If I enabled the auto validation, is it possible to disable it only in specific use case classes?](#if-i-enabled-the-auto-validation-is-it-possible-to-disable-it-only-in-specific-use-case-classes)
 - [Benchmarks](#benchmarks)
-  - [Micro::Case](#microcase)
+  - [`Micro::Case`](#microcase)
     - [Best overall](#best-overall)
     - [Success results](#success-results)
     - [Failure results](#failure-results)
-  - [Micro::Case::Flow](#microcaseflow)
+  - [`Micro::Case::Flow`](#microcaseflow)
   - [Comparisons](#comparisons)
 - [Examples](#examples)
   - [1️⃣ Rails App (API)](#1️⃣-rails-app-api)
@@ -63,8 +63,15 @@ The main project goals are:
 
 ## Dependencies
 
-This project depends on [Micro::Attribute](https://github.com/serradura/u-attributes) gem.
-It is used to define the use case attributes.
+1. [`kind`](https://github.com/serradura/kind) gem.
+
+    A simple type system (at runtime) for Ruby.
+
+    Used to validate method inputs, expose `Kind.of.Micro::Case::Result` type checker and its [`activemodel validation`](https://github.com/serradura/kind#kindvalidator-activemodelvalidations) module is auto required by [`u-case/with_activemodel_validation`](#u-casewith_activemodel_validation---how-to-validate-use-case-attributes) mode.
+2. [`u-attributes`](https://github.com/serradura/u-attributes) gem.
+
+    This gem allows defining read-only attributes, that is, your objects will have only getters to access their attributes data.
+    It is used to define the use case attributes.
 
 ## Installation
 
@@ -816,11 +823,11 @@ end
 
 [⬆️ Back to Top](#table-of-contents-)
 
-### `u-case/with_validation` - How to validate use case attributes?
+### `u-case/with_activemodel_validation` - How to validate use case attributes?
 
 **Requirement:**
 
-To do this your application must have the [activemodel >= 3.2](https://rubygems.org/gems/activemodel) as a dependency.
+To do this your application must have the [activemodel >= 3.2, < 6.1.0](https://rubygems.org/gems/activemodel) as a dependency.
 
 ```ruby
 #
@@ -844,10 +851,10 @@ end
 # your use cases on validation errors, you can use:
 
 # In some file. e.g: A Rails initializer
-require 'u-case/with_validation' # or require 'micro/case/with_validation'
+require 'u-case/with_activemodel_validation' # or require 'micro/case/with_validation'
 
 # In the Gemfile
-gem 'u-case', require: 'u-case/with_validation'
+gem 'u-case', require: 'u-case/with_activemodel_validation'
 
 # Using this approach, you can rewrite the previous example with less code. e.g:
 
@@ -872,7 +879,7 @@ end
 Answer: Yes, it is. To do this, you only need to use the `disable_auto_validation` macro. e.g:
 
 ```ruby
-require 'u-case/with_validation'
+require 'u-case/with_activemodel_validation'
 
 class Multiply < Micro::Case
   disable_auto_validation
