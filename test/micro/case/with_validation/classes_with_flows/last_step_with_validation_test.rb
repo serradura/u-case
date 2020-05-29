@@ -32,7 +32,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
 
           attribute :number
 
-          validates :number, numericality: { only_integer: true }
+          validates :number, kind: Integer
 
           def call!
             Success { { number: number * 2 } }
@@ -55,7 +55,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
 
           assert_failure_result(result, type: :validation_error)
 
-          assert_equal(['must be an integer'], result.value[:errors][:number])
+          assert_equal(['must be a kind of: Integer'], result.value[:errors][:number])
 
           # ---
 
