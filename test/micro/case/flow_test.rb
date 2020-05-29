@@ -1,5 +1,5 @@
 require 'test_helper'
-require 'support/jobs'
+require 'support/jobs/base'
 
 class Micro::Case::FlowTest < Minitest::Test
   def test_calling_with_a_result
