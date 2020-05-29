@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'set'
+
 module Micro
   class Case
     class Result
@@ -27,6 +29,7 @@ module Micro
 
       def initialize
         @__transitions__ = {}
+        @__transitions_accessible_attributes__ = Set.new
       end
 
       def __set__(is_success, value, type, use_case)
@@ -91,6 +94,12 @@ module Micro
         @__transitions__.map { |_use_case, transition| transition }
       end
 
+      def __set_transitions_accessible_attributes__(attribute_names)
+        @__transitions_accessible_attributes__.merge(
+          Kind.of.Array(attribute_names).map(&:to_sym)
+        )
+      end
+
       private
 
         def success_type?(expected_type)
@@ -109,11 +118,13 @@ module Micro
           use_case_class = @use_case.class
 
           result = @success ? :success : :failure
+          transition = {
+            use_case: { class: use_case_class, attributes: Utils.symbolize_keys(@use_case.attributes) },
+            result => { type: @type, value: @value },
+            accessible_attributes: @__transitions_accessible_attributes__.to_a
+          }
 
-          @__transitions__[use_case_class] = {
-            use_case: { class: use_case_class, attributes: @use_case.attributes },
-            result => { type: @type, value: @value }
-          }.freeze
+          @__transitions__[use_case_class] = transition
         end
     end
   end

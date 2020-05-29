@@ -75,7 +75,12 @@ module Micro
           end
 
           def first_use_case_result(arg)
-            @first_use_case.call(first_use_case_input(arg))
+            input = first_use_case_input(arg)
+
+            @first_use_case.call(input).tap do |result|
+              result.__set_transitions_accessible_attributes__(input.keys)
+              result.send(:__set_transition__)
+            end
           end
 
           def next_use_case_result(use_case, result, input)
@@ -88,6 +93,8 @@ module Micro
 
               value = result.value
               input = value.is_a?(Hash) ? memo.tap { |data| data.merge!(value) } : value
+
+              result.__set_transitions_accessible_attributes__(memo.keys)
 
               next_use_case_result(use_case, result, input)
             end
