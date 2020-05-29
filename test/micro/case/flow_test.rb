@@ -20,122 +20,143 @@ class Micro::Case::FlowTest < Minitest::Test
           assert_equal(:invalid_state_transition, value)
         end
 
-
-    # Micro::Case::Result#transitions - result1.transitions
-
     result1.transitions.tap do |result_transitions|
-      # -------------------
-      # - transition: FIRST
-      # -------------------
-
+      # --------------
+      # transitions[0]
+      # --------------
       first_transition = result_transitions[0]
+
+      # transitions[0][:use_case]
       first_transition_use_case = first_transition[:use_case]
 
-      # -- transition[0]: use_case
+      # transitions[0][:use_case][:class]
       assert_equal(Jobs::ValidateID, first_transition_use_case[:class])
 
+      # transitions[0][:use_case][:attributes]
       assert_equal([:job], first_transition_use_case[:attributes].keys)
+
       assert_instance_of(Jobs::Entity, first_transition_use_case[:attributes][:job])
       assert_equal('sleeping', first_transition_use_case[:attributes][:job].state)
 
-      # -- transition[0]: result
+      # transitions[0][:success]
       assert(first_transition.include?(:success))
 
       first_transition_result = first_transition[:success]
 
+      # transitions[0][:success][:type]
       assert_equal(:ok, first_transition_result[:type])
 
+      # transitions[0][:success][:value]
       assert_equal([:job], first_transition_result[:value].keys)
+
       assert_instance_of(Jobs::Entity, first_transition_result[:value][:job])
       assert_equal('sleeping', first_transition_result[:value][:job].state)
 
-      # -- transition[0]: accessible_attributes
+      # transitions[0][:accessible_attributes]
       assert_equal([:job], first_transition[:accessible_attributes])
 
-      # --------------------
-      # - transition: SECOND
-      # --------------------
+      # --------------
+      # transitions[1]
+      # --------------
 
       second_transition = result_transitions[1]
+
+      # transitions[1][:use_case]
+
       second_transition_use_case = second_transition[:use_case]
 
-      # -- transition[1]: use_case
+      # transitions[1][:use_case][:class]
       assert_equal(Jobs::SetStateToRunning, second_transition_use_case[:class])
 
+      # transitions[1][:use_case][:attributes]
       assert_equal([:job], second_transition_use_case[:attributes].keys)
+
       assert_instance_of(Jobs::Entity, second_transition_use_case[:attributes][:job])
       assert_equal('sleeping', second_transition_use_case[:attributes][:job].state)
 
-      # -- transition[1]: result
+      # transitions[1][:success]
       assert(second_transition.include?(:success))
 
       second_transition_result = second_transition[:success]
 
+      # transitions[1][:success][:type]
       assert_equal(:state_updated, second_transition_result[:type])
 
+      # transitions[1][:success][:value]
       assert_equal([:job, :changes], second_transition_result[:value].keys)
+
       assert_instance_of(Jobs::Entity, second_transition_result[:value][:job])
       assert_equal('running', second_transition_result[:value][:job].state)
 
-      # -- transition[1]: accessible_attributes
+      # transitions[1][:accessible_attributes]
       assert_equal([:job], second_transition[:accessible_attributes])
     end
 
-    # Micro::Case::Result#transitions - result2.transitions
-
     result2.transitions.tap do |result_transitions|
-      # -------------------
-      # - transition: FIRST
-      # -------------------
-
+      # --------------
+      # transitions[0]
+      # --------------
       first_transition = result_transitions[0]
+
+      # transitions[0][:use_case]
       first_transition_use_case = first_transition[:use_case]
 
-      # -- transition[0]: use_case
+      # transitions[0][:use_case][:class]
       assert_equal(Jobs::ValidateID, first_transition_use_case[:class])
 
+      # transitions[0][:use_case][:attributes]
       assert_equal([:job], first_transition_use_case[:attributes].keys)
+
       assert_instance_of(Jobs::Entity, first_transition_use_case[:attributes][:job])
       assert_equal('running', first_transition_use_case[:attributes][:job].state)
 
-      # -- transition[0]: result
+      # transitions[0][:success]
       assert(first_transition.include?(:success))
 
       first_transition_result = first_transition[:success]
 
+      # transitions[0][:success][:type]
       assert_equal(:ok, first_transition_result[:type])
 
+      # transitions[0][:success][:value]
       assert_equal([:job], first_transition_result[:value].keys)
+
       assert_instance_of(Jobs::Entity, first_transition_result[:value][:job])
       assert_equal('running', first_transition_result[:value][:job].state)
 
-      # -- transition[0]: accessible_attributes
+      # transitions[0][:accessible_attributes]
       assert_equal([:job, :changes], first_transition[:accessible_attributes])
 
-      # --------------------
-      # - transition: SECOND
-      # --------------------
+      # --------------
+      # transitions[1]
+      # --------------
 
       second_transition = result_transitions[1]
+
+      # transitions[1][:use_case]
       second_transition_use_case = second_transition[:use_case]
 
-      # -- transition[1]: use_case
+      # transitions[1][:use_case][:class]
       assert_equal(Jobs::SetStateToRunning, second_transition_use_case[:class])
 
+      # transitions[1][:use_case][:attributes]
       assert_equal([:job], second_transition_use_case[:attributes].keys)
+
       assert_instance_of(Jobs::Entity, second_transition_use_case[:attributes][:job])
       assert_equal('running', second_transition_use_case[:attributes][:job].state)
 
-      # -- transition[1]: result
+      # transitions[1][:failure]
       assert(second_transition.include?(:failure))
 
       second_transition_result = second_transition[:failure]
 
+      # transitions[1][:failure][:type]
       assert_equal(:invalid_state_transition, second_transition_result[:type])
 
+      # transitions[1][:failure][:value]
       assert_equal(:invalid_state_transition, second_transition_result[:value])
 
-      # -- transition[1]: accessible_attributes
+      # transitions[1][:accessible_attributes]
       assert_equal([:job, :changes], second_transition[:accessible_attributes])
     end
   end
