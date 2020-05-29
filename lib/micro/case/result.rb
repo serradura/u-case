@@ -3,6 +3,8 @@
 module Micro
   class Case
     class Result
+      Kind::Types.add(self)
+
       @@transition_tracking_disabled = false
 
       def self.disable_transition_tracking
