@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
+require 'kind'
 require 'micro/attributes'
 
 module Micro
   class Case
     require 'micro/case/version'
+    require 'micro/case/utils'
     require 'micro/case/result'
     require 'micro/case/error'
     require 'micro/case/safe'
