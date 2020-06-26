@@ -58,7 +58,9 @@ module Micro
       end
 
       def on_success(expected_type = nil)
-        self.tap { yield(value) if success_type?(expected_type) }
+        yield(value) if success_type?(expected_type)
+
+        self
       end
 
       def on_failure(expected_type = nil)
@@ -66,7 +68,19 @@ module Micro
 
         data = expected_type.nil? ? Data.new(value, type).tap(&:freeze) : value
 
-        self.tap { yield(data, @use_case) }
+        yield(data, @use_case)
+
+        self
+      end
+
+      def on_exception(expected_exception = nil)
+        return self unless failure_type?(:exception)
+
+        if !expected_exception || (Kind.is(Exception, expected_exception) && value.is_a?(expected_exception))
+          yield(value, @use_case)
+        end
+
+        self
       end
 
       def then(arg = nil, &block)
@@ -124,7 +138,7 @@ module Micro
 
         def __set_transition__
           use_case_class = @use_case.class
-          use_case_attributes = Utils.symbolize_keys(@use_case.attributes)
+          use_case_attributes = Utils.symbolize_hash_keys(@use_case.attributes)
 
           __set_transitions_accessible_attributes__!(use_case_attributes.keys)
 

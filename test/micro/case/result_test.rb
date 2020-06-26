@@ -8,7 +8,9 @@ class Micro::Case::ResultTest < Minitest::Test
   end
 
   def failure_result(options = {})
-    build_result(**{ type: :error }.merge(options).merge(success: false))
+    type = options[:value].is_a?(Exception) ? :exception : :error
+
+    build_result(**{ type: type }.merge(options).merge(success: false))
   end
 
   def success_result(options = {})
@@ -141,6 +143,53 @@ class Micro::Case::ResultTest < Minitest::Test
       .on_failure { |(value, *)| acc += value }
 
     assert_equal(number * 5, acc)
+  end
+
+  def test_the_on_exception_hook
+    use_case_instance = Micro::Case.new({})
+
+    # ---
+
+    zero_division_error = ZeroDivisionError.new('divided by 0')
+
+    counter1 = 0
+    result1 = failure_result(value: zero_division_error, use_case: use_case_instance)
+
+    result1
+      .on_success { raise }
+      .on_exception(TypeError) { raise }
+      .on_failure(:exception) { counter1 += 1 }
+      .on_exception { counter1 += 1 }
+      .on_exception(ZeroDivisionError) { counter1 += 1 }
+
+    assert_equal(3, counter1)
+
+    # --
+
+    result1
+      .on_failure(:exception) { |value| assert_equal(zero_division_error, value) }
+      .on_exception { |value| assert_equal(zero_division_error, value) }
+      .on_exception(ZeroDivisionError) { |value| assert_equal(zero_division_error, value) }
+
+    # --
+
+    result1
+      .on_failure(:exception) { |value, use_case| assert_equal([zero_division_error, use_case_instance], [value, use_case]) }
+      .on_exception { |value, use_case| assert_equal([zero_division_error, use_case_instance], [value, use_case]) }
+      .on_exception(ZeroDivisionError) { |value, use_case| assert_equal([zero_division_error, use_case_instance], [value, use_case]) }
+
+    # ---
+
+    counter2 = 0
+    result2 = failure_result(value: counter2, use_case: Micro::Case.new({}))
+
+    result2
+      .on_success { counter2 +=1 }
+      .on_failure(:exception) { counter2 +=1 }
+      .on_exception { counter2 +=1 }
+      .on_exception(TypeError) { counter2 +=1 }
+
+    assert_equal(0, counter2)
   end
 
   def test_the_invalid_type_error
