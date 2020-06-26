@@ -84,7 +84,7 @@ module Micro
 
           return self if failure?
 
-          arg.call(self.value)
+          arg.__call_and_set_transition__(self, self.value)
         end
       end
 
@@ -95,12 +95,20 @@ module Micro
       end
 
       def __set_transitions_accessible_attributes__(attribute_names)
-        @__transitions_accessible_attributes__.merge(
-          Kind.of.Array(attribute_names).map(&:to_sym)
+        return if @@transition_tracking_disabled
+
+        __set_transitions_accessible_attributes__!(
+          attribute_names.map!(&:to_sym)
         )
       end
 
       private
+
+        def __set_transitions_accessible_attributes__!(attribute_names)
+          @__transitions_accessible_attributes__.merge(
+            attribute_names
+          )
+        end
 
         def success_type?(expected_type)
           success? && (expected_type.nil? || expected_type == type)
@@ -116,10 +124,13 @@ module Micro
 
         def __set_transition__
           use_case_class = @use_case.class
+          use_case_attributes = Utils.symbolize_keys(@use_case.attributes)
+
+          __set_transitions_accessible_attributes__!(use_case_attributes.keys)
 
           result = @success ? :success : :failure
           transition = {
-            use_case: { class: use_case_class, attributes: Utils.symbolize_keys(@use_case.attributes) },
+            use_case: { class: use_case_class, attributes: use_case_attributes },
             result => { type: @type, value: @value },
             accessible_attributes: @__transitions_accessible_attributes__.to_a
           }

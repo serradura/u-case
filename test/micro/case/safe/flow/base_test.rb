@@ -19,6 +19,8 @@ class Micro::Case::Safe::Flow::BaseTest < Minitest::Test
         .on_failure { |(value, _type)| assert_equal(:invalid_state_transition, value) }
 
     result1.transitions.tap do |result_transitions|
+      assert_equal(2, result_transitions.size)
+
       # --------------
       # transitions[0]
       # --------------
@@ -91,6 +93,8 @@ class Micro::Case::Safe::Flow::BaseTest < Minitest::Test
     end
 
     result2.transitions.tap do |result_transitions|
+      assert_equal(2, result_transitions.size)
+
       # --------------
       # transitions[0]
       # --------------

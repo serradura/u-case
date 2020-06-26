@@ -81,6 +81,8 @@ class Micro::Case::Flow::ReducerTest < Minitest::Test
 
     result_transitions = todo_created.transitions
 
+    assert_equal(3, result_transitions.size)
+
     # --------------
     # transitions[0]
     # --------------

@@ -21,6 +21,8 @@ class Micro::Case::FlowTest < Minitest::Test
         end
 
     result1.transitions.tap do |result_transitions|
+      assert_equal(2, result_transitions.size)
+
       # --------------
       # transitions[0]
       # --------------
@@ -93,6 +95,8 @@ class Micro::Case::FlowTest < Minitest::Test
     end
 
     result2.transitions.tap do |result_transitions|
+      assert_equal(2, result_transitions.size)
+
       # --------------
       # transitions[0]
       # --------------
