@@ -124,7 +124,7 @@ module Micro
 
         def __set_transition__
           use_case_class = @use_case.class
-          use_case_attributes = Utils.symbolize_keys(@use_case.attributes)
+          use_case_attributes = Utils.symbolize_hash_keys(@use_case.attributes)
 
           __set_transitions_accessible_attributes__!(use_case_attributes.keys)
 
