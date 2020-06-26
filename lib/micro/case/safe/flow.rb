@@ -19,7 +19,7 @@ module Micro
 
           private
 
-            def use_case_result(use_case, result, input)
+            def next_use_case_result(use_case, result, input)
               begin
                 instance = use_case.__new__(result, input)
                 instance.call

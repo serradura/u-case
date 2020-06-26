@@ -25,6 +25,7 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = '>= 2.2.0'
 
+  spec.add_runtime_dependency 'kind', '~> 3.0'
   spec.add_runtime_dependency 'u-attributes', '~> 1.1'
 
   spec.add_development_dependency 'bundler'
