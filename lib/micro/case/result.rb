@@ -1,8 +1,18 @@
 # frozen_string_literal: true
 
+require 'set'
+
 module Micro
   class Case
     class Result
+      Kind::Types.add(self)
+
+      @@transition_tracking_disabled = false
+
+      def self.disable_transition_tracking
+        @@transition_tracking_disabled = true
+      end
+
       class Data
         attr_reader :value, :type
 
@@ -17,11 +27,18 @@ module Micro
 
       attr_reader :value, :type
 
+      def initialize
+        @__transitions__ = {}
+        @__transitions_accessible_attributes__ = Set.new
+      end
+
       def __set__(is_success, value, type, use_case)
         raise Error::InvalidResultType unless type.is_a?(Symbol)
-        raise Error::InvalidUseCase if !is_success && !is_a_use_case?(use_case)
+        raise Error::InvalidUseCase if !is_a_use_case?(use_case)
 
         @success, @value, @type, @use_case = is_success, value, type, use_case
+
+        __set_transition__ unless @@transition_tracking_disabled
 
         self
       end
@@ -67,11 +84,31 @@ module Micro
 
           return self if failure?
 
-          arg.call(self.value)
+          arg.__call_and_set_transition__(self, self.value)
         end
       end
 
+      def transitions
+        return [] if @__transitions__.empty?
+
+        @__transitions__.map { |_use_case, transition| transition }
+      end
+
+      def __set_transitions_accessible_attributes__(attribute_names)
+        return if @@transition_tracking_disabled
+
+        __set_transitions_accessible_attributes__!(
+          attribute_names.map!(&:to_sym)
+        )
+      end
+
       private
+
+        def __set_transitions_accessible_attributes__!(attribute_names)
+          @__transitions_accessible_attributes__.merge(
+            attribute_names
+          )
+        end
 
         def success_type?(expected_type)
           success? && (expected_type.nil? || expected_type == type)
@@ -83,6 +120,22 @@ module Micro
 
         def is_a_use_case?(arg)
           (arg.is_a?(Class) && arg < ::Micro::Case) || arg.is_a?(::Micro::Case)
+        end
+
+        def __set_transition__
+          use_case_class = @use_case.class
+          use_case_attributes = Utils.symbolize_keys(@use_case.attributes)
+
+          __set_transitions_accessible_attributes__!(use_case_attributes.keys)
+
+          result = @success ? :success : :failure
+          transition = {
+            use_case: { class: use_case_class, attributes: use_case_attributes },
+            result => { type: @type, value: @value },
+            accessible_attributes: @__transitions_accessible_attributes__.to_a
+          }
+
+          @__transitions__[use_case_class] = transition
         end
     end
   end

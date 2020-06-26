@@ -10,7 +10,7 @@
 Create simple and powerful use cases as objects.
 
 The main project goals are:
-1. Be simple to use and easy to learn (input **>>** process / transform **>>** output).
+1. Easy to use and easy to learn (input **>>** process **>>** output).
 2. Promote referential transparency (transforming instead of modifying) and data integrity.
 3. No callbacks (e.g: before, after, around).
 4. Solve complex business logic, by allowing the composition of use cases.
@@ -23,29 +23,32 @@ The main project goals are:
 - [Dependencies](#dependencies)
 - [Installation](#installation)
 - [Usage](#usage)
-  - [Micro::Case - How to define a use case?](#microcase---how-to-define-a-use-case)
-  - [Micro::Case::Result - What is a use case result?](#microcaseresult---what-is-a-use-case-result)
+  - [`Micro::Case` - How to define a use case?](#microcase---how-to-define-a-use-case)
+  - [`Micro::Case::Result` - What is a use case result?](#microcaseresult---what-is-a-use-case-result)
     - [What are the default result types?](#what-are-the-default-result-types)
     - [How to define custom result types?](#how-to-define-custom-result-types)
     - [Is it possible to define a custom result type without a block?](#is-it-possible-to-define-a-custom-result-type-without-a-block)
     - [How to use the result hooks?](#how-to-use-the-result-hooks)
     - [Why the failure hook (without a type) exposes a different kind of data?](#why-the-failure-hook-without-a-type-exposes-a-different-kind-of-data)
     - [What happens if a result hook was declared multiple times?](#what-happens-if-a-result-hook-was-declared-multiple-times)
-    - [How to use the Micro::Case::Result#then method?](#how-to-use-the-microcaseresultthen-method)
-  - [Micro::Case::Flow - How to compose use cases?](#microcaseflow---how-to-compose-use-cases)
+    - [How to use the `Micro::Case::Result#then` method?](#how-to-use-the-microcaseresultthen-method)
+  - [`Micro::Case::Flow` - How to compose use cases?](#microcaseflow---how-to-compose-use-cases)
     - [Is it possible to compose a use case flow with other ones?](#is-it-possible-to-compose-a-use-case-flow-with-other-ones)
-    - [Is it possible a flow accumulates its input and merges each success result to use as the argument of their use cases?](#is-it-possible-a-flow-accumulates-its-input-and-merges-each-success-result-to-use-as-the-argument-of-their-use-cases)
+    - [Is it possible a flow accumulates its input and merges each success result to use as the argument of the next use cases?](#is-it-possible-a-flow-accumulates-its-input-and-merges-each-success-result-to-use-as-the-argument-of-the-next-use-cases)
+    - [How to understand what is happening during a flow execution?](#how-to-understand-what-is-happening-during-a-flow-execution)
+      - [Micro::Case::Result#transitions schema.](#microcaseresulttransitions-schema)
     - [Is it possible to declare a flow which includes the use case itself?](#is-it-possible-to-declare-a-flow-which-includes-the-use-case-itself)
-  - [Micro::Case::Strict - What is a strict use case?](#microcasestrict---what-is-a-strict-use-case)
-  - [Micro::Case::Safe - Is there some feature to auto handle exceptions inside of a use case or flow?](#microcasesafe---is-there-some-feature-to-auto-handle-exceptions-inside-of-a-use-case-or-flow)
-  - [u-case/with_validation - How to validate use case attributes?](#u-casewith_validation---how-to-validate-use-case-attributes)
+  - [`Micro::Case::Strict` - What is a strict use case?](#microcasestrict---what-is-a-strict-use-case)
+  - [`Micro::Case::Safe` - Is there some feature to auto handle exceptions inside of a use case or flow?](#microcasesafe---is-there-some-feature-to-auto-handle-exceptions-inside-of-a-use-case-or-flow)
+  - [`u-case/with_activemodel_validation` - How to validate use case attributes?](#u-casewith_activemodel_validation---how-to-validate-use-case-attributes)
     - [If I enabled the auto validation, is it possible to disable it only in specific use case classes?](#if-i-enabled-the-auto-validation-is-it-possible-to-disable-it-only-in-specific-use-case-classes)
+    - [Kind::Validator](#kindvalidator)
 - [Benchmarks](#benchmarks)
-  - [Micro::Case](#microcase)
+  - [`Micro::Case`](#microcase)
     - [Best overall](#best-overall)
     - [Success results](#success-results)
     - [Failure results](#failure-results)
-  - [Micro::Case::Flow](#microcaseflow)
+  - [`Micro::Case::Flow`](#microcaseflow)
   - [Comparisons](#comparisons)
 - [Examples](#examples)
   - [1️⃣ Rails App (API)](#1️⃣-rails-app-api)
@@ -63,8 +66,15 @@ The main project goals are:
 
 ## Dependencies
 
-This project depends on [Micro::Attribute](https://github.com/serradura/u-attributes) gem.
-It is used to define the use case attributes.
+1. [`kind`](https://github.com/serradura/kind) gem.
+
+    A simple type system (at runtime) for Ruby.
+
+    Used to validate method inputs, expose `Kind.of.Micro::Case::Result` type checker and its [`activemodel validation`](https://github.com/serradura/kind#kindvalidator-activemodelvalidations) module is auto required by [`u-case/with_activemodel_validation`](#u-casewith_activemodel_validation---how-to-validate-use-case-attributes) mode.
+2. [`u-attributes`](https://github.com/serradura/u-attributes) gem.
+
+    This gem allows defining read-only attributes, that is, your objects will have only getters to access their attributes data.
+    It is used to define the use case attributes.
 
 ## Installation
 
@@ -642,11 +652,146 @@ Note: You can blend any of the [available syntaxes/approaches](#how-to-create-a-
 
 [⬆️ Back to Top](#table-of-contents-)
 
-#### Is it possible a flow accumulates its input and merges each success result to use as the argument of their use cases?
+#### Is it possible a flow accumulates its input and merges each success result to use as the argument of the next use cases?
 
-Answer: Yes, it is! Check out these test examples [Micro::Case::Flow](https://github.com/serradura/u-case/blob/e0066d8a6e3a9404069dfcb9bf049b854f08a33c/test/micro/case/flow/reducer_test.rb) and [Micro::Case::Safe::Flow](https://github.com/serradura/u-case/blob/e0066d8a6e3a9404069dfcb9bf049b854f08a33c/test/micro/case/safe/flow/reducer_test.rb) to see different use cases sharing their own data.
+Answer: Yes, it is! Look at the example below to understand how the data accumulation works inside of the flow execution.
+
+```ruby
+module Users
+  class Find < Micro::Case
+    attribute :email
+
+    def call!
+      user = User.find_by(email: email)
+
+      return Success { { user: user } } if user
+
+      Failure(:user_not_found)
+    end
+  end
+end
+
+module Users
+  class ValidatePassword < Micro::Case::Strict
+    attributes :user, :password
+
+    def call!
+      return Failure(:user_must_be_persisted) if user.new_record?
+      return Failure(:wrong_password) if user.wrong_password?(password)
+
+      return Success { attributes(:user) }
+    end
+  end
+end
+
+module Users
+  Authenticate = Micro::Case::Flow([
+    Find,
+    ValidatePassword
+  ])
+end
+
+Users::Authenticate
+  .call(email: 'somebody@test.com', password: 'password')
+  .on_success { |result| sign_in(result[:user]) }
+  .on_failure(:wrong_password) { |result| render status: 401 }
+  .on_failure(:user_not_found) { |result| render status: 404 }
+```
+
+First, lets see the attribute of each use case:
+
+```ruby
+class Users::Find < Micro::Case
+  attribute :email
+end
+
+class Users::ValidatePassword < Micro::Case
+  attributes :user, :password
+end
+```
+
+As you can see the `Users::ValidatePassword` expects a user as its input. So, how it receives the user?
+It receives the user from the `Users::Find` success result!
+
+And this, is the power of use cases composition because the output
+of one flow will compose the input of the next use case in the flow!
+
+> input **>>** process **>>** output
+
+> **Note:** Check out these test examples [Micro::Case::Flow](https://github.com/serradura/u-case/blob/b6d63b0db0caada67d2a6cf5cc5937000c0acf04/test/micro/case/flow/reducer_test.rb) and [Micro::Case::Safe::Flow](https://github.com/serradura/u-case/blob/b1d84b355f2b92d329e10d5d56d8012df1d32681/test/micro/case/safe/flow/reducer_test.rb) to see different use cases sharing their own data.
 
 [⬆️ Back to Top](#table-of-contents-)
+
+#### How to understand what is happening during a flow execution?
+
+Use `Micro::Case::Result#transitions`!
+
+Let's use the [previous section example](#is-it-possible-a-flow-accumulates-its-input-and-merges-each-success-result-to-use-as-the-argument-of-the-next-use-cases) to ilustrate how to use this feature.
+
+```ruby
+user_authenticated =
+  Users::Authenticate.call(email: 'rodrigo@test.com', password: user_password)
+
+user_authenticated.transitions
+[
+  {
+    :use_case => {
+      :class      => Users::Find,
+      :attributes => { :email => "rodrigo@test.com" }
+    },
+    :success => {
+      :type  => :ok,
+      :value => {
+        :user => #<User:0x00007fb57b1c5f88 @email="rodrigo@test.com" ...>
+      }
+    },
+    :accessible_attributes => [ :email, :password ]
+  },
+  {
+    :use_case => {
+      :class      => Users::ValidatePassword,
+      :attributes => {
+        :user     => #<User:0x00007fb57b1c5f88 @email="rodrigo@test.com" ...>
+        :password => "123456"
+      }
+    },
+    :success => {
+      :type  => :ok,
+      :value => {
+        :user => #<User:0x00007fb57b1c5f88 @email="rodrigo@test.com" ...>
+      }
+    },
+    :accessible_attributes => [ :email, :password, :user ]
+  }
+]
+```
+
+The example above shows the output generated by the `Micro::Case::Result#transitions`.
+With it is possible to analyze the use cases execution order and what were the given `inputs` (attributes) and `outputs` (`success.value`) in the entire execution.
+
+And look up the `accessible_attributes` property, because it shows whats attributes are accessible in that flow step. For example, in the last step, you can see that the `accessible_attributes` increased because of the [flow data accumulation](#is-it-possible-a-flow-accumulates-its-input-and-merges-each-success-result-to-use-as-the-argument-of-the-next-use-cases).
+
+> **Note:** The [`Micro::Case::Result#then`](#how-to-use-the-microcaseresultthen-method) increments the `Micro::Case::Result#transitions`.
+
+##### Micro::Case::Result#transitions schema.
+```ruby
+[
+  {
+    use_case: {
+      class:      <Micro::Case>,# Use case which was executed
+      attributes: <Hash>        # (Input) The use case's attributes
+    },
+    [success:, failure:] => {   # (Output)
+      type:  <Symbol>,          # Result type. Defaults:
+                                # Success = :ok, Failure = :error/:exception
+      value: <Hash>             # The data returned by the use case
+    },
+    accessible_attributes: <Array>, # Properties that can be accessed by the use case's attributes,
+                                    # starting with Hash used to invoke it and which are incremented
+                                    # with each result value of the flow's use cases.
+  }
+]
+```
 
 #### Is it possible to declare a flow which includes the use case itself?
 
@@ -816,11 +961,11 @@ end
 
 [⬆️ Back to Top](#table-of-contents-)
 
-### `u-case/with_validation` - How to validate use case attributes?
+### `u-case/with_activemodel_validation` - How to validate use case attributes?
 
 **Requirement:**
 
-To do this your application must have the [activemodel >= 3.2](https://rubygems.org/gems/activemodel) as a dependency.
+To do this your application must have the [activemodel >= 3.2, < 6.1.0](https://rubygems.org/gems/activemodel) as a dependency.
 
 ```ruby
 #
@@ -844,10 +989,10 @@ end
 # your use cases on validation errors, you can use:
 
 # In some file. e.g: A Rails initializer
-require 'u-case/with_validation' # or require 'micro/case/with_validation'
+require 'u-case/with_activemodel_validation' # or require 'micro/case/with_validation'
 
 # In the Gemfile
-gem 'u-case', require: 'u-case/with_validation'
+gem 'u-case', require: 'u-case/with_activemodel_validation'
 
 # Using this approach, you can rewrite the previous example with less code. e.g:
 
@@ -872,7 +1017,7 @@ end
 Answer: Yes, it is. To do this, you only need to use the `disable_auto_validation` macro. e.g:
 
 ```ruby
-require 'u-case/with_validation'
+require 'u-case/with_activemodel_validation'
 
 class Multiply < Micro::Case
   disable_auto_validation
@@ -894,6 +1039,31 @@ Multiply.call(a: 2, b: 'a')
 
 [⬆️ Back to Top](#table-of-contents-)
 
+#### Kind::Validator
+
+The [kind gem](https://github.com/serradura/kind) has a module to enable the validation of data type through [`ActiveModel validations`](https://guides.rubyonrails.org/active_model_basics.html#validations). So, when you require the `'u-case/with_activemodel_validation'`, this module will require the [`Kind::Validator`](https://github.com/serradura/kind#kindvalidator-activemodelvalidations).
+
+The example below shows how to validate the attributes data types.
+
+```ruby
+class Todo::List::AddItem < Micro::Case
+  attributes :user, :params
+
+  validates :user, kind: User
+  validates :params, kind: ActionController::Parameters
+
+  def call!
+    todo_params = Todo::Params.to_save(params)
+
+    todo = user.todos.create(todo_params)
+
+    Success { { todo: todo} }
+  rescue ActionController::ParameterMissing => e
+    Failure(:parameter_missing) { { message: e.message } }
+  end
+end
+```
+
 ## Benchmarks
 
 ### `Micro::Case`
@@ -902,25 +1072,25 @@ Multiply.call(a: 2, b: 'a')
 
 The table below contains the average between the [Success results](#success-results) and [Failure results](#failure-results) benchmarks.
 
-| Gem / Abstraction      | Iterations per second |       Comparison |
-| ---------------------- | --------------------: | ---------------: |
-| **Micro::Case**        |              116629.7 | _**The Faster**_ |
-| Dry::Monads            |              101796.3 |     1.14x slower |
-| Interactor             |               21230.5 |     5.49x slower |
-| Trailblazer::Operation |               16466.6 |     7.08x slower |
-| Dry::Transaction       |                5069.5 |    23.00x slower |
+| Gem / Abstraction      | Iterations per second |       Comparison  |
+| ---------------------- | --------------------: | ----------------: |
+| **Micro::Case**        |              116629.7 | _**The Fastest**_ |
+| Dry::Monads            |              101796.3 |     1.14x slower  |
+| Interactor             |               21230.5 |     5.49x slower  |
+| Trailblazer::Operation |               16466.6 |     7.08x slower  |
+| Dry::Transaction       |                5069.5 |    23.00x slower  |
 
 ---
 
 #### Success results
 
-| Gem / Abstraction      | Iterations per second |       Comparison |
-| -----------------      | --------------------: | ---------------: |
-| Dry::Monads            |              139352.5 | _**The Faster**_ |
-| **Micro::Case**        |              124749.4 |     1.12x slower |
-| Interactor             |               28974.4 |     4.81x slower |
-| Trailblazer::Operation |               17275.6 |     8.07x slower |
-| Dry::Transaction       |                5571.7 |    25.01x slower |
+| Gem / Abstraction      | Iterations per second |       Comparison  |
+| -----------------      | --------------------: | ----------------: |
+| Dry::Monads            |              139352.5 | _**The Fastest**_ |
+| **Micro::Case**        |              124749.4 |     1.12x slower  |
+| Interactor             |               28974.4 |     4.81x slower  |
+| Trailblazer::Operation |               17275.6 |     8.07x slower  |
+| Dry::Transaction       |                5571.7 |    25.01x slower  |
 
 <details>
   <summary>Show the full <a href="https://github.com/evanphx/benchmark-ips">benchmark/ips</a> results.</summary>
@@ -960,13 +1130,13 @@ https://github.com/serradura/u-case/blob/master/benchmarks/use_case/with_success
 
 #### Failure results
 
-| Gem / Abstraction      | Iterations per second |       Comparison |
-| -----------------      | --------------------: | ---------------: |
-| **Micro::Case**        |              108510.0 | _**The Faster**_ |
-| Dry::Monads            |               64240.1 |     1.69x slower |
-| Trailblazer::Operation |               15657.7 |     6.93x slower |
-| Interactor             |               13486.7 |     8.05x slower |
-| Dry::Transaction       |                4567.3 |    23.76x slower |
+| Gem / Abstraction      | Iterations per second |       Comparison  |
+| -----------------      | --------------------: | ----------------: |
+| **Micro::Case**        |              108510.0 | _**The Fastest**_ |
+| Dry::Monads            |               64240.1 |     1.69x slower  |
+| Trailblazer::Operation |               15657.7 |     6.93x slower  |
+| Interactor             |               13486.7 |     8.05x slower  |
+| Dry::Transaction       |                4567.3 |    23.76x slower  |
 
 <details>
   <summary>Show the full <a href="https://github.com/evanphx/benchmark-ips">benchmark/ips</a> results.</summary>
@@ -1009,10 +1179,10 @@ https://github.com/serradura/u-case/blob/master/benchmarks/use_case/with_failure
 ### `Micro::Case::Flow`
 
 | Gems / Abstraction      | [Success results](https://github.com/serradura/u-case/blob/master/benchmarks/flow/with_success_result.rb#L40) | [Failure results](https://github.com/serradura/u-case/blob/master/benchmarks/flow/with_failure_result.rb#L40) |
-| ------------------      | ---------------: | ---------------: |
-| Micro::Case::Flow       | _**The Faster**_ | _**The Faster**_ |
-| Micro::Case::Safe::Flow |        0x slower |        0x slower |
-| Interactor::Organizer   |     1.47x slower |     5.51x slower |
+| ------------------      | ----------------: | ----------------: |
+| Micro::Case::Flow       | _**The Fastest**_ | _**The Fastest**_ |
+| Micro::Case::Safe::Flow |        0x slower  |        0x slower  |
+| Interactor::Organizer   |     1.47x slower  |     5.51x slower  |
 
 \* The `Dry::Monads`, `Dry::Transaction`, `Trailblazer::Operation` are out of this analysis because all of them doesn't have this kind of feature.
 

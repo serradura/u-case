@@ -23,19 +23,18 @@ module Micro
 
         def initialize(use_cases)
           @use_cases = use_cases
+          @first_use_case = use_cases[0]
+          @next_use_cases = use_cases[1..-1]
         end
 
         def call(arg = {})
           memo = arg.is_a?(Hash) ? arg.dup : {}
 
-          @use_cases.reduce(initial_result(arg)) do |result, use_case|
-            break result if result.failure?
+          first_result = first_use_case_result(arg)
 
-            value = result.value
-            input = value.is_a?(Hash) ? memo.tap { |data| data.merge!(value) } : value
+          return first_result if @next_use_cases.empty?
 
-            use_case_result(use_case, result, input)
-          end
+          next_use_cases_result(first_result, memo)
         end
 
         def >>(arg)
@@ -52,22 +51,52 @@ module Micro
 
         private
 
-          def use_case_result(use_case, result, input)
-            use_case.__new__(result, input).call
-          end
-
-          def initial_result(arg)
-            return arg.call if arg_to_call?(arg)
-            return arg if arg.is_a?(Micro::Case::Result)
-
-            result = ::Micro::Case::Result.new
-            result.__set__(true, arg, :ok, nil)
+          def is_a_result?(arg)
+            arg.is_a?(Micro::Case::Result)
           end
 
           def arg_to_call?(arg)
             return true if arg.is_a?(::Micro::Case) || arg.is_a?(Reducer)
             return true if arg.is_a?(Class) && (arg < ::Micro::Case || arg < ::Micro::Case::Flow)
             return false
+          end
+
+          def call_arg(arg)
+            output = arg.call
+
+            is_a_result?(output) ? output.value : output
+          end
+
+          def first_use_case_input(arg)
+            return call_arg(arg) if arg_to_call?(arg)
+            return arg.value if is_a_result?(arg)
+
+            arg
+          end
+
+          def first_use_case_result(arg)
+            input = first_use_case_input(arg)
+
+            result = ::Micro::Case::Result.new
+
+            @first_use_case.__call_and_set_transition__(result, input)
+          end
+
+          def next_use_case_result(use_case, result, input)
+            use_case.__new__(result, input).call
+          end
+
+          def next_use_cases_result(first_result, memo)
+            @next_use_cases.reduce(first_result) do |result, use_case|
+              break result if result.failure?
+
+              value = result.value
+              input = value.is_a?(Hash) ? memo.tap { |data| data.merge!(value) } : value
+
+              result.__set_transitions_accessible_attributes__(memo.keys)
+
+              next_use_case_result(use_case, result, input)
+            end
           end
       end
     end
