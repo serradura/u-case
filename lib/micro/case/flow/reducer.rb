@@ -77,10 +77,9 @@ module Micro
           def first_use_case_result(arg)
             input = first_use_case_input(arg)
 
-            @first_use_case.call(input).tap do |result|
-              result.__set_transitions_accessible_attributes__(input.keys)
-              result.send(:__set_transition__)
-            end
+            result = ::Micro::Case::Result.new
+
+            @first_use_case.__call_and_set_transition__(result, input)
           end
 
           def next_use_case_result(use_case, result, input)

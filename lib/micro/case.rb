@@ -43,6 +43,14 @@ module Micro
       instance
     end
 
+    def self.__call_and_set_transition__(result, arg)
+      if arg.respond_to?(:keys)
+        result.__set_transitions_accessible_attributes__(arg.keys)
+      end
+
+      __new__(result, arg).call
+    end
+
     def self.__call!
       return const_get(:Flow_Step) if const_defined?(:Flow_Step)
 
