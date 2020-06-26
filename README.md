@@ -773,6 +773,8 @@ And look up the `accessible_attributes` property, because it shows whats attribu
 
 > **Note:** The [`Micro::Case::Result#then`](#how-to-use-the-microcaseresultthen-method) increments the `Micro::Case::Result#transitions`.
 
+PS: Use the `Micro::Case::Result.disable_transition_tracking` global feature toggle to disable this feature (use once) and increase the use cases' performance.
+
 ##### `Micro::Case::Result#transitions` schema
 ```ruby
 [
