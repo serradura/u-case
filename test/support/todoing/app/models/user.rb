@@ -4,21 +4,25 @@ require 'digest'
 
 class User < InactiveRecord::Base
   attr_reader :password_hash
-  attr_accessor :name
+  attr_accessor :email
+
+  def self.find_by_email(email)
+    __relation.find { |rec| rec.email == email }
+  end
 
   def initialize(options = {})
-    @name = options[:name]
+    @email = options[:email]
     @password = options[:password]
   end
 
   def invalid?
-    name.empty? || @password.empty?
+    email.empty? || @password.empty?
   end
 
   def save
     return false if invalid?
 
-    self.name = name
+    self.email = email
 
     save_new_record do
       @password_hash = Digest::SHA256.hexdigest(@password)

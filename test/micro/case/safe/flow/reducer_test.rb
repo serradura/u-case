@@ -4,39 +4,7 @@ class Micro::Case::Safe::Flow::ReducerTest < Minitest::Test
   require 'digest'
   require 'securerandom'
 
-  class Base
-    attr_reader :id
-
-    def self.__relation; (@relation ||= []); end
-
-    def self.all; __relation.to_a; end
-
-    def self.count; __relation.size; end
-
-    def self.delete_all; @relation = []; end
-
-    def self.find_by_id(id)
-      __relation.find { |rec| rec.id == id }
-    end
-
-    def new_record?; id.nil?; end
-
-    private
-
-      def save_new_record
-        if new_record?
-          @id = SecureRandom.uuid
-
-          yield
-
-          self.class.__relation << self
-        end
-
-        true
-      end
-  end
-
-  class User < Base
+  class User < InactiveRecord::Base
     attr_reader :password_hash
     attr_accessor :name
 
@@ -64,7 +32,7 @@ class Micro::Case::Safe::Flow::ReducerTest < Minitest::Test
     end
   end
 
-  class Todo < Base
+  class Todo < InactiveRecord::Base
     attr_accessor :description, :done, :user_id
 
     def self.find_by_id_and_user_id(id, user_id)
