@@ -2,10 +2,10 @@
 
 module Users
   class Find < Micro::Case::Strict
-    attribute :user_id
+    attribute :email
 
     def call!
-      user = User.find_by_id(user_id)
+      user = User.find_by_email(email)
 
       return Success { { user: user } } if user
 

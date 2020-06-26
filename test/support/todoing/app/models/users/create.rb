@@ -2,12 +2,12 @@
 
 module Users
   class Create < Micro::Case::Safe
-    attributes :name, :password, :password_confirmation
+    attributes :email, :password, :password_confirmation
 
     def call!
       return Failure(:invalid_password) if password != password_confirmation
 
-      user = User.new(attributes(:name, :password))
+      user = User.new(attributes(:email, :password))
 
       return Failure(:validation_error) unless user.save
 

@@ -10,7 +10,7 @@ class Micro::Case::Flow::ReducerTest < Minitest::Test
     user_password = '123456'
 
     user_created =
-      Users::Create.call(name: 'Rodrigo', password: user_password, password_confirmation: user_password)
+      Users::Create.call(email: 'rodrigo@test.com', password: user_password, password_confirmation: user_password)
 
     assert_success_result(user_created)
 
@@ -19,8 +19,13 @@ class Micro::Case::Flow::ReducerTest < Minitest::Test
     refute_nil(user.id)
     refute_predicate(user, :new_record?)
 
+    user_authenticated =
+      Users::Authenticate.call(email: 'rodrigo@test.com', password: user_password)
+
+    assert_success_result(user_authenticated)
+
     todo_created =
-      UserTodoList::AddItem.call(user_id: user.id, password: user_password, description: 'Buy milk')
+      UserTodoList::AddItem.call(email: 'rodrigo@test.com', password: user_password, description: 'Buy milk')
 
     assert_success_result(todo_created)
 
@@ -32,7 +37,7 @@ class Micro::Case::Flow::ReducerTest < Minitest::Test
     assert_equal(user.id, todo.user_id)
 
     result =
-      UserTodoList::MarkItemAsDone.call(user_id: user.id, password: user_password, todo_id: todo.id)
+      UserTodoList::MarkItemAsDone.call(email:'rodrigo@test.com', password: user_password, todo_id: todo.id)
 
     todo_updated = result.value[:todo]
 
@@ -47,19 +52,19 @@ class Micro::Case::Flow::ReducerTest < Minitest::Test
     user_password = '123456'
 
     user_created =
-      Users::Create.call(name: 'Rodrigo', password: user_password, password_confirmation: user_password)
+      Users::Create.call(email: 'rodrigo@test.com', password: user_password, password_confirmation: user_password)
 
     assert_success_result(user_created)
 
     user = user_created.value[:user]
 
     result1 =
-      UserTodoList::AddItem.call(user_id: user.id, password: '', description: 'Buy beer')
+      UserTodoList::AddItem.call(email:'rodrigo@test.com', password: '', description: 'Buy beer')
 
     assert_failure_result(result1, type: :wrong_password)
 
     result2 =
-      UserTodoList::AddItem.call(user_id: user.id, password: user_password, description: '')
+      UserTodoList::AddItem.call(email:'rodrigo@test.com', password: user_password, description: '')
 
     assert_failure_result(result2, type: :validation_error)
     assert_instance_of(Todos::Create, result2.use_case)
@@ -72,12 +77,12 @@ class Micro::Case::Flow::ReducerTest < Minitest::Test
     user_password = '123456'
 
     user_created =
-      Users::Create.call(name: 'Rodrigo', password: user_password, password_confirmation: user_password)
+      Users::Create.call(email: 'rodrigo@test.com', password: user_password, password_confirmation: user_password)
 
     user = user_created.value[:user]
 
     todo_created =
-      UserTodoList::AddItem.call(user_id: user.id, password: user_password, description: 'Buy milk')
+      UserTodoList::AddItem.call(email:'rodrigo@test.com', password: user_password, description: 'Buy milk')
 
     result_transitions = todo_created.transitions
 
@@ -96,9 +101,9 @@ class Micro::Case::Flow::ReducerTest < Minitest::Test
     assert_equal(Users::Find, first_transition_use_case[:class])
 
     # transitions[0][:use_case][:attributes]
-    assert_equal([:user_id], first_transition_use_case[:attributes].keys)
+    assert_equal([:email], first_transition_use_case[:attributes].keys)
 
-    assert_instance_of(String, first_transition_use_case[:attributes][:user_id])
+    assert_instance_of(String, first_transition_use_case[:attributes][:email])
 
     # transitions[0][:success]
     assert(first_transition.include?(:success))
@@ -114,7 +119,7 @@ class Micro::Case::Flow::ReducerTest < Minitest::Test
     assert_instance_of(User, first_transition_result[:value][:user])
 
     # transitions[0][:accessible_attributes]
-    assert_equal([:user_id, :password, :description], first_transition[:accessible_attributes])
+    assert_equal([:email, :password, :description], first_transition[:accessible_attributes])
 
     # --------------
     # transitions[1]
@@ -148,7 +153,7 @@ class Micro::Case::Flow::ReducerTest < Minitest::Test
     assert_instance_of(User, second_transition_result[:value][:user])
 
     # transitions[1][:accessible_attributes]
-    assert_equal([:user_id, :password, :description, :user], second_transition[:accessible_attributes])
+    assert_equal([:email, :password, :description, :user], second_transition[:accessible_attributes])
 
     # --------------
     # transitions[2]
@@ -188,6 +193,6 @@ class Micro::Case::Flow::ReducerTest < Minitest::Test
     )
 
     # transitions[2][:accessible_attributes]
-    assert_equal([:user_id, :password, :description, :user], third_transition[:accessible_attributes])
+    assert_equal([:email, :password, :description, :user], third_transition[:accessible_attributes])
   end
 end
