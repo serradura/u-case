@@ -972,7 +972,7 @@ In functional programming errors/exceptions are handled as regular data, the ide
 
 To address this the `Micro::Case::Result` has a special hook `#on_exception` to helping you to handle the control flow in the case of exceptions.
 
-> **Note** this feature will work better if you use it with a `Micro::Case::Safe` use case/flow.
+> **Note**: this feature will work better if you use it with a `Micro::Case::Safe` use case/flow.
 
 How does it work?
 
