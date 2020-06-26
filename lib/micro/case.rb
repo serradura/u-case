@@ -51,18 +51,30 @@ module Micro
       __new__(result, arg).call
     end
 
-    def self.__call!
-      return const_get(:Flow_Step) if const_defined?(:Flow_Step)
+    FLOW_STEP = 'Flow_Step'.freeze
 
-      const_set(:Flow_Step, Class.new(self) do
-        private def __call
-          __call_use_case
-        end
-      end)
+    private_constant :FLOW_STEP
+
+    def self.__call!
+      return const_get(FLOW_STEP) if const_defined?(FLOW_STEP, false)
+
+      class_eval("class #{FLOW_STEP} < #{self.name}; private def __call; __call_use_case; end; end")
     end
 
     def self.call!
       self
+    end
+
+    def self.inherited(subclass)
+      subclass.attributes(self.attributes_data({}))
+      subclass.extend ::Micro::Attributes.const_get('Macros::ForSubclasses'.freeze)
+
+      if self.send(:__flow_use_cases) && !subclass.name.to_s.end_with?(FLOW_STEP)
+        raise "Wooo, you can't do this! Inherits from a use case which has an inner flow violates "\
+          "one of the project principles: Solve complex business logic, by allowing the composition of use cases. "\
+          "Instead of doing this, declare a new class/constant with the steps needed.\n\n"\
+          "Related issue: https://github.com/serradura/u-case/issues/19\n"
+      end
     end
 
     def self.__flow_reducer
