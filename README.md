@@ -40,6 +40,8 @@ The main project goals are:
     - [Is it possible to declare a flow which includes the use case itself?](#is-it-possible-to-declare-a-flow-which-includes-the-use-case-itself)
   - [`Micro::Case::Strict` - What is a strict use case?](#microcasestrict---what-is-a-strict-use-case)
   - [`Micro::Case::Safe` - Is there some feature to auto handle exceptions inside of a use case or flow?](#microcasesafe---is-there-some-feature-to-auto-handle-exceptions-inside-of-a-use-case-or-flow)
+    - [`Micro::Case::Safe::Flow`](#microcasesafeflow)
+    - [`Micro::Case::Result#on_exception`](#microcaseresulton_exception)
   - [`u-case/with_activemodel_validation` - How to validate use case attributes?](#u-casewith_activemodel_validation---how-to-validate-use-case-attributes)
     - [If I enabled the auto validation, is it possible to disable it only in specific use case classes?](#if-i-enabled-the-auto-validation-is-it-possible-to-disable-it-only-in-specific-use-case-classes)
     - [Kind::Validator](#kindvalidator)
@@ -710,7 +712,7 @@ class Users::ValidatePassword < Micro::Case
 end
 ```
 
-As you can see the `Users::ValidatePassword` expects a user as its input. So, how it receives the user?
+As you can see the `Users::ValidatePassword` expects a user as its input. So, how does it receives the user?
 It receives the user from the `Users::Find` success result!
 
 And this, is the power of use cases composition because the output
@@ -908,7 +910,9 @@ end
 # Examples: https://github.com/serradura/u-case/blob/5a85fc238b63811a32737493dc6c59965f92491d/test/micro/case/safe_test.rb#L95-L123
 ```
 
-**Flows:**
+[⬆️ Back to Top](#table-of-contents-)
+
+#### `Micro::Case::Safe::Flow`
 
 As the safe use cases, safe flows can intercept an exception in any of its steps. These are the ways to define one:
 
@@ -942,7 +946,6 @@ module Users
   end
 end
 
-
 # !------------------------------------------ ! #
 # ! Deprecated: Micro::Case::Safe::Flow mixin ! #
 # !-------------------------------------------! #
@@ -960,6 +963,54 @@ end
 
 # Note: This feature will be removed in the next major release (3.0)
 ```
+
+[⬆️ Back to Top](#table-of-contents-)
+
+#### `Micro::Case::Result#on_exception`
+
+In functional programming errors/exceptions are handled as regular data, the idea is to transform the output even when it happens an unexpected behavior. For many, [exceptions are very similar to the GOTO statement](https://softwareengineering.stackexchange.com/questions/189222/are-exceptions-as-control-flow-considered-a-serious-antipattern-if-so-why), jumping the application flow to paths which could be difficult to figure out how things work in a system.
+
+To address this the `Micro::Case::Result` has a special hook `#on_exception` to helping you to handle the control flow in the case of exceptions.
+
+> **Note** this feature will work better if you use it with a `Micro::Case::Safe` use case/flow.
+
+How does it work?
+
+```ruby
+class Divide < Micro::Case::Safe
+  attributes :a, :b
+
+  def call!
+    Success(division: a / b)
+  end
+end
+
+Divide
+  .call(a: 2, b: 0)
+  .on_success { |result| puts result[:division] }
+  .on_exception(TypeError) { puts 'Please, use only numeric attributes.' }
+  .on_exception(ZeroDivisionError) { |_error| puts "Can't divide a number by 0." }
+  .on_exception { |_error, _use_case| puts 'Oh no, something went wrong!' }
+
+# Output:
+# -------
+# Can't divide a number by 0
+# Oh no, something went wrong!
+
+Divide.
+  .call(a: 2, b: '2').
+  .on_success { |result| puts result[:division] }
+  .on_exception(TypeError) { puts 'Please, use only numeric attributes.' }
+  .on_exception(ZeroDivisionError) { |_error| puts "Can't divide a number by 0." }
+  .on_exception { |_error, _use_case| puts 'Oh no, something went wrong!' }
+
+# Output:
+# -------
+# Please, use only numeric attributes.
+# Oh no, something went wrong!
+```
+
+As you can see, this hook has the same behavior of `result.on_failure(:exception)`, but, the ideia here is to have a better communication in the code, making an explicit reference when some failure happened because of an exception.
 
 [⬆️ Back to Top](#table-of-contents-)
 
