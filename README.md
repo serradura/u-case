@@ -40,6 +40,7 @@ The main project goals are:
   - [`Micro::Case::Safe` - Is there some feature to auto handle exceptions inside of a use case or flow?](#microcasesafe---is-there-some-feature-to-auto-handle-exceptions-inside-of-a-use-case-or-flow)
   - [`u-case/with_activemodel_validation` - How to validate use case attributes?](#u-casewith_activemodel_validation---how-to-validate-use-case-attributes)
     - [If I enabled the auto validation, is it possible to disable it only in specific use case classes?](#if-i-enabled-the-auto-validation-is-it-possible-to-disable-it-only-in-specific-use-case-classes)
+    - [Kind::Validator](#kindvalidator)
 - [Benchmarks](#benchmarks)
   - [`Micro::Case`](#microcase)
     - [Best overall](#best-overall)
@@ -964,6 +965,31 @@ Multiply.call(a: 2, b: 'a')
 ```
 
 [⬆️ Back to Top](#table-of-contents-)
+
+#### Kind::Validator
+
+The [kind gem](https://github.com/serradura/kind) has a module to enable the validation of data type through [`ActiveModel validations`](https://guides.rubyonrails.org/active_model_basics.html#validations). So, when you require the `'u-case/with_activemodel_validation'`, this module will require the [`Kind::Validator`](https://github.com/serradura/kind#kindvalidator-activemodelvalidations).
+
+The example below shows how to validate the attributes data types.
+
+```ruby
+class Todo::List::AddItem < Micro::Case
+  attributes :user, :params
+
+  validates :user, kind: User
+  validates :params, kind: ActionController::Parameters
+
+  def call!
+    todo_params = Todo::Params.to_save(params)
+
+    todo = user.todos.create(todo_params)
+
+    Success { { todo: todo} }
+  rescue ActionController::ParameterMissing => e
+    Failure(:parameter_missing) { { message: e.message } }
+  end
+end
+```
 
 ## Benchmarks
 
