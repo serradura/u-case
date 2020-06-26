@@ -36,7 +36,7 @@ The main project goals are:
     - [Is it possible to compose a use case flow with other ones?](#is-it-possible-to-compose-a-use-case-flow-with-other-ones)
     - [Is it possible a flow accumulates its input and merges each success result to use as the argument of the next use cases?](#is-it-possible-a-flow-accumulates-its-input-and-merges-each-success-result-to-use-as-the-argument-of-the-next-use-cases)
     - [How to understand what is happening during a flow execution?](#how-to-understand-what-is-happening-during-a-flow-execution)
-      - [Micro::Case::Result#transitions schema.](#microcaseresulttransitions-schema)
+      - [`Micro::Case::Result#transitions` schema](#microcaseresulttransitions-schema)
     - [Is it possible to declare a flow which includes the use case itself?](#is-it-possible-to-declare-a-flow-which-includes-the-use-case-itself)
   - [`Micro::Case::Strict` - What is a strict use case?](#microcasestrict---what-is-a-strict-use-case)
   - [`Micro::Case::Safe` - Is there some feature to auto handle exceptions inside of a use case or flow?](#microcasesafe---is-there-some-feature-to-auto-handle-exceptions-inside-of-a-use-case-or-flow)
@@ -773,7 +773,7 @@ And look up the `accessible_attributes` property, because it shows whats attribu
 
 > **Note:** The [`Micro::Case::Result#then`](#how-to-use-the-microcaseresultthen-method) increments the `Micro::Case::Result#transitions`.
 
-##### Micro::Case::Result#transitions schema.
+##### `Micro::Case::Result#transitions` schema
 ```ruby
 [
   {
