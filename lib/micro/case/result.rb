@@ -114,10 +114,6 @@ module Micro
         __set_transitions_accessible_attributes__!(attributes_data)
       end
 
-      def __get_transitions_accessible_attributes__
-        @__transitions_accessible_attributes__
-      end
-
       private
 
         def __set_transitions_accessible_attributes__!(attributes_data)
