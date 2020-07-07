@@ -29,7 +29,7 @@ module Micro
 
       def initialize
         @__transitions__ = {}
-        @__transitions_accessible_attributes__ = Set.new
+        @__transitions_accessible_attributes__ = {}
       end
 
       def __set__(is_success, value, type, use_case)
@@ -83,7 +83,7 @@ module Micro
         self
       end
 
-      def then(arg = nil, &block)
+      def then(arg = nil, attributes = nil, &block)
         can_yield_self = respond_to?(:yield_self)
 
         if block
@@ -98,7 +98,9 @@ module Micro
 
           return self if failure?
 
-          arg.__call_and_set_transition__(self, self.value)
+          input = attributes.is_a?(Hash) ? self.value.merge(attributes) : self.value
+
+          arg.__call_and_set_transition__(self, input)
         end
       end
 
@@ -108,20 +110,27 @@ module Micro
         @__transitions__.map { |_use_case, transition| transition }
       end
 
-      def __set_transitions_accessible_attributes__(attribute_names)
-        return if @@transition_tracking_disabled
+      def __set_transitions_accessible_attributes__(attributes_data)
+        return attributes_data if @@transition_tracking_disabled
 
-        __set_transitions_accessible_attributes__!(
-          attribute_names.map!(&:to_sym)
-        )
+        __set_transitions_accessible_attributes__!(attributes_data)
+      end
+
+      def __get_transitions_accessible_attributes__
+        @__transitions_accessible_attributes__
       end
 
       private
 
-        def __set_transitions_accessible_attributes__!(attribute_names)
-          @__transitions_accessible_attributes__.merge(
-            attribute_names
-          )
+        def __set_transitions_accessible_attributes__!(attributes_data)
+          attributes = Utils.symbolize_hash_keys(attributes_data)
+
+          __update_transitions_accessible_attributes__(attributes)
+        end
+
+        def __update_transitions_accessible_attributes__(attributes)
+          @__transitions_accessible_attributes__.merge!(attributes)
+          @__transitions_accessible_attributes__
         end
 
         def success_type?(expected_type)
@@ -140,13 +149,13 @@ module Micro
           use_case_class = @use_case.class
           use_case_attributes = Utils.symbolize_hash_keys(@use_case.attributes)
 
-          __set_transitions_accessible_attributes__!(use_case_attributes.keys)
+          __update_transitions_accessible_attributes__(use_case_attributes)
 
           result = @success ? :success : :failure
           transition = {
             use_case: { class: use_case_class, attributes: use_case_attributes },
             result => { type: @type, value: @value },
-            accessible_attributes: @__transitions_accessible_attributes__.to_a
+            accessible_attributes: @__transitions_accessible_attributes__.keys
           }
 
           @__transitions__[use_case_class] = transition
