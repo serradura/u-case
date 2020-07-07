@@ -48,7 +48,7 @@ module MicroCaseAssertions
   def assert_success_result(result, options = { type: :ok })
     value = (block_given? ? yield : options[:value])
 
-    assert_result(result, options.merge(value: value))
+    assert_result(result, options.merge(value: value)) if value
 
     assert_predicate(result, :success?)
 

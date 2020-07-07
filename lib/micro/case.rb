@@ -44,11 +44,10 @@ module Micro
     end
 
     def self.__call_and_set_transition__(result, arg)
-      if arg.respond_to?(:keys)
-        result.__set_transitions_accessible_attributes__(arg.keys)
-      end
+      input =
+        arg.is_a?(Hash) ? result.__set_transitions_accessible_attributes__(arg) : arg
 
-      __new__(result, arg).call
+      __new__(result, input).call
     end
 
     FLOW_STEP = 'Flow_Step'.freeze
