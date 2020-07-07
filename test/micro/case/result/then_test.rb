@@ -89,7 +89,7 @@ class Micro::Case::Result::ThenTest < Minitest::Test
       first_transition_use_case = first_transition[:use_case]
 
       # transitions[0][:use_case][:class]
-      assert_equal(Micro::Case::Result::ThenTest::ConvertTextIntoInteger, first_transition_use_case[:class])
+      assert_equal(ConvertTextIntoInteger, first_transition_use_case[:class])
 
       # transitions[0][:use_case][:attributes]
       assert_equal([:text], first_transition_use_case[:attributes].keys)
@@ -123,7 +123,7 @@ class Micro::Case::Result::ThenTest < Minitest::Test
       second_transition_use_case = second_transition[:use_case]
 
       # transitions[1][:use_case][:class]
-      assert_equal(Micro::Case::Result::ThenTest::Add3, second_transition_use_case[:class])
+      assert_equal(Add3, second_transition_use_case[:class])
 
       # transitions[1][:use_case][:attributes]
       assert_equal([:number], second_transition_use_case[:attributes].keys)
@@ -165,7 +165,7 @@ class Micro::Case::Result::ThenTest < Minitest::Test
       first_transition_use_case = first_transition[:use_case]
 
       # transitions[0][:use_case][:class]
-      assert_equal(Micro::Case::Result::ThenTest::ConvertTextIntoInteger, first_transition_use_case[:class])
+      assert_equal(ConvertTextIntoInteger, first_transition_use_case[:class])
 
       # transitions[0][:use_case][:attributes]
       assert_equal([:text], first_transition_use_case[:attributes].keys)
