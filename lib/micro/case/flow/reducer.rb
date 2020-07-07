@@ -93,7 +93,7 @@ module Micro
               value = result.value
               input = value.is_a?(Hash) ? memo.tap { |data| data.merge!(value) } : value
 
-              result.__set_transitions_accessible_attributes__(memo.keys)
+              result.__set_transitions_accessible_attributes__(memo)
 
               next_use_case_result(use_case, result, input)
             end

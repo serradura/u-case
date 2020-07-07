@@ -89,7 +89,7 @@ class Micro::Case::Result::ThenTest < Minitest::Test
       first_transition_use_case = first_transition[:use_case]
 
       # transitions[0][:use_case][:class]
-      assert_equal(Micro::Case::Result::ThenTest::ConvertTextIntoInteger, first_transition_use_case[:class])
+      assert_equal(ConvertTextIntoInteger, first_transition_use_case[:class])
 
       # transitions[0][:use_case][:attributes]
       assert_equal([:text], first_transition_use_case[:attributes].keys)
@@ -123,7 +123,7 @@ class Micro::Case::Result::ThenTest < Minitest::Test
       second_transition_use_case = second_transition[:use_case]
 
       # transitions[1][:use_case][:class]
-      assert_equal(Micro::Case::Result::ThenTest::Add3, second_transition_use_case[:class])
+      assert_equal(Add3, second_transition_use_case[:class])
 
       # transitions[1][:use_case][:attributes]
       assert_equal([:number], second_transition_use_case[:attributes].keys)
@@ -165,7 +165,7 @@ class Micro::Case::Result::ThenTest < Minitest::Test
       first_transition_use_case = first_transition[:use_case]
 
       # transitions[0][:use_case][:class]
-      assert_equal(Micro::Case::Result::ThenTest::ConvertTextIntoInteger, first_transition_use_case[:class])
+      assert_equal(ConvertTextIntoInteger, first_transition_use_case[:class])
 
       # transitions[0][:use_case][:attributes]
       assert_equal([:text], first_transition_use_case[:attributes].keys)
@@ -195,5 +195,225 @@ class Micro::Case::Result::ThenTest < Minitest::Test
 
     assert_raises(Micro::Case::Error::InvalidInvocationOfTheThenMethod) { result1.then(1) }
     assert_raises(Micro::Case::Error::InvalidInvocationOfTheThenMethod) { result2.then(1) }
+  end
+
+  class FooBar < Micro::Case
+    attributes :foo, :bar
+
+    def call!
+      return Success(filled_foo_and_bar: true) if foo && bar
+
+      Failure(:missing_foo_or_bar)
+    end
+  end
+
+  class Foo < Micro::Case
+    attributes :foo
+
+    def call!
+      return Success(filled_foo: true) if foo
+
+      Failure(:missing_foo)
+    end
+  end
+
+  class Bar < Micro::Case
+    attributes :bar
+
+    def call!
+      return Success(filled_bar: true) if bar
+
+      Failure(:missing_bar)
+    end
+  end
+
+  FooAndBar = Micro::Case::Flow([Foo, Bar])
+
+  class FooBarBaz < Micro::Case
+    attributes :foo, :bar, :baz
+
+    def call!
+      return Success(filled_foo_and_bar_and_baz: true) if foo && bar && baz
+
+      Failure(:missing_foo_or_bar_or_baz)
+    end
+  end
+
+  def test_the_accessibility_of_accumulated_data
+    result1 =
+      FooBar
+        .call(foo: 'foo', bar: 'bar')
+        .then(Foo)
+        .then(Bar)
+
+    assert_success_result(result1)
+
+    result1_transitions = result1.transitions
+
+    [
+      {
+        use_case: { class: FooBar, attributes: { foo: 'foo', bar: 'bar'} },
+        success: { type: :ok, value: { filled_foo_and_bar: true } },
+        accessible_attributes: [:foo, :bar]
+      },
+      {
+        use_case: { class: Foo, attributes: { foo: 'foo' } },
+        success: { type: :ok, value: { filled_foo: true } },
+        accessible_attributes: [:foo, :bar, :filled_foo_and_bar]
+      },
+      {
+        use_case: { class: Bar, attributes: { bar: 'bar' }},
+        success: { type: :ok, value: { filled_bar: true } },
+        accessible_attributes: [:foo, :bar, :filled_foo_and_bar, :filled_foo]
+      }
+    ].each_with_index do |expected_transition, index|
+      assert_equal(expected_transition, result1_transitions[index])
+    end
+
+    # ---
+
+    result2 =
+      FooAndBar
+        .call(foo: 'foo', bar: 'bar')
+        .then(FooBar)
+        .then(Bar)
+
+    assert_success_result(result2)
+
+    result2_transitions = result2.transitions
+
+    [
+      {
+        use_case: { class: Foo, attributes: { foo: 'foo' } },
+        success: { type: :ok, value: { filled_foo: true } },
+        accessible_attributes: [:foo, :bar]
+      },
+      {
+        use_case: { class: Bar, attributes: { bar: 'bar' }},
+        success: { type: :ok, value: { filled_bar: true } },
+        accessible_attributes: [:foo, :bar, :filled_foo]
+      },
+      {
+        use_case: { class: FooBar, attributes: { foo: 'foo', bar: 'bar'} },
+        success: { type: :ok, value: { filled_foo_and_bar: true } },
+        accessible_attributes: [:foo, :bar, :filled_foo, :filled_bar]
+      },
+      {
+        use_case: { class: Bar, attributes: { bar: 'bar' }},
+        success: { type: :ok, value: { filled_bar: true } },
+        accessible_attributes: [:foo, :bar, :filled_foo, :filled_bar, :filled_foo_and_bar]
+      },
+    ].each_with_index do |expected_transition, index|
+      assert_equal(expected_transition, result2_transitions[index])
+    end
+  end
+
+  def test_the_injection_of_values
+    result1 =
+      Foo
+        .call(foo: 'foo')
+        .then(FooBar, bar: 'bar')
+
+    assert_success_result(result1)
+
+    result1_transitions = result1.transitions
+
+    [
+      {
+        use_case: { class: Foo, attributes: { foo: 'foo' } },
+        success: { type: :ok, value: { filled_foo: true } },
+        accessible_attributes: [:foo]
+      },
+      {
+        use_case: { class: FooBar, attributes: { foo: 'foo', bar: 'bar'} },
+        success: { type: :ok, value: { filled_foo_and_bar: true } },
+        accessible_attributes: [:foo, :filled_foo, :bar]
+      }
+    ].each_with_index do |expected_transition, index|
+      assert_equal(expected_transition, result1_transitions[index])
+    end
+
+    # ---
+
+    result2 =
+      Bar
+        .call(bar: 'bar')
+        .then(FooBar, foo: 'foo')
+
+    assert_success_result(result2)
+
+    result2_transitions = result2.transitions
+
+    [
+      {
+        use_case: { class: Bar, attributes: { bar: 'bar' }},
+        success: { type: :ok, value: { filled_bar: true } },
+        accessible_attributes: [:bar]
+      },
+      {
+        use_case: { class: FooBar, attributes: { foo: 'foo', bar: 'bar'} },
+        success: { type: :ok, value: { filled_foo_and_bar: true } },
+        accessible_attributes: [:bar, :filled_bar, :foo]
+      }
+    ].each_with_index do |expected_transition, index|
+      assert_equal(expected_transition, result2_transitions[index])
+    end
+
+    # ---
+
+    result3 =
+      FooBar
+        .call(foo: 'foo', bar: 'bar')
+        .then(FooBarBaz, baz: 'baz')
+
+    assert_success_result(result3)
+
+    result3_transitions = result3.transitions
+
+    [
+      {
+        use_case: { class: FooBar, attributes: { foo: 'foo', bar: 'bar'} },
+        success: { type: :ok, value: { filled_foo_and_bar: true } },
+        accessible_attributes: [:foo, :bar]
+      },
+      {
+        use_case: { class: FooBarBaz, attributes: { foo: 'foo', bar: 'bar', baz: 'baz'} },
+        success: { type: :ok, value: { filled_foo_and_bar_and_baz: true } },
+        accessible_attributes: [:foo, :bar, :filled_foo_and_bar, :baz]
+      },
+    ].each_with_index do |expected_transition, index|
+      assert_equal(expected_transition, result3_transitions[index])
+    end
+
+    # ---
+
+    result4 =
+      FooAndBar
+        .call(foo: 'foo', bar: 'bar')
+        .then(FooBarBaz, baz: 'baz')
+
+    assert_success_result(result4)
+
+    result4_transitions = result4.transitions
+
+    [
+      {
+        use_case: { class: Foo, attributes: { foo: 'foo' } },
+        success: { type: :ok, value: { filled_foo: true } },
+        accessible_attributes: [:foo, :bar]
+      },
+      {
+        use_case: { class: Bar, attributes: { bar: 'bar' }},
+        success: { type: :ok, value: { filled_bar: true } },
+        accessible_attributes: [:foo, :bar, :filled_foo]
+      },
+      {
+        use_case: { class: FooBarBaz, attributes: { foo: 'foo', bar: 'bar', baz: 'baz'} },
+        success: { type: :ok, value: { filled_foo_and_bar_and_baz: true } },
+        accessible_attributes: [:foo, :bar, :filled_foo, :filled_bar, :baz]
+      },
+    ].each_with_index do |expected_transition, index|
+      assert_equal(expected_transition, result4_transitions[index])
+    end
   end
 end
