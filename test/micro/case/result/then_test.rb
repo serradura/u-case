@@ -196,4 +196,102 @@ class Micro::Case::Result::ThenTest < Minitest::Test
     assert_raises(Micro::Case::Error::InvalidInvocationOfTheThenMethod) { result1.then(1) }
     assert_raises(Micro::Case::Error::InvalidInvocationOfTheThenMethod) { result2.then(1) }
   end
+
+  class FooBar < Micro::Case
+    attributes :foo, :bar
+
+    def call!
+      return Success(filled_foo_and_bar: true) if foo && bar
+
+      Failure(:missing_foo_or_bar)
+    end
+  end
+
+  class Foo < Micro::Case
+    attributes :foo
+
+    def call!
+      return Success(filled_foo: true) if foo
+
+      Failure(:missing_foo)
+    end
+  end
+
+  class Bar < Micro::Case
+    attributes :bar
+
+    def call!
+      return Success(filled_bar: true) if bar
+
+      Failure(:missing_bar)
+    end
+  end
+
+  FooAndBar = Micro::Case::Flow([Foo, Bar])
+
+  class FooBarBaz < Micro::Case
+    attributes :foo, :bar, :baz
+
+    def call!
+      return Success(filled_foo_and_bar_and_baz: true) if foo && bar && baz
+
+      Failure(:missing_foo_or_bar_or_baz)
+    end
+  end
+
+  def test_the_accessibility_of_accumulated_data
+    result1 =
+      FooBar
+        .call(foo: 'foo', bar: 'bar')
+        .then(Foo)
+        .then(Bar)
+
+    assert_success_result(result1)
+
+    # ---
+
+    result2 =
+      FooAndBar
+        .call(foo: 'foo', bar: 'bar')
+        .then(FooBar)
+        .then(Bar)
+
+    assert_success_result(result2)
+  end
+
+  def test_the_injection_of_values
+    result1 =
+      Foo
+        .call(foo: 'foo')
+        .then(FooBar, bar: 'bar')
+
+    assert_success_result(result1)
+
+    # ---
+
+    result2 =
+      Bar
+        .call(bar: 'bar')
+        .then(FooBar, foo: 'foo')
+
+    assert_success_result(result2)
+
+    # ---
+
+    result3 =
+      FooBar
+        .call(foo: 'foo', bar: 'bar')
+        .then(FooBarBaz, baz: 'baz')
+
+    assert_success_result(result3)
+
+    # ---
+
+    result4 =
+      FooAndBar
+        .call(foo: 'foo', bar: 'bar')
+        .then(FooBarBaz, baz: 'baz')
+
+    assert_success_result(result4)
+  end
 end
