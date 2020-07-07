@@ -32,6 +32,7 @@ The main project goals are:
     - [Why the failure hook (without a type) exposes a different kind of data?](#why-the-failure-hook-without-a-type-exposes-a-different-kind-of-data)
     - [What happens if a result hook was declared multiple times?](#what-happens-if-a-result-hook-was-declared-multiple-times)
     - [How to use the `Micro::Case::Result#then` method?](#how-to-use-the-microcaseresultthen-method)
+      - [How to make attributes data injection using this feature?](#how-to-make-attributes-data-injection-using-this-feature)
   - [`Micro::Case::Flow` - How to compose use cases?](#microcaseflow---how-to-compose-use-cases)
     - [Is it possible to compose a use case flow with other ones?](#is-it-possible-to-compose-a-use-case-flow-with-other-ones)
     - [Is it possible a flow accumulates its input and merges each success result to use as the argument of the next use cases?](#is-it-possible-a-flow-accumulates-its-input-and-merges-each-success-result-to-use-as-the-argument-of-the-next-use-cases)
@@ -44,7 +45,7 @@ The main project goals are:
     - [`Micro::Case::Result#on_exception`](#microcaseresulton_exception)
   - [`u-case/with_activemodel_validation` - How to validate use case attributes?](#u-casewith_activemodel_validation---how-to-validate-use-case-attributes)
     - [If I enabled the auto validation, is it possible to disable it only in specific use case classes?](#if-i-enabled-the-auto-validation-is-it-possible-to-disable-it-only-in-specific-use-case-classes)
-    - [Kind::Validator](#kindvalidator)
+    - [`Kind::Validator`](#kindvalidator)
 - [Benchmarks](#benchmarks)
   - [`Micro::Case`](#microcase)
     - [Best overall](#best-overall)
@@ -431,6 +432,9 @@ result.value * 4 == accum # true
 
 #### How to use the `Micro::Case::Result#then` method?
 
+This method allows you to create dynamic flows, so, with it,
+you can add new use cases or flows to continue the result transformation. e.g:
+
 ```ruby
 class ForbidNegativeNumber < Micro::Case
   attribute :number
@@ -455,7 +459,6 @@ result1 =
     .call(number: -1)
     .then(Add3)
 
-result1.type     # :error
 result1.value    # {'number' => -1}
 result1.failure? # true
 
@@ -466,9 +469,24 @@ result2 =
     .call(number: 1)
     .then(Add3)
 
-result2.type     # :ok
 result2.value    # {'number' => 4}
 result2.success? # true
+```
+
+> **Note:** this method changes the [`Micro::Case::Result#transitions`](#how-to-understand-what-is-happening-during-a-flow-execution).
+
+[⬆️ Back to Top](#table-of-contents-)
+
+##### How to make attributes data injection using this feature?
+
+Pass a Hash as the second argument of the `Micro::Case::Result#then` method.
+
+```ruby
+Todo::FindAllForUser
+  .call(user: current_user, params: params)
+  .then(Paginate)
+  .then(Serialize::PaginatedRelationAsJson, serializer: Todo::Serializer)
+  .on_success { |result| render_json(200, data: result[:todos]) }
 ```
 
 [⬆️ Back to Top](#table-of-contents-)
@@ -1092,7 +1110,7 @@ Multiply.call(a: 2, b: 'a')
 
 [⬆️ Back to Top](#table-of-contents-)
 
-#### Kind::Validator
+#### `Kind::Validator`
 
 The [kind gem](https://github.com/serradura/kind) has a module to enable the validation of data type through [`ActiveModel validations`](https://guides.rubyonrails.org/active_model_basics.html#validations). So, when you require the `'u-case/with_activemodel_validation'`, this module will require the [`Kind::Validator`](https://github.com/serradura/kind#kindvalidator-activemodelvalidations).
 
