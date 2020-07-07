@@ -28,7 +28,7 @@ module Micro
       attr_reader :value, :type
 
       def initialize
-        @__transitions__ = {}
+        @__transitions__ = []
         @__transitions_accessible_attributes__ = {}
       end
 
@@ -105,9 +105,7 @@ module Micro
       end
 
       def transitions
-        return [] if @__transitions__.empty?
-
-        @__transitions__.map { |_use_case, transition| transition }
+        @__transitions__.clone
       end
 
       def __set_transitions_accessible_attributes__(attributes_data)
@@ -152,13 +150,12 @@ module Micro
           __update_transitions_accessible_attributes__(use_case_attributes)
 
           result = @success ? :success : :failure
-          transition = {
+
+          @__transitions__ << {
             use_case: { class: use_case_class, attributes: use_case_attributes },
             result => { type: @type, value: @value },
             accessible_attributes: @__transitions_accessible_attributes__.keys
           }
-
-          @__transitions__[use_case_class] = transition
         end
     end
   end

@@ -248,6 +248,28 @@ class Micro::Case::Result::ThenTest < Minitest::Test
 
     assert_success_result(result1)
 
+    result1_transitions = result1.transitions
+
+    [
+      {
+        use_case: { class: FooBar, attributes: { foo: 'foo', bar: 'bar'} },
+        success: { type: :ok, value: { filled_foo_and_bar: true } },
+        accessible_attributes: [:foo, :bar]
+      },
+      {
+        use_case: { class: Foo, attributes: { foo: 'foo' } },
+        success: { type: :ok, value: { filled_foo: true } },
+        accessible_attributes: [:foo, :bar, :filled_foo_and_bar]
+      },
+      {
+        use_case: { class: Bar, attributes: { bar: 'bar' }},
+        success: { type: :ok, value: { filled_bar: true } },
+        accessible_attributes: [:foo, :bar, :filled_foo_and_bar, :filled_foo]
+      }
+    ].each_with_index do |expected_transition, index|
+      assert_equal(expected_transition, result1_transitions[index])
+    end
+
     # ---
 
     result2 =
@@ -257,6 +279,33 @@ class Micro::Case::Result::ThenTest < Minitest::Test
         .then(Bar)
 
     assert_success_result(result2)
+
+    result2_transitions = result2.transitions
+
+    [
+      {
+        use_case: { class: Foo, attributes: { foo: 'foo' } },
+        success: { type: :ok, value: { filled_foo: true } },
+        accessible_attributes: [:foo, :bar]
+      },
+      {
+        use_case: { class: Bar, attributes: { bar: 'bar' }},
+        success: { type: :ok, value: { filled_bar: true } },
+        accessible_attributes: [:foo, :bar, :filled_foo]
+      },
+      {
+        use_case: { class: FooBar, attributes: { foo: 'foo', bar: 'bar'} },
+        success: { type: :ok, value: { filled_foo_and_bar: true } },
+        accessible_attributes: [:foo, :bar, :filled_foo, :filled_bar]
+      },
+      {
+        use_case: { class: Bar, attributes: { bar: 'bar' }},
+        success: { type: :ok, value: { filled_bar: true } },
+        accessible_attributes: [:foo, :bar, :filled_foo, :filled_bar, :filled_foo_and_bar]
+      },
+    ].each_with_index do |expected_transition, index|
+      assert_equal(expected_transition, result2_transitions[index])
+    end
   end
 
   def test_the_injection_of_values
@@ -267,6 +316,23 @@ class Micro::Case::Result::ThenTest < Minitest::Test
 
     assert_success_result(result1)
 
+    result1_transitions = result1.transitions
+
+    [
+      {
+        use_case: { class: Foo, attributes: { foo: 'foo' } },
+        success: { type: :ok, value: { filled_foo: true } },
+        accessible_attributes: [:foo]
+      },
+      {
+        use_case: { class: FooBar, attributes: { foo: 'foo', bar: 'bar'} },
+        success: { type: :ok, value: { filled_foo_and_bar: true } },
+        accessible_attributes: [:foo, :filled_foo, :bar]
+      }
+    ].each_with_index do |expected_transition, index|
+      assert_equal(expected_transition, result1_transitions[index])
+    end
+
     # ---
 
     result2 =
@@ -275,6 +341,23 @@ class Micro::Case::Result::ThenTest < Minitest::Test
         .then(FooBar, foo: 'foo')
 
     assert_success_result(result2)
+
+    result2_transitions = result2.transitions
+
+    [
+      {
+        use_case: { class: Bar, attributes: { bar: 'bar' }},
+        success: { type: :ok, value: { filled_bar: true } },
+        accessible_attributes: [:bar]
+      },
+      {
+        use_case: { class: FooBar, attributes: { foo: 'foo', bar: 'bar'} },
+        success: { type: :ok, value: { filled_foo_and_bar: true } },
+        accessible_attributes: [:bar, :filled_bar, :foo]
+      }
+    ].each_with_index do |expected_transition, index|
+      assert_equal(expected_transition, result2_transitions[index])
+    end
 
     # ---
 
@@ -285,6 +368,23 @@ class Micro::Case::Result::ThenTest < Minitest::Test
 
     assert_success_result(result3)
 
+    result3_transitions = result3.transitions
+
+    [
+      {
+        use_case: { class: FooBar, attributes: { foo: 'foo', bar: 'bar'} },
+        success: { type: :ok, value: { filled_foo_and_bar: true } },
+        accessible_attributes: [:foo, :bar]
+      },
+      {
+        use_case: { class: FooBarBaz, attributes: { foo: 'foo', bar: 'bar', baz: 'baz'} },
+        success: { type: :ok, value: { filled_foo_and_bar_and_baz: true } },
+        accessible_attributes: [:foo, :bar, :filled_foo_and_bar, :baz]
+      },
+    ].each_with_index do |expected_transition, index|
+      assert_equal(expected_transition, result3_transitions[index])
+    end
+
     # ---
 
     result4 =
@@ -293,5 +393,27 @@ class Micro::Case::Result::ThenTest < Minitest::Test
         .then(FooBarBaz, baz: 'baz')
 
     assert_success_result(result4)
+
+    result4_transitions = result4.transitions
+
+    [
+      {
+        use_case: { class: Foo, attributes: { foo: 'foo' } },
+        success: { type: :ok, value: { filled_foo: true } },
+        accessible_attributes: [:foo, :bar]
+      },
+      {
+        use_case: { class: Bar, attributes: { bar: 'bar' }},
+        success: { type: :ok, value: { filled_bar: true } },
+        accessible_attributes: [:foo, :bar, :filled_foo]
+      },
+      {
+        use_case: { class: FooBarBaz, attributes: { foo: 'foo', bar: 'bar', baz: 'baz'} },
+        success: { type: :ok, value: { filled_foo_and_bar_and_baz: true } },
+        accessible_attributes: [:foo, :bar, :filled_foo, :filled_bar, :baz]
+      },
+    ].each_with_index do |expected_transition, index|
+      assert_equal(expected_transition, result4_transitions[index])
+    end
   end
 end
