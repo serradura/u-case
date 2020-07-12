@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
 module Users
-  Authenticate = Find >> ValidatePassword
+  Authenticate = Micro::Case::Flow([
+    Find,
+    ValidatePassword
+  ])
 end

@@ -2,38 +2,37 @@ require 'ostruct'
 require 'test_helper'
 require 'support/steps'
 
-class Micro::Case::Safe::Flow::CollectionMapperTest < Minitest::Test
-  Add2ToAllNumbers = Micro::Case::Safe::Flow([
+class Micro::Case::Flow::CollectionTest < Minitest::Test
+  Add2ToAllNumbers = Micro::Case::Flow([
     Steps::ConvertToNumbers,
     Steps::Add2
   ])
 
-  DoubleAllNumbers = Micro::Case::Safe::Flow([
+  DoubleAllNumbers = Micro::Case::Flow([
     Steps::ConvertToNumbers,
     Steps::Double
   ])
 
-  SquareAllNumbers = Micro::Case::Safe::Flow([
+  SquareAllNumbers = Micro::Case::Flow([
     Steps::ConvertToNumbers,
     Steps::Square
   ])
 
-  DoubleAllNumbersAndAdd2 = Micro::Case::Safe::Flow([
+  DoubleAllNumbersAndAdd2 = Micro::Case::Flow([
     DoubleAllNumbers,
     Steps::Add2
   ])
 
-  SquareAllNumbersAndAdd2 = Micro::Case::Safe::Flow([
+  SquareAllNumbersAndAdd2 = Micro::Case::Flow([
     SquareAllNumbers,
     Steps::Add2
   ])
 
   SquareAllNumbersAndDouble =
-    Micro::Case::Safe::Flow([SquareAllNumbersAndAdd2, DoubleAllNumbers])
+    Micro::Case::Flow([SquareAllNumbersAndAdd2, DoubleAllNumbers])
 
   DoubleAllNumbersAndSquareAndAdd2 =
-    Micro::Case::Safe::Flow([DoubleAllNumbers, SquareAllNumbersAndAdd2])
-
+    Micro::Case::Flow([DoubleAllNumbers, SquareAllNumbersAndAdd2])
 
   EXAMPLES = [
     { flow: Add2ToAllNumbers, result: [3, 3, 4, 4, 5, 6] },
