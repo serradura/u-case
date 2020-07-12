@@ -56,8 +56,6 @@ class Micro::Case::Flow::ReducerTest < Minitest::Test
 
     assert_success_result(user_created)
 
-    user = user_created.value[:user]
-
     result1 =
       UserTodoList::AddItem.call(email:'rodrigo@test.com', password: '', description: 'Buy beer')
 
@@ -76,10 +74,7 @@ class Micro::Case::Flow::ReducerTest < Minitest::Test
   def test_the_result_transitions_after_creating_a_todo
     user_password = '123456'
 
-    user_created =
-      Users::Create.call(email: 'rodrigo@test.com', password: user_password, password_confirmation: user_password)
-
-    user = user_created.value[:user]
+    Users::Create.call(email: 'rodrigo@test.com', password: user_password, password_confirmation: user_password)
 
     todo_created =
       UserTodoList::AddItem.call(email:'rodrigo@test.com', password: user_password, description: 'Buy milk')

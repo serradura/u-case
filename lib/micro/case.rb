@@ -11,7 +11,6 @@ module Micro
     require 'micro/case/error'
     require 'micro/case/safe'
     require 'micro/case/strict'
-    require 'micro/case/flow/reducer'
     require 'micro/case/flow'
     require 'micro/case/safe/flow'
 
@@ -23,14 +22,6 @@ module Micro
 
     def self.Flow(args)
       Flow::Reducer.build(Array(args))
-    end
-
-    def self.>>(use_case)
-      Flow([self, use_case])
-    end
-
-    def self.&(use_case)
-      Safe::Flow([self, use_case])
     end
 
     def self.call(options = {})

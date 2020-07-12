@@ -60,8 +60,14 @@ module Safe
       end
     end
 
-    Build = State::Default & SetID
+    Build = Micro::Case::Safe::Flow([
+      State::Default,
+      SetID
+    ])
 
-    Run = ValidateID & SetStateToRunning
+    Run = Micro::Case::Safe::Flow([
+      ValidateID,
+      SetStateToRunning
+    ])
   end
 end

@@ -3,7 +3,9 @@ require 'test_helper'
 require 'support/steps'
 
 class Micro::Case::Flow::BlendTest < Minitest::Test
-  Add2ToAllNumbers = Steps::ConvertToNumbers >> Steps::Add2
+  Add2ToAllNumbers = Micro::Case::Flow([
+    Steps::ConvertToNumbers, Steps::Add2
+  ])
 
   DoubleAllNumbers = Micro::Case::Flow([
     Steps::ConvertToNumbers,
@@ -12,20 +14,24 @@ class Micro::Case::Flow::BlendTest < Minitest::Test
 
   class SquareAllNumbers < Micro::Case
     flow Steps::ConvertToNumbers,
-         Steps::Square
+        Steps::Square
   end
 
-  DoubleAllNumbersAndAdd2 = DoubleAllNumbers >> Steps::Add2
+  DoubleAllNumbersAndAdd2 = Micro::Case::Flow([
+    DoubleAllNumbers, Steps::Add2
+  ])
 
   SquareAllNumbersAndAdd2 = Micro::Case::Flow([
     SquareAllNumbers, Steps::Add2
   ])
 
-  SquareAllNumbersAndDouble = SquareAllNumbersAndAdd2 >> DoubleAllNumbers
+  SquareAllNumbersAndDouble = Micro::Case::Flow([
+    SquareAllNumbersAndAdd2, DoubleAllNumbers
+  ])
 
   class DoubleAllNumbersAndSquareAndAdd2 < Micro::Case
     flow DoubleAllNumbers,
-         SquareAllNumbersAndAdd2
+        SquareAllNumbersAndAdd2
   end
 
   EXAMPLES = [
