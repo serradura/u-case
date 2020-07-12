@@ -99,7 +99,10 @@ class Micro::Case::Safe::Flow::ReducerTest < Minitest::Test
       end
     end
 
-    Authenticate = Fetch & CheckPassword
+    Authenticate = Micro::Case::Safe::Flow([
+      Fetch,
+      CheckPassword
+    ])
   end
 
   module Todos
@@ -144,12 +147,10 @@ class Micro::Case::Safe::Flow::ReducerTest < Minitest::Test
   module UserTodos
     Create = Micro::Case::Safe::Flow([Users::Authenticate, Todos::Create])
 
-    class MarkAsDone
-      include Micro::Case::Safe::Flow
-
+    class MarkAsDone < Micro::Case
       flow Users::Authenticate,
-           Todos::FetchByUser,
-           Todos::SetToDone
+        Todos::FetchByUser,
+        Todos::SetToDone
     end
   end
 
