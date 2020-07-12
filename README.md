@@ -200,7 +200,7 @@ bad_result = Divide.call(a: 2, b: '2')
 bad_result.type     # :error
 bad_result.value    # {"b"=>"2"}
 bad_result.failure? # true
-bad_result.use_case # #<Divide:0x0000 @__attributes={"a"=>2, "b"=>"2"}, @a=2, @b="2", @__result=#<Micro::Case::Result:0x0000 @use_case=#<Divide:0x0000 ...>, @type=:error, @value={"b"=>"2"}, @success=false>>
+bad_result.use_case # #<Divide:0x0000 @__attributes={"a"=>2, "b"=>"2"}, @a=2, @b="2", @__result=#<Micro::Case::Result:0x0000 @use_case=#<Divide:0x0000 ...>, @type=:error, @value={"b"=>"2"}, @success=false>
 
 # Failure result (type == :exception)
 
@@ -209,7 +209,7 @@ err_result = Divide.call(a: 2, b: 0)
 err_result.type     # :exception
 err_result.value    # <ZeroDivisionError: divided by 0>
 err_result.failure? # true
-err_result.use_case # #<Divide:0x0000 @__attributes={"a"=>2, "b"=>0}, @a=2, @b=0, @__result=#<Micro::Case::Result:0x0000 @use_case=#<Divide:0x0000 ...>, @type=:exception, @value=#<ZeroDivisionError: divided by 0>, @success=false>>
+err_result.use_case # #<Divide:0x0000 @__attributes={"a"=>2, "b"=>0}, @a=2, @b=0, @__result=#<Micro::Case::Result:0x0000 @use_case=#<Divide:0x0000 ...>, @type=:exception, @value=#<ZeroDivisionError: divided by 0>, @success=false>
 
 # Note:
 # ----
@@ -562,39 +562,12 @@ DoubleAllNumbers
   .call(numbers: %w[1 1 b 2 3 4])
   .on_failure { |message| p message } # "numbers must contain only numeric types"
 
-# !------------------------------------ ! #
-# ! Deprecated: Micro::Case::Flow mixin ! #
-# !-------------------------------------! #
-
-# The code below still works, but it will output a warning message:
-# Deprecation: Micro::Case::Flow mixin is being deprecated, please use `Micro::Case` inheritance instead.
-
-class DoubleAllNumbers
-  include Micro::Case::Flow
-
-  flow Steps::ConvertTextToNumbers,
-       Steps::Double
-end
-
-# Note: This feature will be removed in the next major release (3.0)
-
-#-------------------------------------------------------------#
-# Another way to create a flow using the composition operator #
-#-------------------------------------------------------------#
-
-SquareAllNumbers =
-  Steps::ConvertTextToNumbers >> Steps::Square
-
-SquareAllNumbers
-  .call(numbers: %w[1 1 2 2 3 4])
-  .on_success { |value| p value[:numbers] } # [1, 1, 4, 4, 9, 16]
-
 # Note:
 # ----
 # When happening a failure, the use case responsible
 # will be accessible in the result
 
-result = SquareAllNumbers.call(numbers: %w[1 1 b 2 3 4])
+result = DoubleAllNumbers.call(numbers: %w[1 1 b 2 3 4])
 
 result.failure?                                # true
 result.use_case.is_a?(Steps::ConvertTextToNumbers) # true
@@ -649,15 +622,41 @@ module Steps
   end
 end
 
-Add2ToAllNumbers = Steps::ConvertTextToNumbers >> Steps::Add2
-DoubleAllNumbers = Steps::ConvertTextToNumbers >> Steps::Double
-SquareAllNumbers = Steps::ConvertTextToNumbers >> Steps::Square
+DoubleAllNumbers =
+  Micro::Case::Flow([
+    Steps::ConvertTextToNumbers,
+    Steps::Double
+  ])
 
-DoubleAllNumbersAndAdd2 = DoubleAllNumbers >> Steps::Add2
-SquareAllNumbersAndAdd2 = SquareAllNumbers >> Steps::Add2
+SquareAllNumbers =
+  Micro::Case::Flow([
+    Steps::ConvertTextToNumbers,
+    Steps::Square
+  ])
 
-SquareAllNumbersAndDouble = SquareAllNumbersAndAdd2 >> DoubleAllNumbers
-DoubleAllNumbersAndSquareAndAdd2 = DoubleAllNumbers >> SquareAllNumbersAndAdd2
+DoubleAllNumbersAndAdd2 =
+  Micro::Case::Flow([
+    DoubleAllNumbers,
+    Steps::Add2
+  ])
+
+SquareAllNumbersAndAdd2 =
+  Micro::Case::Flow([
+    SquareAllNumbers,
+    Steps::Add2
+  ])
+
+SquareAllNumbersAndDouble =
+  Micro::Case::Flow([
+    SquareAllNumbersAndAdd2,
+    DoubleAllNumbers
+  ])
+
+DoubleAllNumbersAndSquareAndAdd2 =
+  Micro::Case::Flow([
+    DoubleAllNumbers,
+    SquareAllNumbersAndAdd2
+  ])
 
 SquareAllNumbersAndDouble
   .call(numbers: %w[1 1 2 2 3 4])
@@ -936,15 +935,6 @@ As the safe use cases, safe flows can intercept an exception in any of its steps
 
 ```ruby
 module Users
-  Create = ProcessParams & ValidateParams & Persist & SendToCRM
-end
-
-# Note:
-# The ampersand is based on the safe navigation operator. https://ruby-doc.org/core-2.6/doc/syntax/calling_methods_rdoc.html#label-Safe+navigation+operator
-
-# The alternatives to declare a safe flow are:
-
-module Users
   Create = Micro::Case::Safe::Flow([
     ProcessParams,
     ValidateParams,
@@ -963,23 +953,6 @@ module Users
          SendToCRM
   end
 end
-
-# !------------------------------------------ ! #
-# ! Deprecated: Micro::Case::Safe::Flow mixin ! #
-# !-------------------------------------------! #
-
-# The code below still works, but it will output a warning message:
-# Deprecation: Micro::Case::Flow mixin is being deprecated, please use `Micro::Case` inheritance instead.
-
-module Users
-  class Create
-    include Micro::Case::Safe::Flow
-
-    flow ProcessParams, ValidateParams, Persist, SendToCRM
-  end
-end
-
-# Note: This feature will be removed in the next major release (3.0)
 ```
 
 [⬆️ Back to Top](#table-of-contents-)
