@@ -42,7 +42,11 @@ class SendNotifications < Micro::Case
   end
 end
 
-ReplyToSurvey = CreateResponse >> AddRewardPoints >> SendNotifications
+class ReplyToSurvey < Micro::Case
+  flow CreateResponse,
+    AddRewardPoints,
+    SendNotifications
+end
 
 # or
 
@@ -51,11 +55,3 @@ ReplyToSurvey = Micro::Case::Flow([
   AddRewardPoints,
   SendNotifications
 ])
-
-# or
-
-class ReplyToSurvey
-  include Micro::Case::Flow
-
-  flow CreateResponse, AddRewardPoints, SendNotifications
-end
