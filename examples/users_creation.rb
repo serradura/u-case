@@ -6,7 +6,7 @@ gemfile do
   # NOTE: I used an older version of the Activemodel only to show the compatibility with its older versions.
   gem 'activemodel', '~> 3.2', '>= 3.2.22.5'
 
-  gem 'u-case', '~> 2.0.0', require: 'u-case/with_validation'
+  gem 'u-case', '~> 2.6.0', require: 'u-case/with_activemodel_validation'
 end
 
 module Users
@@ -50,6 +50,8 @@ module Users
     class Persist < Micro::Case
       attributes :name, :email
 
+      validates :name, :email, kind: String
+
       def call!
         Success(user: Entity.new(user_data))
       end
@@ -61,6 +63,8 @@ module Users
 
     class SyncWithCRM < Micro::Case
       attribute :user
+
+      validates :user, kind: Users::Entity
 
       def call!
         return Success(user_id: user.id, crm_id: sync_with_crm) if user.persisted?
@@ -74,7 +78,12 @@ module Users
       end
     end
 
-    Process = ProcessParams >> ValidateParams >> Persist >> SyncWithCRM
+    Process = Micro::Case::Flow([
+      ProcessParams,
+      ValidateParams,
+      Persist,
+      SyncWithCRM
+    ])
   end
 end
 
