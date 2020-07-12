@@ -3,7 +3,9 @@ require 'test_helper'
 require 'support/steps'
 
 class Micro::Case::Safe::Flow::BlendTest < Minitest::Test
-  Add2ToAllNumbers = Steps::ConvertToNumbers & Steps::Add2
+  Add2ToAllNumbers = Micro::Case::Safe::Flow([
+    Steps::ConvertToNumbers, Steps::Add2
+  ])
 
   DoubleAllNumbers = Micro::Case::Safe::Flow([
     Steps::ConvertToNumbers,
@@ -12,20 +14,24 @@ class Micro::Case::Safe::Flow::BlendTest < Minitest::Test
 
   class SquareAllNumbers < Micro::Case::Safe
     flow Steps::ConvertToNumbers,
-         Steps::Square
+        Steps::Square
   end
 
-  DoubleAllNumbersAndAdd2 = DoubleAllNumbers & Steps::Add2
+  DoubleAllNumbersAndAdd2 = Micro::Case::Safe::Flow([
+    DoubleAllNumbers, Steps::Add2
+  ])
 
   SquareAllNumbersAndAdd2 = Micro::Case::Safe::Flow([
     SquareAllNumbers, Steps::Add2
   ])
 
-  SquareAllNumbersAndDouble = SquareAllNumbersAndAdd2 & DoubleAllNumbers
+  SquareAllNumbersAndDouble = Micro::Case::Safe::Flow([
+    SquareAllNumbersAndAdd2, DoubleAllNumbers
+  ])
 
   class DoubleAllNumbersAndSquareAndAdd2 < Micro::Case::Safe
     flow DoubleAllNumbers,
-         SquareAllNumbersAndAdd2
+        SquareAllNumbersAndAdd2
   end
 
   EXAMPLES = [
@@ -62,7 +68,10 @@ class Micro::Case::Safe::Flow::BlendTest < Minitest::Test
     end
   end
 
-  Add2ToAllNumbersAndDivideByZero = Add2ToAllNumbers & DivideNumbersByZero
+  class Add2ToAllNumbersAndDivideByZero < Micro::Case::Safe
+    flow Add2ToAllNumbers,
+      DivideNumbersByZero
+  end
 
   DoubleAllNumbersAndDivideByZero = Micro::Case::Safe::Flow([
     DoubleAllNumbers,
@@ -71,7 +80,7 @@ class Micro::Case::Safe::Flow::BlendTest < Minitest::Test
 
   class SquareAllNumbersAndDivideByZero < Micro::Case::Safe
     flow SquareAllNumbers,
-         DivideNumbersByZero
+        DivideNumbersByZero
   end
 
   def test_the_expection_interception
@@ -95,11 +104,15 @@ class Micro::Case::Safe::Flow::BlendTest < Minitest::Test
   end
 
   def test_that_raises_wrong_usage_exceptions
-    flow_1 = EmptyHash & DivideNumbersByZero
+    flow_1 = Micro::Case::Safe::Flow([
+      EmptyHash, DivideNumbersByZero
+    ])
 
     assert_raises_with_message(ArgumentError, 'missing keyword: :numbers') { flow_1.call({}) }
 
-    flow_2 = EmptyHash & Add
+    flow_2 = Micro::Case::Safe::Flow([
+      EmptyHash, Add
+    ])
 
     assert_raises_with_message(ArgumentError, 'missing keywords: :a, :b') { flow_2.call({}) }
   end
