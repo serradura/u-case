@@ -7,12 +7,14 @@ gemfile do
 
   gem 'interactor', '~> 3.1', '>= 3.1.1'
 
-  gem 'u-case', '~> 2.0.0'
+  gem 'u-case', '~> 2.6.0'
 end
 
 require 'benchmark/ips'
 
 require_relative 'add2_to_all_numbers'
+
+Micro::Case::Result.disable_transition_tracking
 
 NUMBERS = {numbers: %w[1 1 2 2 3 4]}
 
@@ -37,17 +39,39 @@ Benchmark.ips do |x|
   x.compare!
 end
 
-# Warming up --------------------------------------
-#   Interactor::Organizer  4.880k i/100ms
-#       Micro::Case::Flow  7.035k i/100ms
-# Micro::Case::Safe::Flow  7.059k i/100ms
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++
+# With Micro::Case::Result.disable_transition_tracking
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+# Warming up --------------------------------------
+# Interactor::Organizer    4.765k i/100ms
+#     Micro::Case::Flow    5.372k i/100ms
+# Micro::Case::Safe::Flow  5.855k i/100ms
 # Calculating -------------------------------------
-#   Interactor::Organizer  50.208k (± 1.3%) i/s -    253.760k in   5.055099s
-#       Micro::Case::Flow  73.791k (± 0.9%) i/s -    372.855k in   5.053311s
-# Micro::Case::Safe::Flow  73.314k (± 1.1%) i/s -    367.068k in   5.007473s
+# Interactor::Organizer    48.598k (± 5.2%) i/s -    243.015k in   5.014307s
+#     Micro::Case::Flow    61.606k (± 4.4%) i/s -    311.576k in   5.068602s
+# Micro::Case::Safe::Flow  60.688k (± 4.8%) i/s -    304.460k in   5.028877s
 
 # Comparison:
-#       Micro::Case::Flow: 73790.7 i/s
-# Micro::Case::Safe::Flow: 73313.7 i/s - same-ish: difference falls within error
-#   Interactor::Organizer: 50207.7 i/s - 1.47x  slower
+#     Micro::Case::Flow:    61606.3 i/s
+# Micro::Case::Safe::Flow:  60688.3 i/s - same-ish: difference falls within error
+# Interactor::Organizer:    48598.2 i/s - 1.27x  slower
+
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# Without Micro::Case::Result.disable_transition_tracking
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+# Warming up --------------------------------------
+# Interactor::Organizer    4.889k i/100ms
+#     Micro::Case::Flow    4.472k i/100ms
+# Micro::Case::Safe::Flow  4.488k i/100ms
+# Calculating -------------------------------------
+# Interactor::Organizer    50.705k (± 3.8%) i/s -    254.228k in   5.021142s
+#     Micro::Case::Flow    45.938k (± 5.2%) i/s -    232.544k in   5.077276s
+# Micro::Case::Safe::Flow  46.412k (± 3.5%) i/s -    233.376k in   5.035084s
+
+# Comparison:
+# Interactor::Organizer:    50705.4 i/s
+# Micro::Case::Safe::Flow:  46411.7 i/s - 1.09x  slower
+#     Micro::Case::Flow:    45938.4 i/s - 1.10x  slower
