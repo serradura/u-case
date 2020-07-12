@@ -102,6 +102,7 @@ module Multiply
       Failure(:invalid_data)
     end
   end
+
   class WithTrailblazerOperation < Trailblazer::Operation
     step :normalize
     step :calculate

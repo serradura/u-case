@@ -52,8 +52,12 @@ module Add2ToAllNumbers
       end
     end
 
-    Flow = ConvertTextToNumbers >> Add2
+    Flow = Micro::Case::Flow([
+      ConvertTextToNumbers, Add2
+    ])
 
-    SafeFlow = ConvertTextToNumbers & Add2
+    SafeFlow = Micro::Case::Safe::Flow([
+      ConvertTextToNumbers, Add2
+    ])
   end
 end
