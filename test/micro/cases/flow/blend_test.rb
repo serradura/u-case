@@ -2,12 +2,12 @@ require 'ostruct'
 require 'test_helper'
 require 'support/steps'
 
-class Micro::Case::Flow::BlendTest < Minitest::Test
-  Add2ToAllNumbers = Micro::Case::Flow([
+class Micro::Cases::Flow::BlendTest < Minitest::Test
+  Add2ToAllNumbers = Micro::Cases.flow([
     Steps::ConvertToNumbers, Steps::Add2
   ])
 
-  DoubleAllNumbers = Micro::Case::Flow([
+  DoubleAllNumbers = Micro::Cases.flow([
     Steps::ConvertToNumbers,
     Steps::Double
   ])
@@ -17,15 +17,15 @@ class Micro::Case::Flow::BlendTest < Minitest::Test
         Steps::Square
   end
 
-  DoubleAllNumbersAndAdd2 = Micro::Case::Flow([
+  DoubleAllNumbersAndAdd2 = Micro::Cases.flow([
     DoubleAllNumbers, Steps::Add2
   ])
 
-  SquareAllNumbersAndAdd2 = Micro::Case::Flow([
+  SquareAllNumbersAndAdd2 = Micro::Cases.flow([
     SquareAllNumbers, Steps::Add2
   ])
 
-  SquareAllNumbersAndDouble = Micro::Case::Flow([
+  SquareAllNumbersAndDouble = Micro::Cases.flow([
     SquareAllNumbersAndAdd2, DoubleAllNumbers
   ])
 

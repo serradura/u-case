@@ -15,7 +15,7 @@ end
 
 $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 
-require 'u-case/with_validation' if ENV.fetch('ACTIVEMODEL_VERSION', '6.1.0') < '6.1.0'
+require 'u-case/with_activemodel_validation' if ENV.fetch('ACTIVEMODEL_VERSION', '6.1.0') < '6.1.0'
 require 'micro/case'
 
 require 'minitest/pride'

@@ -60,12 +60,12 @@ module Safe
       end
     end
 
-    Build = Micro::Case::Safe::Flow([
+    Build = Micro::Cases.safe_flow([
       State::Default,
       SetID
     ])
 
-    Run = Micro::Case::Safe::Flow([
+    Run = Micro::Cases.safe_flow([
       ValidateID,
       SetStateToRunning
     ])

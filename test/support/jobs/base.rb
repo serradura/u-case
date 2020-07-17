@@ -59,12 +59,12 @@ module Jobs
     end
   end
 
-  Build = Micro::Case::Flow([
+  Build = Micro::Cases.flow([
     State::Default,
     SetID
   ])
 
-  Run = Micro::Case::Flow([
+  Run = Micro::Cases.flow([
     ValidateID,
     SetStateToRunning
   ])
