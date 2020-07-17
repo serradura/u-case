@@ -27,9 +27,17 @@ pry_byebug_version =
   else '3.9'
   end
 
+pry_version =
+  case RUBY_VERSION
+  when /\A2.2/ then '0.12.2'
+  when /\A2.3/ then '0.12.2'
+  else '0.13.1'
+  end
+
 group :development, :test do
   gem 'awesome_print', '~> 1.8'
 
+  gem 'pry', "~> #{pry_version}"
   gem 'pry-byebug', "~> #{pry_byebug_version}"
 end
 
