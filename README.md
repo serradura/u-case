@@ -33,7 +33,7 @@ The main project goals are:
     - [What happens if a result hook was declared multiple times?](#what-happens-if-a-result-hook-was-declared-multiple-times)
     - [How to use the `Micro::Case::Result#then` method?](#how-to-use-the-microcaseresultthen-method)
       - [How to make attributes data injection using this feature?](#how-to-make-attributes-data-injection-using-this-feature)
-  - [`Micro::Case::Flow` - How to compose use cases?](#microcaseflow---how-to-compose-use-cases)
+  - [`Micro::Cases::Flow` - How to compose use cases?](#microcasesflow---how-to-compose-use-cases)
     - [Is it possible to compose a use case flow with other ones?](#is-it-possible-to-compose-a-use-case-flow-with-other-ones)
     - [Is it possible a flow accumulates its input and merges each success result to use as the argument of the next use cases?](#is-it-possible-a-flow-accumulates-its-input-and-merges-each-success-result-to-use-as-the-argument-of-the-next-use-cases)
     - [How to understand what is happening during a flow execution?](#how-to-understand-what-is-happening-during-a-flow-execution)
@@ -47,11 +47,11 @@ The main project goals are:
     - [If I enabled the auto validation, is it possible to disable it only in specific use case classes?](#if-i-enabled-the-auto-validation-is-it-possible-to-disable-it-only-in-specific-use-case-classes)
     - [`Kind::Validator`](#kindvalidator)
 - [Benchmarks](#benchmarks)
-  - [`Micro::Case`](#microcase)
+  - [`Micro::Case` (v2.6.0)](#microcase-v260)
     - [Best overall](#best-overall)
     - [Success results](#success-results)
     - [Failure results](#failure-results)
-  - [`Micro::Case::Flow`](#microcaseflow)
+  - [`Micro::Case::Flow` (v2.6.0)](#microcaseflow-v260)
   - [Comparisons](#comparisons)
 - [Examples](#examples)
   - [1️⃣ Rails App (API)](#1️⃣-rails-app-api)
@@ -491,9 +491,9 @@ Todo::FindAllForUser
 
 [⬆️ Back to Top](#table-of-contents-)
 
-### `Micro::Case::Flow` - How to compose use cases?
+### `Micro::Cases::Flow` - How to compose use cases?
 
-In this case, this will be a **flow** (`Micro::Case::Flow`).
+In this case, this will be a **flow** (`Micro::Cases::Flow`).
 The main idea of this feature is to use/reuse use cases as steps of a new use case.
 
 ```ruby
@@ -539,7 +539,7 @@ end
 # Creating a flow using the collection syntax #
 #---------------------------------------------#
 
-Add2ToAllNumbers = Micro::Case::Flow([
+Add2ToAllNumbers = Micro::Cases.flow([
   Steps::ConvertTextToNumbers,
   Steps::Add2
 ])
@@ -623,40 +623,22 @@ module Steps
 end
 
 DoubleAllNumbers =
-  Micro::Case::Flow([
-    Steps::ConvertTextToNumbers,
-    Steps::Double
-  ])
+  Micro::Cases.flow([Steps::ConvertTextToNumbers, Steps::Double])
 
 SquareAllNumbers =
-  Micro::Case::Flow([
-    Steps::ConvertTextToNumbers,
-    Steps::Square
-  ])
+  Micro::Cases.flow([Steps::ConvertTextToNumbers, Steps::Square])
 
 DoubleAllNumbersAndAdd2 =
-  Micro::Case::Flow([
-    DoubleAllNumbers,
-    Steps::Add2
-  ])
+  Micro::Cases.flow([DoubleAllNumbers, Steps::Add2])
 
 SquareAllNumbersAndAdd2 =
-  Micro::Case::Flow([
-    SquareAllNumbers,
-    Steps::Add2
-  ])
+  Micro::Cases.flow([SquareAllNumbers, Steps::Add2])
 
 SquareAllNumbersAndDouble =
-  Micro::Case::Flow([
-    SquareAllNumbersAndAdd2,
-    DoubleAllNumbers
-  ])
+  Micro::Cases.flow([SquareAllNumbersAndAdd2, DoubleAllNumbers])
 
 DoubleAllNumbersAndSquareAndAdd2 =
-  Micro::Case::Flow([
-    DoubleAllNumbers,
-    SquareAllNumbersAndAdd2
-  ])
+  Micro::Cases.flow([DoubleAllNumbers, SquareAllNumbersAndAdd2])
 
 SquareAllNumbersAndDouble
   .call(numbers: %w[1 1 2 2 3 4])
@@ -704,7 +686,7 @@ module Users
 end
 
 module Users
-  Authenticate = Micro::Case::Flow([
+  Authenticate = Micro::Cases.flow([
     Find,
     ValidatePassword
   ])
@@ -737,7 +719,7 @@ of one flow will compose the input of the next use case in the flow!
 
 > input **>>** process **>>** output
 
-> **Note:** Check out these test examples [Micro::Case::Flow](https://github.com/serradura/u-case/blob/b6d63b0db0caada67d2a6cf5cc5937000c0acf04/test/micro/case/flow/reducer_test.rb) and [Micro::Case::Safe::Flow](https://github.com/serradura/u-case/blob/b1d84b355f2b92d329e10d5d56d8012df1d32681/test/micro/case/safe/flow/reducer_test.rb) to see different use cases sharing their own data.
+> **Note:** Check out these test examples [Micro::Cases::Flow](https://github.com/serradura/u-case/blob/c96a3650469da40dc9f83ff678204055b7015d01/test/micro/cases/flow/result_transitions_test.rb) and [Micro::Cases::Safe::Flow](https://github.com/serradura/u-case/blob/c96a3650469da40dc9f83ff678204055b7015d01/test/micro/cases/safe/flow/result_transitions_test.rb) to see different use cases sharing their own data.
 
 [⬆️ Back to Top](#table-of-contents-)
 
@@ -935,7 +917,7 @@ As the safe use cases, safe flows can intercept an exception in any of its steps
 
 ```ruby
 module Users
-  Create = Micro::Case::Safe::Flow([
+  Create = Micro::Cases.safe_flow([
     ProcessParams,
     ValidateParams,
     Persist,
@@ -1110,7 +1092,7 @@ end
 
 ## Benchmarks
 
-### `Micro::Case`
+### `Micro::Case` (v2.6.0)
 
 #### Best overall
 
@@ -1218,7 +1200,7 @@ https://github.com/serradura/u-case/blob/master/benchmarks/use_case/with_failure
 
 ---
 
-### `Micro::Case::Flow`
+### `Micro::Case::Flow` (v2.6.0)
 
 | Gems / Abstraction      | [Success results](https://github.com/serradura/u-case/blob/master/benchmarks/flow/with_success_result.rb#L40) | [Failure results](https://github.com/serradura/u-case/blob/master/benchmarks/flow/with_failure_result.rb#L40) |
 | ------------------      | ----------------: | ----------------: |
