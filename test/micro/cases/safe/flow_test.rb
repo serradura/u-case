@@ -1,7 +1,7 @@
 require 'test_helper'
-require 'support/jobs/base'
+require 'support/jobs/safe'
 
-class Micro::Case::FlowTest < Minitest::Test
+class Micro::Cases::Safe::FlowTest < Minitest::Test
   def test_calling_with_a_result
     new_job = Jobs::Build.call
 
@@ -16,9 +16,7 @@ class Micro::Case::FlowTest < Minitest::Test
       Jobs::Run
         .call(result1)
         .on_success { raise }
-        .on_failure do |(value, _type)|
-          assert_equal(:invalid_state_transition, value)
-        end
+        .on_failure { |(value, _type)| assert_equal(:invalid_state_transition, value) }
 
     result1.transitions.tap do |result_transitions|
       assert_equal(2, result_transitions.size)
@@ -176,7 +174,7 @@ class Micro::Case::FlowTest < Minitest::Test
     Jobs::Run
       .call(result)
       .on_success { raise }
-      .on_failure { |(value, _type)| assert_equal(:invalid_state_transition, value) }
+      .on_failure { |(value, *)| assert_equal(:invalid_state_transition, value) }
   end
 
   def test_calling_with_a_use_case_instance
@@ -194,7 +192,7 @@ class Micro::Case::FlowTest < Minitest::Test
     Jobs::Run
       .call(result)
       .on_success { raise }
-      .on_failure { |data| assert_equal(:invalid_state_transition, data.value) }
+      .on_failure { |(value, _type)| assert_equal(:invalid_state_transition, value) }
   end
 
   def test_calling_with_a_use_case_class

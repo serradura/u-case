@@ -2,12 +2,12 @@ require 'ostruct'
 require 'test_helper'
 require 'support/steps'
 
-class Micro::Case::Safe::Flow::BlendTest < Minitest::Test
-  Add2ToAllNumbers = Micro::Case::Safe::Flow([
+class Micro::Cases::Safe::Flow::BlendTest < Minitest::Test
+  Add2ToAllNumbers = Micro::Cases.safe_flow([
     Steps::ConvertToNumbers, Steps::Add2
   ])
 
-  DoubleAllNumbers = Micro::Case::Safe::Flow([
+  DoubleAllNumbers = Micro::Cases.safe_flow([
     Steps::ConvertToNumbers,
     Steps::Double
   ])
@@ -17,15 +17,15 @@ class Micro::Case::Safe::Flow::BlendTest < Minitest::Test
         Steps::Square
   end
 
-  DoubleAllNumbersAndAdd2 = Micro::Case::Safe::Flow([
+  DoubleAllNumbersAndAdd2 = Micro::Cases.safe_flow([
     DoubleAllNumbers, Steps::Add2
   ])
 
-  SquareAllNumbersAndAdd2 = Micro::Case::Safe::Flow([
+  SquareAllNumbersAndAdd2 = Micro::Cases.safe_flow([
     SquareAllNumbers, Steps::Add2
   ])
 
-  SquareAllNumbersAndDouble = Micro::Case::Safe::Flow([
+  SquareAllNumbersAndDouble = Micro::Cases.safe_flow([
     SquareAllNumbersAndAdd2, DoubleAllNumbers
   ])
 
@@ -73,7 +73,7 @@ class Micro::Case::Safe::Flow::BlendTest < Minitest::Test
       DivideNumbersByZero
   end
 
-  DoubleAllNumbersAndDivideByZero = Micro::Case::Safe::Flow([
+  DoubleAllNumbersAndDivideByZero = Micro::Cases.safe_flow([
     DoubleAllNumbers,
     DivideNumbersByZero
   ])
@@ -104,13 +104,13 @@ class Micro::Case::Safe::Flow::BlendTest < Minitest::Test
   end
 
   def test_that_raises_wrong_usage_exceptions
-    flow_1 = Micro::Case::Safe::Flow([
+    flow_1 = Micro::Cases.safe_flow([
       EmptyHash, DivideNumbersByZero
     ])
 
     assert_raises_with_message(ArgumentError, 'missing keyword: :numbers') { flow_1.call({}) }
 
-    flow_2 = Micro::Case::Safe::Flow([
+    flow_2 = Micro::Cases.safe_flow([
       EmptyHash, Add
     ])
 
