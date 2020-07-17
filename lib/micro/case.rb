@@ -3,25 +3,22 @@
 require 'kind'
 require 'micro/attributes'
 
+require 'micro/case/version'
+
 module Micro
   class Case
-    require 'micro/case/version'
     require 'micro/case/utils'
     require 'micro/case/result'
     require 'micro/case/error'
     require 'micro/case/safe'
     require 'micro/case/strict'
-    require 'micro/case/flow'
-    require 'micro/case/safe/flow'
+
+    require 'micro/cases'
 
     include Micro::Attributes.without(:strict_initialize)
 
     def self.to_proc
       Proc.new { |arg| call(arg) }
-    end
-
-    def self.Flow(args)
-      Flow::Reducer.build(Array(args))
     end
 
     def self.call(options = {})
@@ -67,8 +64,8 @@ module Micro
       end
     end
 
-    def self.__flow_reducer
-      Flow::Reducer
+    def self.__flow_builder
+      Cases::Flow
     end
 
     def self.__flow_get
@@ -95,7 +92,7 @@ module Micro
 
       self.class_eval('def use_cases; self.class.use_cases; end')
 
-      @__flow = __flow_reducer.build(args)
+      @__flow = __flow_builder.build(args)
     end
 
     def self.__flow_set!
