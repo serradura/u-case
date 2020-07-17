@@ -1,7 +1,7 @@
 require 'test_helper'
 require 'support/todoing/boot'
 
-class Micro::Case::Flow::ReducerTest < Minitest::Test
+class Micro::Cases::Flow::ResultTransitionsTest < Minitest::Test
   def setup
     [User, Todo].each(&:delete_all)
   end

@@ -227,7 +227,7 @@ class Micro::Case::Result::ThenTest < Minitest::Test
     end
   end
 
-  FooAndBar = Micro::Case::Flow([Foo, Bar])
+  FooAndBar = Micro::Cases.flow([Foo, Bar])
 
   class FooBarBaz < Micro::Case
     attributes :foo, :bar, :baz

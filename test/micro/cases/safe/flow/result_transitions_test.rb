@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class Micro::Case::Safe::Flow::ReducerTest < Minitest::Test
+class Micro::Cases::Safe::Flow::ResultTransitionsTest < Minitest::Test
   require 'digest'
   require 'securerandom'
 
@@ -99,7 +99,7 @@ class Micro::Case::Safe::Flow::ReducerTest < Minitest::Test
       end
     end
 
-    Authenticate = Micro::Case::Safe::Flow([
+    Authenticate = Micro::Cases.safe_flow([
       Fetch,
       CheckPassword
     ])
@@ -145,7 +145,7 @@ class Micro::Case::Safe::Flow::ReducerTest < Minitest::Test
   end
 
   module UserTodos
-    Create = Micro::Case::Safe::Flow([Users::Authenticate, Todos::Create])
+    Create = Micro::Cases.safe_flow([Users::Authenticate, Todos::Create])
 
     class MarkAsDone < Micro::Case
       flow Users::Authenticate,

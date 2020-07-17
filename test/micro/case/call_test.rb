@@ -5,7 +5,7 @@ require 'support/steps'
 class Micro::Case::CallTest < Minitest::Test
   Failure = Micro::Case::Result
 
-  Add2ToAllNumbers1 = Micro::Case::Flow([
+  Add2ToAllNumbers1 = Micro::Cases.flow([
     Steps::ConvertToNumbers,
     Steps::Add2
   ])

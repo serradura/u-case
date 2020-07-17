@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module UserTodoList
-  AddItem = Micro::Case::Flow([
+  AddItem = Micro::Cases.flow([
     Users::Authenticate,
     Todos::Create
   ])

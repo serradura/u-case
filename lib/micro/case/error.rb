@@ -25,10 +25,6 @@ module Micro
         def initialize; super('use case must be a kind or an instance of Micro::Case'.freeze); end
       end
 
-      class InvalidUseCases < ArgumentError
-        def initialize; super('argument must be a collection of `Micro::Case` classes'.freeze); end
-      end
-
       class InvalidInvocationOfTheThenMethod < StandardError
         def initialize; super('Invalid invocation of the Micro::Case::Result#then method'); end
       end
