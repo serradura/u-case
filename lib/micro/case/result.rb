@@ -13,23 +13,15 @@ module Micro
         @@transition_tracking_disabled = true
       end
 
-      class Data
-        attr_reader :value, :type
-
-        def initialize(value, type)
-          @value, @type = value, type
-        end
-
-        def to_ary; [value, type]; end
-      end
-
-      private_constant :Data
-
       attr_reader :value, :type
 
       def initialize
         @__transitions__ = []
         @__transitions_accessible_attributes__ = {}
+      end
+
+      def to_ary
+        [value, type]
       end
 
       def __set__(is_success, value, type, use_case)
@@ -66,7 +58,7 @@ module Micro
       def on_failure(expected_type = nil)
         return self unless failure_type?(expected_type)
 
-        data = expected_type.nil? ? Data.new(value, type).tap(&:freeze) : value
+        data = expected_type.nil? ? self : value
 
         yield(data, @use_case)
 

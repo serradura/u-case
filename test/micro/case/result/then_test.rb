@@ -36,19 +36,37 @@ class Micro::Case::Result::ThenTest < Minitest::Test
     end
 
     def test_the_method_then_with_a_block
-      result1 = success_result(value: 0)
-      result2 = failure_result(value: 1)
+      success = success_result(value: 0)
+      success_incr = 0
 
-      result1.then { |result| assert_equal(result1, result) }
-      result2.then { |result| assert_equal(result2, result) }
+      then_output1 =
+      success.then { |result| result.success? ? success_incr += 1 : 0 }
+
+      refute_instance_of(Micro::Case::Result, then_output1)
+      assert_equal(success_incr, then_output1)
+
+      # ---
+
+      failure = failure_result(value: 1)
+      failure_incr = 0
+
+      then_output2 =
+        failure.then { |result| result.failure? ? failure_incr += 1 : 0 }
+
+      refute_instance_of(Micro::Case::Result, then_output2)
+      assert_equal(failure_incr, then_output2)
     end
 
     def test_the_method_then_without_a_block_or_an_argument
-      result1 = success_result(value: 0)
-      result2 = failure_result(value: 1)
+      success = success_result(value: 0)
 
-      assert_instance_of(Enumerator, result1.then)
-      assert_instance_of(Enumerator, result2.then)
+      assert_instance_of(Enumerator, success.then)
+
+      # ---
+
+      failure = failure_result(value: 1)
+
+      assert_instance_of(Enumerator, failure.then)
     end
   end
 
@@ -77,74 +95,29 @@ class Micro::Case::Result::ThenTest < Minitest::Test
 
     assert_success_result(result1, value: { number: 3 })
 
-    result1.transitions.tap do |result_transitions|
-      assert_equal(2, result_transitions.size)
+    expected_transitions1 = [
+      {
+        use_case: {
+          class: ConvertTextIntoInteger, attributes: { text: '0'}
+        },
+        success: {
+          type: :ok, value: { number: 0 }
+        },
+        accessible_attributes: [:text]
+      },
+      {
+        use_case: {
+          class: Add3, attributes: { number: 0 }
+        },
+        success: {
+          type: :ok, value: { number: 3 }
+        },
+        accessible_attributes: [:text, :number]
+      }
+    ]
 
-      # --------------
-      # transitions[0]
-      # --------------
-      first_transition = result_transitions[0]
-
-      # transitions[0][:use_case]
-      first_transition_use_case = first_transition[:use_case]
-
-      # transitions[0][:use_case][:class]
-      assert_equal(ConvertTextIntoInteger, first_transition_use_case[:class])
-
-      # transitions[0][:use_case][:attributes]
-      assert_equal([:text], first_transition_use_case[:attributes].keys)
-
-      assert_equal('0', first_transition_use_case[:attributes][:text])
-
-      # transitions[0][:success]
-      assert(first_transition.include?(:success))
-
-      first_transition_result = first_transition[:success]
-
-      # transitions[0][:success][:type]
-      assert_equal(:ok, first_transition_result[:type])
-
-      # transitions[0][:success][:value]
-      assert_equal([:number], first_transition_result[:value].keys)
-
-      assert_equal(0, first_transition_result[:value][:number])
-
-      # transitions[0][:accessible_attributes]
-      assert_equal([:text], first_transition[:accessible_attributes])
-
-      # --------------
-      # transitions[1]
-      # --------------
-
-      second_transition = result_transitions[1]
-
-      # transitions[1][:use_case]
-
-      second_transition_use_case = second_transition[:use_case]
-
-      # transitions[1][:use_case][:class]
-      assert_equal(Add3, second_transition_use_case[:class])
-
-      # transitions[1][:use_case][:attributes]
-      assert_equal([:number], second_transition_use_case[:attributes].keys)
-
-      assert_equal(0, second_transition_use_case[:attributes][:number])
-
-      # transitions[1][:success]
-      assert(second_transition.include?(:success))
-
-      second_transition_result = second_transition[:success]
-
-      # transitions[1][:success][:type]
-      assert_equal(:ok, second_transition_result[:type])
-
-      # transitions[1][:success][:value]
-      assert_equal([:number], second_transition_result[:value].keys)
-
-      assert_equal(3, second_transition_result[:value][:number])
-
-      # transitions[1][:accessible_attributes]
-      assert_equal([:text, :number], second_transition[:accessible_attributes])
+    result1.transitions.each_with_index do |transition, index|
+      assert_equal(expected_transitions1[index], transition)
     end
 
     # ---
@@ -153,39 +126,21 @@ class Micro::Case::Result::ThenTest < Minitest::Test
 
     assert_failure_result(result2, value: :text_isnt_a_string_only_with_numbers)
 
-    result2.transitions.tap do |result_transitions|
-      assert_equal(1, result_transitions.size)
+    expected_transitions2 = [
+      {
+        use_case: {
+          class: ConvertTextIntoInteger, attributes: { text: 0}
+        },
+        failure: {
+          type: :text_isnt_a_string_only_with_numbers,
+          value: :text_isnt_a_string_only_with_numbers
+        },
+        accessible_attributes: [:text]
+      }
+    ]
 
-      # --------------
-      # transitions[0]
-      # --------------
-      first_transition = result_transitions[0]
-
-      # transitions[0][:use_case]
-      first_transition_use_case = first_transition[:use_case]
-
-      # transitions[0][:use_case][:class]
-      assert_equal(ConvertTextIntoInteger, first_transition_use_case[:class])
-
-      # transitions[0][:use_case][:attributes]
-      assert_equal([:text], first_transition_use_case[:attributes].keys)
-
-      assert_equal(0, first_transition_use_case[:attributes][:text])
-
-      # transitions[0][:success]
-      assert(first_transition.include?(:failure))
-
-      first_transition_result = first_transition[:failure]
-
-      # transitions[0][:success][:type]
-      assert_equal(:text_isnt_a_string_only_with_numbers, first_transition_result[:type])
-
-      # transitions[0][:success][:value]
-
-      assert_equal(:text_isnt_a_string_only_with_numbers, first_transition_result[:value])
-
-      # transitions[0][:accessible_attributes]
-      assert_equal([:text], first_transition[:accessible_attributes])
+    result2.transitions.each_with_index do |transition, index|
+      assert_equal(expected_transitions2[index], transition)
     end
   end
 
