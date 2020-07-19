@@ -5,7 +5,7 @@ class Micro::Case::Safe::WithInnerFlowTest < Minitest::Test
     attribute :text
 
     def call!
-      Success { { number: text.to_i } }
+      Success result: { number: text.to_i }
     end
   end
 
@@ -13,7 +13,7 @@ class Micro::Case::Safe::WithInnerFlowTest < Minitest::Test
     attribute :number
 
     def call!
-      Success { { text: number.to_s } }
+      Success result: { text: number.to_s }
     end
   end
 
@@ -25,7 +25,7 @@ class Micro::Case::Safe::WithInnerFlowTest < Minitest::Test
     attribute :number
 
     def call!
-      Success { { number: number * 2 } }
+      Success result: { number: number * 2 }
     end
   end
 

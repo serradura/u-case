@@ -7,7 +7,7 @@ module Users
     def call!
       user = User.find_by_email(email)
 
-      return Success { { user: user } } if user
+      return Success result: { user: user } if user
 
       Failure(:user_not_found)
     end

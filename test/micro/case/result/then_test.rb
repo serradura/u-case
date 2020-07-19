@@ -75,7 +75,7 @@ class Micro::Case::Result::ThenTest < Minitest::Test
 
     def call!
       if Kind.of.String?(text) && text =~ /\A\d+\z/
-        Success { { number: text.to_i } }
+        Success result: { number: text.to_i }
       else
         Failure(:text_isnt_a_string_only_with_numbers)
       end
@@ -86,7 +86,7 @@ class Micro::Case::Result::ThenTest < Minitest::Test
     attribute :number
 
     def call!
-      Success { { number: number + 3 } }
+      Success result: { number: number + 3 }
     end
   end
 
@@ -156,7 +156,7 @@ class Micro::Case::Result::ThenTest < Minitest::Test
     attributes :foo, :bar
 
     def call!
-      return Success(filled_foo_and_bar: true) if foo && bar
+      return Success(result: { filled_foo_and_bar: true }) if foo && bar
 
       Failure(:missing_foo_or_bar)
     end
@@ -166,7 +166,7 @@ class Micro::Case::Result::ThenTest < Minitest::Test
     attributes :foo
 
     def call!
-      return Success(filled_foo: true) if foo
+      return Success(result: { filled_foo: true }) if foo
 
       Failure(:missing_foo)
     end
@@ -176,7 +176,7 @@ class Micro::Case::Result::ThenTest < Minitest::Test
     attributes :bar
 
     def call!
-      return Success(filled_bar: true) if bar
+      return Success(result: { filled_bar: true }) if bar
 
       Failure(:missing_bar)
     end
@@ -188,7 +188,7 @@ class Micro::Case::Result::ThenTest < Minitest::Test
     attributes :foo, :bar, :baz
 
     def call!
-      return Success(filled_foo_and_bar_and_baz: true) if foo && bar && baz
+      return Success(result: { filled_foo_and_bar_and_baz: true }) if foo && bar && baz
 
       Failure(:missing_foo_or_bar_or_baz)
     end

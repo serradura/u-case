@@ -6,7 +6,7 @@ class Micro::Case::SafeTest < Minitest::Test
 
     def call!
       if a.is_a?(Integer) && b.is_a?(Integer)
-        Success(a / b)
+        Success(result: a / b)
       else
         Failure(:not_an_integer)
       end
@@ -81,9 +81,9 @@ class Micro::Case::SafeTest < Minitest::Test
     attribute :arg
 
     def call!
-      Success(2 / arg)
+      Success result: 2 / arg
     rescue => e
-      Failure(e)
+      Failure result: e
     end
   end
 
@@ -91,9 +91,9 @@ class Micro::Case::SafeTest < Minitest::Test
     attribute :arg
 
     def call!
-      Success(2 / arg)
+      Success(result: 2 / arg)
     rescue => e
-      Failure { e }
+      Failure result: e
     end
   end
 
@@ -101,9 +101,9 @@ class Micro::Case::SafeTest < Minitest::Test
     attribute :arg
 
     def call!
-      Success(2 / arg)
+      Success(result: 2 / arg)
     rescue => e
-      Failure(:foo) { e }
+      Failure :foo, result: e
     end
   end
 
@@ -111,9 +111,9 @@ class Micro::Case::SafeTest < Minitest::Test
     attribute :arg
 
     def call!
-      Failure(arg / 0)
+      Failure(result: arg / 0)
     rescue => e
-      Success(e)
+      Success(result: e)
     end
   end
 

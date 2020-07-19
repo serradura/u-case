@@ -12,7 +12,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
         validates :a, :b, presence: true, numericality: true
 
         def call!
-          Success(number: a * b)
+          Success(result: { number: a * b })
         end
       end
 
@@ -22,7 +22,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
         validates :a, :b, presence: true, numericality: true
 
         def call!
-          Success(number: a + b)
+          Success result: { number: a + b }
         end
       end
 

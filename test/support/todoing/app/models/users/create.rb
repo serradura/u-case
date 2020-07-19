@@ -11,7 +11,7 @@ module Users
 
       return Failure(:validation_error) unless user.save
 
-      Success { { user: user } }
+      Success result: { user: user }
     end
   end
 end
