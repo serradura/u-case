@@ -32,6 +32,7 @@ The main project goals are:
     - [Why the failure hook (without a type) exposes a different kind of data?](#why-the-failure-hook-without-a-type-exposes-a-different-kind-of-data)
     - [What happens if a result hook was declared multiple times?](#what-happens-if-a-result-hook-was-declared-multiple-times)
     - [How to use the `Micro::Case::Result#then` method?](#how-to-use-the-microcaseresultthen-method)
+      - [What does happens when a `Micro::Case::Result#then` receives a block?](#what-does-happens-when-a-microcaseresultthen-receives-a-block)
       - [How to make attributes data injection using this feature?](#how-to-make-attributes-data-injection-using-this-feature)
   - [`Micro::Cases::Flow` - How to compose use cases?](#microcasesflow---how-to-compose-use-cases)
     - [Is it possible to compose a use case flow with other ones?](#is-it-possible-to-compose-a-use-case-flow-with-other-ones)
@@ -474,6 +475,42 @@ result2.success? # true
 ```
 
 > **Note:** this method changes the [`Micro::Case::Result#transitions`](#how-to-understand-what-is-happening-during-a-flow-execution).
+
+[⬆️ Back to Top](#table-of-contents-)
+
+##### What does happens when a `Micro::Case::Result#then` receives a block?
+
+It will yields self (a `Micro::Case::Result instance`) to the block and return the result of the block. e.g:
+
+```ruby
+class Add < Micro::Case
+  attributes :a, :b
+
+  def call!
+    return Success output: { sum: a + b } if Kind.of.Numeric?(a, b)
+
+    Failure(:attributes_arent_numbers)
+  end
+end
+
+# --
+
+success_result =
+  Add
+    .call(a: 2, b: 2)
+    .then { |result| result.success? ? result.value[:sum] : 0 }
+
+puts success_result # 4
+
+# --
+
+failure_result =
+  Add
+    .call(a: 2, b: '2')
+    .then { |result| result.success? ? result.value[:sum] : 0 }
+
+puts failure_result # 0
+```
 
 [⬆️ Back to Top](#table-of-contents-)
 
