@@ -64,7 +64,7 @@ class Micro::Cases::Safe::Flow::BlendTest < Minitest::Test
     attributes :numbers
 
     def call!
-      Success(numbers: numbers.map { |number| number / 0 })
+      Success result: { numbers: numbers.map { |number| number / 0 } }
     end
   end
 
@@ -94,13 +94,13 @@ class Micro::Cases::Safe::Flow::BlendTest < Minitest::Test
   end
 
   class EmptyHash < Micro::Case
-    def call!; Success({}); end
+    def call!; Success(result: {}); end
   end
 
   class Add < Micro::Case::Strict
     attributes :a, :b
 
-    def call!; Success(a + b); end
+    def call!; Success(result: a + b); end
   end
 
   def test_that_raises_wrong_usage_exceptions

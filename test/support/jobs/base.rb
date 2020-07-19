@@ -14,7 +14,9 @@ module Jobs
   module State
     class Sleeping < Micro::Case
       def call!
-        Success(job: Entity.new(id: nil, state: 'sleeping'))
+        job = Entity.new(id: nil, state: 'sleeping')
+
+        Success result: { job: job }
       end
     end
 
@@ -27,9 +29,11 @@ module Jobs
     attributes :job
 
     def call!
-      return Success(job: job) if !job.id.nil?
+      return Success result: { job: job } if !job.id.nil?
 
-      Success(job: job.with_attribute(:id, SecureRandom.uuid))
+      new_job = job.with_attribute(:id, SecureRandom.uuid)
+
+      Success result: { job: new_job }
     end
   end
 
@@ -39,9 +43,9 @@ module Jobs
     attributes :job
 
     def call!
-      return Success(job: job) if job.id =~ ACCEPTABLE_UUID
+      return Success result: { job: job } if job.id =~ ACCEPTABLE_UUID
 
-      Failure(:invalid_uuid) { job }
+      Failure :invalid_uuid, result: job
     end
   end
 
@@ -53,9 +57,9 @@ module Jobs
 
       job_running = job.with_attribute(:state, 'running')
 
-      Success(:state_updated) do
-        {job: job_running, changes: job.diff_attributes(job_running) }
-      end
+      Success :state_updated, result: {
+        job: job_running, changes: job.diff_attributes(job_running)
+      }
     end
   end
 

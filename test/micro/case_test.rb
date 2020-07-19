@@ -6,9 +6,9 @@ class Micro::CaseTest < Minitest::Test
 
     def call!
       if a.is_a?(Numeric) && b.is_a?(Numeric)
-        Success(a * b)
+        Success result: a * b
       else
-        Failure(:invalid_data) { [a, b]}
+        Failure :invalid_data, result: [a, b]
       end
     end
   end
@@ -17,7 +17,7 @@ class Micro::CaseTest < Minitest::Test
     attributes :number
 
     def call!
-      return Failure { 'number must be greater than 0' } if number <= 0
+      return Failure result: 'number must be greater than 0' if number <= 0
 
       Multiply.call(a: number, b: 2)
     end
@@ -123,10 +123,10 @@ class Micro::CaseTest < Minitest::Test
     attributes :a, :b
 
     def call!
-      return Success(a / b) if a.is_a?(Integer) && b.is_a?(Integer)
+      return Success(result: a / b) if a.is_a?(Integer) && b.is_a?(Integer)
       Failure(:not_an_integer)
     rescue => e
-      Failure(e)
+      Failure result: e
     end
   end
 
