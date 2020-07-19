@@ -9,7 +9,7 @@ module Todos
 
       return Failure(:validation_error) unless todo.save
 
-      Success { { todo: todo } }
+      Success result: { todo: todo }
     end
   end
 end

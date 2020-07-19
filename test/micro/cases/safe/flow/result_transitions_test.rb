@@ -72,7 +72,7 @@ class Micro::Cases::Safe::Flow::ResultTransitionsTest < Minitest::Test
 
         return Failure(:validation_error) unless user.save
 
-        Success { { user: user } }
+        Success result: { user: user }
       end
     end
 
@@ -82,7 +82,7 @@ class Micro::Cases::Safe::Flow::ResultTransitionsTest < Minitest::Test
       def call!
         user = User.find_by_id(user_id)
 
-        return Success { { user: user } } if user
+        return Success result: { user: user } if user
 
         Failure(:user_not_found)
       end
@@ -95,7 +95,7 @@ class Micro::Cases::Safe::Flow::ResultTransitionsTest < Minitest::Test
         return Failure(:user_must_be_persisted) if user.new_record?
         return Failure(:wrong_password) if user.wrong_password?(password)
 
-        return Success { attributes(:user) }
+        return Success result: attributes(:user)
       end
     end
 
@@ -114,7 +114,7 @@ class Micro::Cases::Safe::Flow::ResultTransitionsTest < Minitest::Test
 
         return Failure(:validation_error) unless todo.save
 
-        Success { { todo: todo } }
+        Success result: { todo: todo }
       end
     end
 
@@ -124,7 +124,7 @@ class Micro::Cases::Safe::Flow::ResultTransitionsTest < Minitest::Test
       def call!
         todo = Todo.find_by_id_and_user_id(todo_id, user.id)
 
-        return Success { { todo: todo } } if todo
+        return Success result: { todo: todo } if todo
 
         Failure(:todo_not_found)
       end
@@ -139,7 +139,7 @@ class Micro::Cases::Safe::Flow::ResultTransitionsTest < Minitest::Test
           todo.save
         end
 
-        return Success { attributes(:todo) }
+        return Success result: attributes(:todo)
       end
     end
   end

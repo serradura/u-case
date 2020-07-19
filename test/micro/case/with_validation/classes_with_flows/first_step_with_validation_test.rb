@@ -13,7 +13,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
           def call!
             number = text.include?('.') ? text.to_f : text.to_i
 
-            Success { { number: number } }
+            Success result: { number: number }
           end
         end
 
@@ -21,7 +21,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
           attribute :number
 
           def call!
-            Success { { text: number.to_s } }
+            Success result: { text: number.to_s }
           end
         end
 
@@ -35,7 +35,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
           validates :number, kind: Integer
 
           def call!
-            Success { { number: number * 2 } }
+            Success result: { number: number * 2 }
           end
         end
 
