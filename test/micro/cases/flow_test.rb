@@ -48,11 +48,11 @@ class Micro::Cases::FlowTest < Minitest::Test
       # transitions[0][:success][:type]
       assert_equal(:ok, first_transition_result[:type])
 
-      # transitions[0][:success][:value]
-      assert_equal([:job], first_transition_result[:value].keys)
+      # transitions[0][:success][:result]
+      assert_equal([:job], first_transition_result[:result].keys)
 
-      assert_instance_of(Jobs::Entity, first_transition_result[:value][:job])
-      assert_equal('sleeping', first_transition_result[:value][:job].state)
+      assert_instance_of(Jobs::Entity, first_transition_result[:result][:job])
+      assert_equal('sleeping', first_transition_result[:result][:job].state)
 
       # transitions[0][:accessible_attributes]
       assert_equal([:job], first_transition[:accessible_attributes])
@@ -84,11 +84,11 @@ class Micro::Cases::FlowTest < Minitest::Test
       # transitions[1][:success][:type]
       assert_equal(:state_updated, second_transition_result[:type])
 
-      # transitions[1][:success][:value]
-      assert_equal([:job, :changes], second_transition_result[:value].keys)
+      # transitions[1][:success][:result]
+      assert_equal([:job, :changes], second_transition_result[:result].keys)
 
-      assert_instance_of(Jobs::Entity, second_transition_result[:value][:job])
-      assert_equal('running', second_transition_result[:value][:job].state)
+      assert_instance_of(Jobs::Entity, second_transition_result[:result][:job])
+      assert_equal('running', second_transition_result[:result][:job].state)
 
       # transitions[1][:accessible_attributes]
       assert_equal([:job], second_transition[:accessible_attributes])
@@ -122,11 +122,11 @@ class Micro::Cases::FlowTest < Minitest::Test
       # transitions[0][:success][:type]
       assert_equal(:ok, first_transition_result[:type])
 
-      # transitions[0][:success][:value]
-      assert_equal([:job], first_transition_result[:value].keys)
+      # transitions[0][:success][:result]
+      assert_equal([:job], first_transition_result[:result].keys)
 
-      assert_instance_of(Jobs::Entity, first_transition_result[:value][:job])
-      assert_equal('running', first_transition_result[:value][:job].state)
+      assert_instance_of(Jobs::Entity, first_transition_result[:result][:job])
+      assert_equal('running', first_transition_result[:result][:job].state)
 
       # transitions[0][:accessible_attributes]
       assert_equal([:job, :changes], first_transition[:accessible_attributes])
@@ -157,8 +157,8 @@ class Micro::Cases::FlowTest < Minitest::Test
       # transitions[1][:failure][:type]
       assert_equal(:invalid_state_transition, second_transition_result[:type])
 
-      # transitions[1][:failure][:value]
-      assert_equal({ invalid_state_transition: true }, second_transition_result[:value])
+      # transitions[1][:failure][:result]
+      assert_equal({ invalid_state_transition: true }, second_transition_result[:result])
 
       # transitions[1][:accessible_attributes]
       assert_equal([:job, :changes], second_transition[:accessible_attributes])

@@ -155,7 +155,7 @@ module Micro
 
           @__transitions__ << {
             use_case: { class: use_case_class, attributes: use_case_attributes },
-            result => { type: @type, value: data },
+            result => { type: @type, result: data },
             accessible_attributes: @__transitions_accessible_attributes__.keys
           }
         end
