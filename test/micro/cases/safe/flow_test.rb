@@ -16,7 +16,7 @@ class Micro::Cases::Safe::FlowTest < Minitest::Test
       Jobs::Run
         .call(result1)
         .on_success { raise }
-        .on_failure { |(value, _type)| assert_equal(:invalid_state_transition, value) }
+        .on_failure { |(value, _type)| assert_equal({ invalid_state_transition: true }, value) }
 
     result1.transitions.tap do |result_transitions|
       assert_equal(2, result_transitions.size)
@@ -156,7 +156,7 @@ class Micro::Cases::Safe::FlowTest < Minitest::Test
       assert_equal(:invalid_state_transition, second_transition_result[:type])
 
       # transitions[1][:failure][:value]
-      assert_equal(:invalid_state_transition, second_transition_result[:value])
+      assert_equal({ invalid_state_transition: true }, second_transition_result[:value])
 
       # transitions[1][:accessible_attributes]
       assert_equal([:job, :changes], second_transition[:accessible_attributes])
@@ -174,7 +174,7 @@ class Micro::Cases::Safe::FlowTest < Minitest::Test
     Jobs::Run
       .call(result)
       .on_success { raise }
-      .on_failure { |(value, *)| assert_equal(:invalid_state_transition, value) }
+      .on_failure { |(value, *)| assert_equal({ invalid_state_transition: true }, value) }
   end
 
   def test_calling_with_a_use_case_instance
@@ -192,14 +192,14 @@ class Micro::Cases::Safe::FlowTest < Minitest::Test
     Jobs::Run
       .call(result)
       .on_success { raise }
-      .on_failure { |(value, _type)| assert_equal(:invalid_state_transition, value) }
+      .on_failure { |(value, _type)| assert_equal({ invalid_state_transition: true }, value) }
   end
 
   def test_calling_with_a_use_case_class
     Jobs::Run
       .call(Jobs::State::Default)
       .on_success { raise }
-      .on_failure(:invalid_uuid) { |job| assert_nil(job.id) }
+      .on_failure(:invalid_uuid) { |result| assert_nil(result[:job].id) }
       .on_failure(:invalid_uuid) do |_job, use_case|
         assert_instance_of(Jobs::ValidateID, use_case)
       end

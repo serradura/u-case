@@ -45,7 +45,7 @@ module Jobs
     def call!
       return Success result: { job: job } if job.id =~ ACCEPTABLE_UUID
 
-      Failure :invalid_uuid, result: job
+      Failure :invalid_uuid, result: { job: job }
     end
   end
 

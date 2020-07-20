@@ -17,6 +17,10 @@ module Micro
         def initialize; super('type must be a Symbol'.freeze); end
       end
 
+      class InvalidResultValue < TypeError
+        def initialize; super('value must be a Hash, Symbol or an Exception'.freeze); end
+      end
+
       class InvalidResultInstance < ArgumentError
         def initialize; super('argument must be an instance of Micro::Case::Result'.freeze); end
       end
@@ -29,17 +33,13 @@ module Micro
         def initialize; super('Invalid invocation of the Micro::Case::Result#then method'); end
       end
 
-      class UndefinedFlow < ArgumentError
-        def initialize; super("This class hasn't declared its flow. Please, use the `flow()` macro to define one.".freeze); end
-      end
-
       class InvalidAccessToTheUseCaseObject < StandardError
         def initialize; super('only a failure result can access its use case object'.freeze); end
       end
 
       module ByWrongUsage
         def self.check(exception)
-          exception.is_a?(Error::UnexpectedResult) || exception.is_a?(ArgumentError)
+          exception.is_a?(Error::UnexpectedResult) || exception.is_a?(InvalidResultValue) || exception.is_a?(ArgumentError)
         end
       end
     end

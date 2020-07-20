@@ -65,7 +65,7 @@ class Micro::Cases::Safe::Flow::CollectionTest < Minitest::Test
     EXAMPLES.map(&:flow).each do |flow|
       result = flow.call(numbers: %w[1 1 2 a 3 4])
 
-      assert_failure_result(result, value: 'numbers must contain only numeric types')
+      assert_failure_result(result, value: { message: 'numbers must contain only numeric types' })
     end
   end
 end

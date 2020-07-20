@@ -83,7 +83,7 @@ module MicroCaseAssertions
   def assert_exception_result(result, value: :____skip____, type: :exception)
     assert_kind_of_result(result)
     assert_equal(type, result.type)
-    assert_kind_of(value, result.value) if value != :____skip____
+    assert_kind_of(value[:exception], result.value[:exception]) if value != :____skip____
     assert_predicate(result, :failure?)
 
     # assert the on_failure hook

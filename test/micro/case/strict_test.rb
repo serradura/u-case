@@ -6,7 +6,7 @@ class Micro::Case::StrictTest < Minitest::Test
 
     def call!
       if a.is_a?(Numeric) && b.is_a?(Numeric)
-        Success(result: a * b)
+        Success result: { number: a * b }
       else
         Failure(:invalid_data)
       end
@@ -17,30 +17,30 @@ class Micro::Case::StrictTest < Minitest::Test
     attributes :number
 
     def call!
-      return Failure result: 'number must be greater than 0' if number <= 0
+      return Multiply.call(a: number, b: number) if number > 0
 
-      Multiply.call(a: number, b: number)
+      Failure result: { message: 'number must be greater than 0' }
     end
   end
 
   def test_instance_call_method
     result = Multiply.new(a: 2, b: 2).call
 
-    assert_success_result(result, value: 4)
+    assert_success_result(result, value: { number: 4 })
 
     result = Multiply.new(a: 1, b: '1').call
 
-    assert_failure_result(result, value: :invalid_data, type: :invalid_data)
+    assert_failure_result(result, type: :invalid_data, value: { invalid_data: true })
   end
 
   def test_class_call_method
     result = Double.call(number: 2)
 
-    assert_success_result(result, value: 4)
+    assert_success_result(result, value: { number: 4 })
 
     result = Double.call(number: 0)
 
-    assert_failure_result(result, value: 'number must be greater than 0', type: :error)
+    assert_failure_result(result, type: :error, value: { message: 'number must be greater than 0' })
   end
 
   class Foo < Micro::Case::Strict
@@ -84,8 +84,11 @@ class Micro::Case::StrictTest < Minitest::Test
     attributes :a, :b
 
     def call!
-      return Success(result: a / b) if a.is_a?(Integer) && b.is_a?(Integer)
-      Failure(:not_an_integer)
+      if a.is_a?(Integer) && b.is_a?(Integer)
+        Success result: { number: a / b }
+      else
+        Failure(:not_an_integer)
+      end
     rescue => e
       Failure result: e
     end
@@ -94,13 +97,13 @@ class Micro::Case::StrictTest < Minitest::Test
   def test_the_exception_result_type
     result = Divide.call(a: 2, b: 0)
 
-    assert_exception_result(result, value: ZeroDivisionError)
+    assert_exception_result(result, value: { exception: ZeroDivisionError })
   end
 
   def test_that_when_a_failure_result_is_a_symbol_both_type_and_value_will_be_the_same
     result = Divide.call(a: 2, b: 'a')
 
-    assert_failure_result(result, value: :not_an_integer, type: :not_an_integer)
+    assert_failure_result(result, type: :not_an_integer, value: { not_an_integer: true })
   end
 
   def test_to_proc
@@ -113,6 +116,9 @@ class Micro::Case::StrictTest < Minitest::Test
 
     values = results.map(&:value)
 
-    assert_equal([2, 4, 6, 8], values)
+    assert_equal(
+      [{number: 2}, {number: 4}, {number: 6}, {number: 8}],
+      values
+    )
   end
 end
