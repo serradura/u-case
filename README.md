@@ -29,7 +29,7 @@ The main project goals are:
     - [How to define custom result types?](#how-to-define-custom-result-types)
     - [Is it possible to define a custom result type without a block?](#is-it-possible-to-define-a-custom-result-type-without-a-block)
     - [How to use the result hooks?](#how-to-use-the-result-hooks)
-    - [Why the failure hook (without a type) exposes a different kind of data?](#why-the-failure-hook-without-a-type-exposes-a-different-kind-of-data)
+    - [Why the failure hook (without a type) exposes result itself?](#why-the-failure-hook-without-a-type-exposes-result-itself)
     - [What happens if a result hook was declared multiple times?](#what-happens-if-a-result-hook-was-declared-multiple-times)
     - [How to use the `Micro::Case::Result#then` method?](#how-to-use-the-microcaseresultthen-method)
       - [What does happens when a `Micro::Case::Result#then` receives a block?](#what-does-happens-when-a-microcaseresultthen-receives-a-block)
@@ -42,7 +42,7 @@ The main project goals are:
     - [Is it possible to declare a flow which includes the use case itself?](#is-it-possible-to-declare-a-flow-which-includes-the-use-case-itself)
   - [`Micro::Case::Strict` - What is a strict use case?](#microcasestrict---what-is-a-strict-use-case)
   - [`Micro::Case::Safe` - Is there some feature to auto handle exceptions inside of a use case or flow?](#microcasesafe---is-there-some-feature-to-auto-handle-exceptions-inside-of-a-use-case-or-flow)
-    - [`Micro::Case::Safe::Flow`](#microcasesafeflow)
+    - [`Micro::Cases::Safe::Flow`](#microcasessafeflow)
     - [`Micro::Case::Result#on_exception`](#microcaseresulton_exception)
   - [`u-case/with_activemodel_validation` - How to validate use case attributes?](#u-casewith_activemodel_validation---how-to-validate-use-case-attributes)
     - [If I enabled the auto validation, is it possible to disable it only in specific use case classes?](#if-i-enabled-the-auto-validation-is-it-possible-to-disable-it-only-in-specific-use-case-classes)
@@ -108,11 +108,11 @@ class Multiply < Micro::Case
   # 2. Define the method `call!` with its business logic
   def call!
 
-    # 3. Wrap the use case result/output using the `Success()` or `Failure()` methods
+    # 3. Wrap the use case result/output using the `Success(result: *)` or `Failure(result: *)` methods
     if a.is_a?(Numeric) && b.is_a?(Numeric)
-      Success(a * b)
+      Success result: { number: a * b }
     else
-      Failure { '`a` and `b` attributes must be numeric' }
+      Failure result: { message: '`a` and `b` attributes must be numeric' }
     end
   end
 end
@@ -126,14 +126,14 @@ end
 result = Multiply.call(a: 2, b: 2)
 
 result.success? # true
-result.value    # 4
+result.data     # { number: 4 }
 
 # Failure result
 
 bad_result = Multiply.call(a: 2, b: '2')
 
 bad_result.failure? # true
-bad_result.value    # "`a` and `b` attributes must be numeric"
+bad_result.data     # { message: "`a` and `b` attributes must be numeric" }
 
 #-----------------------------#
 # Calling a use case instance #
@@ -141,7 +141,7 @@ bad_result.value    # "`a` and `b` attributes must be numeric"
 
 result = Multiply.new(a: 2, b: 3).call
 
-result.value # 6
+result.value # { number: 6 }
 
 # Note:
 # ----
@@ -156,11 +156,14 @@ result.value # 6
 A `Micro::Case::Result` stores the use cases output data. These are their main methods:
 - `#success?` returns true if is a successful result.
 - `#failure?` returns true if is an unsuccessful result.
-- `#value` the result value itself.
+- `#data` the result data itself.
 - `#type` a Symbol which gives meaning for the result, this is useful to declare different types of failures or success.
-- `#on_success` or `#on_failure` are hook methods that help you define the application flow.
+- `#on_success` or `#on_failure` are hook methods that help you to define the application flow.
 - `#use_case` if is a failure result, the use case responsible for it will be accessible through this method. This feature is handy to handle a flow failure (this topic will be covered ahead).
-- `#then` allows if the current result is a success, the `then` method will allow to applying a new use case for its value.
+- `#then` this method will allow applying a new use case if the current result was a success. The idea of this feature is to allow the creation of dynamic flows.
+- `#[]` and `#values_at` are shortcuts to access the `#data` values.
+
+> **Note:** for backward compatibility, you could use the `#value` method as an alias of `#data` method.
 
 [⬆️ Back to Top](#table-of-contents-)
 
@@ -175,9 +178,13 @@ class Divide < Micro::Case
   attributes :a, :b
 
   def call!
-    invalid_attributes.empty? ? Success(a / b) : Failure(invalid_attributes)
-  rescue => e
-    Failure(e)
+    if invalid_attributes.empty?
+      Success result: { number: a / b }
+    else
+      Failure result: { invalid_attributes: invalid_attributes }
+    end
+  rescue => exception
+    Failure result: exception
   end
 
   private def invalid_attributes
@@ -190,7 +197,7 @@ end
 result = Divide.call(a: 2, b: 2)
 
 result.type     # :ok
-result.value    # 1
+result.data     # { number: 1 }
 result.success? # true
 result.use_case # raises `Micro::Case::Error::InvalidAccessToTheUseCaseObject: only a failure result can access its own use case`
 
@@ -199,7 +206,7 @@ result.use_case # raises `Micro::Case::Error::InvalidAccessToTheUseCaseObject: o
 bad_result = Divide.call(a: 2, b: '2')
 
 bad_result.type     # :error
-bad_result.value    # {"b"=>"2"}
+bad_result.data     # { invalid_attributes: { "b"=>"2" } }
 bad_result.failure? # true
 bad_result.use_case # #<Divide:0x0000 @__attributes={"a"=>2, "b"=>"2"}, @a=2, @b="2", @__result=#<Micro::Case::Result:0x0000 @use_case=#<Divide:0x0000 ...>, @type=:error, @value={"b"=>"2"}, @success=false>
 
@@ -208,31 +215,33 @@ bad_result.use_case # #<Divide:0x0000 @__attributes={"a"=>2, "b"=>"2"}, @a=2, @b
 err_result = Divide.call(a: 2, b: 0)
 
 err_result.type     # :exception
-err_result.value    # <ZeroDivisionError: divided by 0>
+err_result.data     # { exception: <ZeroDivisionError: divided by 0> }
 err_result.failure? # true
 err_result.use_case # #<Divide:0x0000 @__attributes={"a"=>2, "b"=>0}, @a=2, @b=0, @__result=#<Micro::Case::Result:0x0000 @use_case=#<Divide:0x0000 ...>, @type=:exception, @value=#<ZeroDivisionError: divided by 0>, @success=false>
 
 # Note:
 # ----
 # Any Exception instance which is wrapped by
-# the Failure() method will receive `:exception` instead of the `:error` type.
+# the Failure(result: *) method will receive `:exception` instead of the `:error` type.
 ```
 
 [⬆️ Back to Top](#table-of-contents-)
 
 #### How to define custom result types?
 
-Answer: Use a symbol as the argument of `Success()`, `Failure()` methods and declare a block to set their values.
+Answer: Use a symbol as the argument of `Success()`, `Failure()` methods and declare the `result:` keyword to set the result data.
 
 ```ruby
 class Multiply < Micro::Case
   attributes :a, :b
 
   def call!
-    return Success(a * b) if a.is_a?(Numeric) && b.is_a?(Numeric)
-
-    Failure(:invalid_data) do
-      attributes.reject { |_, input| input.is_a?(Numeric) }
+    if a.is_a?(Numeric) && b.is_a?(Numeric)
+      Success result: { number: a * b }
+    else
+      Failure :invalid_data, result: {
+        attributes: attributes.reject { |_, input| input.is_a?(Numeric) }
+      }
     end
   end
 end
@@ -242,7 +251,7 @@ end
 result = Multiply.call(a: 3, b: 2)
 
 result.type     # :ok
-result.value    # 6
+result.data     # { number: 6 }
 result.success? # true
 
 # Failure result
@@ -250,7 +259,7 @@ result.success? # true
 bad_result = Multiply.call(a: 3, b: '2')
 
 bad_result.type     # :invalid_data
-bad_result.value    # {"b"=>"2"}
+bad_result.data     # { attributes: {"b"=>"2"} }
 bad_result.failure? # true
 ```
 
@@ -258,23 +267,25 @@ bad_result.failure? # true
 
 #### Is it possible to define a custom result type without a block?
 
-Answer: Yes, it is. But only for failure results!
+Answer: Yes, it is possible. But this will have special behavior because the result data will be a hash with the given type as the key and true as its value.
 
 ```ruby
 class Multiply < Micro::Case
   attributes :a, :b
 
   def call!
-    return Failure(:invalid_data) unless a.is_a?(Numeric) && b.is_a?(Numeric)
-
-    Success(a * b)
+    if a.is_a?(Numeric) && b.is_a?(Numeric)
+      Success result: { number: a * b }
+    else
+      Failure(:invalid_data)
+    end
   end
 end
 
 result = Multiply.call(a: 2, b: '2')
 
 result.failure?            # true
-result.value               # :invalid_data
+result.data                # { :invalid_data => true }
 result.type                # :invalid_data
 result.use_case.attributes # {"a"=>2, "b"=>"2"}
 
@@ -297,10 +308,10 @@ class Double < Micro::Case
   attribute :number
 
   def call!
-    return Failure(:invalid) { 'the number must be a numeric value' } unless number.is_a?(Numeric)
-    return Failure(:lte_zero) { 'the number must be greater than 0' } if number <= 0
+    return Failure :invalid, result: { msg: 'number must be a numeric value' } unless number.is_a?(Numeric)
+    return Failure :lte_zero, result: { msg: 'number must be greater than 0' } if number <= 0
 
-    Success(number * 2)
+    Success result: { number: number * 2 }
   end
 end
 
@@ -310,9 +321,9 @@ end
 
 Double
   .call(number: 3)
-  .on_success { |number| p number }
-  .on_failure(:invalid) { |msg| raise TypeError, msg }
-  .on_failure(:lte_zero) { |msg| raise ArgumentError, msg }
+  .on_success { |result| p result[:number] }
+  .on_failure(:invalid) { |result| raise TypeError, result[:msg] }
+  .on_failure(:lte_zero) { |result| raise ArgumentError, result[:msg] }
 
 # The output because it is a success:
 #   6
@@ -323,10 +334,10 @@ Double
 
 Double
   .call(number: -1)
-  .on_success { |number| p number }
+  .on_success { |result| p result[:number] }
   .on_failure { |_result, use_case| puts "#{use_case.class.name} was the use case responsible for the failure" }
-  .on_failure(:invalid) { |msg| raise TypeError, msg }
-  .on_failure(:lte_zero) { |msg| raise ArgumentError, msg }
+  .on_failure(:invalid) { |result| raise TypeError, result[:msg] }
+  .on_failure(:lte_zero) { |result| raise ArgumentError, result[:msg] }
 
 # The outputs will be:
 #
@@ -338,7 +349,7 @@ Double
 # The use case responsible for the failure will be accessible as the second hook argument
 ```
 
-#### Why the failure hook (without a type) exposes a different kind of data?
+#### Why the failure hook (without a type) exposes result itself?
 
 Answer: To allow you to define how to handle the program flow using some
 conditional statement (like an `if`, `case/when`).
@@ -349,9 +360,9 @@ class Double < Micro::Case
 
   def call!
     return Failure(:invalid) unless number.is_a?(Numeric)
-    return Failure(:lte_zero) { number } if number <= 0
+    return Failure :lte_zero, result: attributes(:number) if number <= 0
 
-    Success(number * 2)
+    Success result: { number: number * 2 }
   end
 end
 
@@ -363,32 +374,32 @@ Double
   .call(-1)
   .on_failure do |result, use_case|
     case result.type
-    when :invalid then raise TypeError, 'the number must be a numeric value'
-    when :lte_zero then raise ArgumentError, "the number `#{result.value}` must be greater than 0"
+    when :invalid then raise TypeError, "number must be a numeric value"
+    when :lte_zero then raise ArgumentError, "number `#{result[:number]}` must be greater than 0"
     else raise NotImplementedError
     end
   end
 
 # The output will be the exception:
 #
-# ArgumentError (the number `-1` must be greater than 0)
+# ArgumentError (number `-1` must be greater than 0)
 
-#=====================================================#
-# Using decomposition to access result value and type #
-#=====================================================#
+#=========================================================#
+# Using decomposition to access the result data and type #
+#=========================================================#
 
 # The syntax to decompose an Array can be used in methods, blocks and assigments.
-# If you doesn't know that, check out:
+# If you doesn't know it, check out the Ruby doc:
 # https://ruby-doc.org/core-2.2.0/doc/syntax/assignment_rdoc.html#label-Array+Decomposition
 #
-# And the object exposed in the hook failure can be decomposed using this syntax. e.g:
+# The object exposed in the hook failure is a Micro::Case::Result, and it can be decomposed using this syntax. e.g:
 
 Double
   .call(-2)
-  .on_failure do |(value, type), use_case|
+  .on_failure do |(data, type), use_case|
     case type
-    when :invalid then raise TypeError, 'the number must be a numeric value'
-    when :lte_zero then raise ArgumentError, "the number `#{value}` must be greater than 0"
+    when :invalid then raise TypeError, 'number must be a numeric value'
+    when :lte_zero then raise ArgumentError, "number `#{data[:number]}` must be greater than 0"
     else raise NotImplementedError
     end
   end
@@ -409,26 +420,28 @@ class Double < Micro::Case
   attributes :number
 
   def call!
-    return Failure(:invalid) { 'the number must be a numeric value' } unless number.is_a?(Numeric)
-
-    Success(:computed) { number * 2 }
+    if number.is_a?(Numeric)
+      Success :computed, result: { number: number * 2 }
+    else
+      Failure :invalid, result: { msg: 'number must be a numeric value' }
+    end
   end
 end
 
 result = Double.call(number: 3)
-result.value     # 6
-result.value * 4 # 24
+result.data         # { number: 6 }
+result[:number] * 4 # 24
 
 accum = 0
 
-result.on_success { |number| accum += number }
-      .on_success { |number| accum += number }
-      .on_success(:computed) { |number| accum += number }
-      .on_success(:computed) { |number| accum += number }
+result.on_success { |result| accum += result[:number] }
+      .on_success { |result| accum += result[:number] }
+      .on_success(:computed) { |result| accum += result[:number] }
+      .on_success(:computed) { |result| accum += result[:number] }
 
 accum # 24
 
-result.value * 4 == accum # true
+result[:number] * 4 == accum # true
 ```
 
 #### How to use the `Micro::Case::Result#then` method?
@@ -441,9 +454,9 @@ class ForbidNegativeNumber < Micro::Case
   attribute :number
 
   def call!
-    return Success { attributes } if number >= 0
+    return Success result: attributes if number >= 0
 
-    Failure { attributes }
+    Failure result: attributes
   end
 end
 
@@ -451,7 +464,7 @@ class Add3 < Micro::Case
   attribute :number
 
   def call!
-    Success { { number: number + 3 } }
+    Success result: { number: number + 3 }
   end
 end
 
@@ -460,7 +473,7 @@ result1 =
     .call(number: -1)
     .then(Add3)
 
-result1.value    # {'number' => -1}
+result1.data    # {'number' => -1}
 result1.failure? # true
 
 # ---
@@ -470,7 +483,7 @@ result2 =
     .call(number: 1)
     .then(Add3)
 
-result2.value    # {'number' => 4}
+result2.data     # {'number' => 4}
 result2.success? # true
 ```
 
@@ -487,7 +500,7 @@ class Add < Micro::Case
   attributes :a, :b
 
   def call!
-    return Success output: { sum: a + b } if Kind.of.Numeric?(a, b)
+    return Success result: { sum: a + b } if Kind.of.Numeric?(a, b)
 
     Failure(:attributes_arent_numbers)
   end
@@ -498,7 +511,7 @@ end
 success_result =
   Add
     .call(a: 2, b: 2)
-    .then { |result| result.success? ? result.value[:sum] : 0 }
+    .then { |result| result.success? ? result[:sum] : 0 }
 
 puts success_result # 4
 
@@ -507,7 +520,7 @@ puts success_result # 4
 failure_result =
   Add
     .call(a: 2, b: '2')
-    .then { |result| result.success? ? result.value[:sum] : 0 }
+    .then { |result| result.success? ? result[:sum] : 0 }
 
 puts failure_result # 0
 ```
@@ -540,9 +553,9 @@ module Steps
 
     def call!
       if numbers.all? { |value| String(value) =~ /\d+/ }
-        Success(numbers: numbers.map(&:to_i))
+        Success result: { numbers: numbers.map(&:to_i) }
       else
-        Failure('numbers must contain only numeric types')
+        Failure result: { message: 'numbers must contain only numeric types' }
       end
     end
   end
@@ -551,7 +564,7 @@ module Steps
     attribute :numbers
 
     def call!
-      Success(numbers: numbers.map { |number| number + 2 })
+      Success result: { numbers: numbers.map { |number| number + 2 } }
     end
   end
 
@@ -559,7 +572,7 @@ module Steps
     attribute :numbers
 
     def call!
-      Success(numbers: numbers.map { |number| number * 2 })
+      Success result: { numbers: numbers.map { |number| number * 2 } }
     end
   end
 
@@ -567,14 +580,14 @@ module Steps
     attribute :numbers
 
     def call!
-      Success(numbers: numbers.map { |number| number * number })
+      Success result: { numbers: numbers.map { |number| number * number } }
     end
   end
 end
 
-#---------------------------------------------#
-# Creating a flow using the collection syntax #
-#---------------------------------------------#
+#-------------------------------------------#
+# Creating a flow using Micro::Cases.flow() #
+#-------------------------------------------#
 
 Add2ToAllNumbers = Micro::Cases.flow([
   Steps::ConvertTextToNumbers,
@@ -583,8 +596,8 @@ Add2ToAllNumbers = Micro::Cases.flow([
 
 result = Add2ToAllNumbers.call(numbers: %w[1 1 2 2 3 4])
 
-p result.success? # true
-p result.value    # {:numbers => [3, 3, 4, 4, 5, 6]}
+result.success? # true
+result.data    # {:numbers => [3, 3, 4, 4, 5, 6]}
 
 #---------------------------------------------------#
 # An alternative way to create a flow using classes #
@@ -606,7 +619,7 @@ DoubleAllNumbers
 
 result = DoubleAllNumbers.call(numbers: %w[1 1 b 2 3 4])
 
-result.failure?                                # true
+result.failure?                                    # true
 result.use_case.is_a?(Steps::ConvertTextToNumbers) # true
 
 result.on_failure do |_message, use_case|
@@ -618,7 +631,7 @@ end
 
 #### Is it possible to compose a use case flow with other ones?
 
-Answer: Yes, it is.
+Answer: Yes, it is possible.
 
 ```ruby
 module Steps
@@ -627,9 +640,9 @@ module Steps
 
     def call!
       if numbers.all? { |value| String(value) =~ /\d+/ }
-        Success(numbers: numbers.map(&:to_i))
+        Success result: { numbers: numbers.map(&:to_i) }
       else
-        Failure('numbers must contain only numeric types')
+        Failure result: { message: 'numbers must contain only numeric types' }
       end
     end
   end
@@ -638,7 +651,7 @@ module Steps
     attribute :numbers
 
     def call!
-      Success(numbers: numbers.map { |number| number + 2 })
+      Success result: { numbers: numbers.map { |number| number + 2 } }
     end
   end
 
@@ -646,7 +659,7 @@ module Steps
     attribute :numbers
 
     def call!
-      Success(numbers: numbers.map { |number| number * 2 })
+      Success result: { numbers: numbers.map { |number| number * 2 } }
     end
   end
 
@@ -654,7 +667,7 @@ module Steps
     attribute :numbers
 
     def call!
-      Success(numbers: numbers.map { |number| number * number })
+      Success result: { numbers: numbers.map { |number| number * number } }
     end
   end
 end
@@ -686,23 +699,23 @@ DoubleAllNumbersAndSquareAndAdd2
   .on_success { |value| p value[:numbers] } # [6, 6, 18, 18, 38, 66]
 ```
 
-Note: You can blend any of the [available syntaxes/approaches](#how-to-create-a-flow-which-has-reusable-steps-to-define-a-complex-use-case) to create use case flows - [examples](https://github.com/serradura/u-case/blob/master/test/micro/case/flow/blend_test.rb#L7-L34).
+Note: You can blend any of the [available syntaxes/approaches](#how-to-create-a-flow-which-has-reusable-steps-to-define-a-complex-use-case) to create use case flows - [examples](https://github.com/serradura/u-case/blob/714c6b658fc6aa02617e6833ddee09eddc760f2a/test/micro/cases/flow/blend_test.rb#L5-L35).
 
 [⬆️ Back to Top](#table-of-contents-)
 
 #### Is it possible a flow accumulates its input and merges each success result to use as the argument of the next use cases?
 
-Answer: Yes, it is! Look at the example below to understand how the data accumulation works inside of the flow execution.
+Answer: Yes, it is possible! Look at the example below to understand how the data accumulation works inside of the flow execution.
 
 ```ruby
 module Users
-  class Find < Micro::Case
+  class FindByEmail < Micro::Case
     attribute :email
 
     def call!
       user = User.find_by(email: email)
 
-      return Success { { user: user } } if user
+      return Success result: { user: user } if user
 
       Failure(:user_not_found)
     end
@@ -717,14 +730,14 @@ module Users
       return Failure(:user_must_be_persisted) if user.new_record?
       return Failure(:wrong_password) if user.wrong_password?(password)
 
-      return Success { attributes(:user) }
+      return Success result: attributes(:user)
     end
   end
 end
 
 module Users
   Authenticate = Micro::Cases.flow([
-    Find,
+    FindByEmail,
     ValidatePassword
   ])
 end
@@ -732,14 +745,14 @@ end
 Users::Authenticate
   .call(email: 'somebody@test.com', password: 'password')
   .on_success { |result| sign_in(result[:user]) }
-  .on_failure(:wrong_password) { |result| render status: 401 }
-  .on_failure(:user_not_found) { |result| render status: 404 }
+  .on_failure(:wrong_password) { render status: 401 }
+  .on_failure(:user_not_found) { render status: 404 }
 ```
 
-First, lets see the attribute of each use case:
+First, lets see the attributes used by each use case:
 
 ```ruby
-class Users::Find < Micro::Case
+class Users::FindByEmail < Micro::Case
   attribute :email
 end
 
@@ -749,10 +762,10 @@ end
 ```
 
 As you can see the `Users::ValidatePassword` expects a user as its input. So, how does it receives the user?
-It receives the user from the `Users::Find` success result!
+It receives the user from the `Users::FindByEmail` success result!
 
 And this, is the power of use cases composition because the output
-of one flow will compose the input of the next use case in the flow!
+of one step will compose the input of the next use case in the flow!
 
 > input **>>** process **>>** output
 
@@ -774,12 +787,12 @@ user_authenticated.transitions
 [
   {
     :use_case => {
-      :class      => Users::Find,
+      :class      => Users::FindByEmail,
       :attributes => { :email => "rodrigo@test.com" }
     },
     :success => {
       :type  => :ok,
-      :value => {
+      :result => {
         :user => #<User:0x00007fb57b1c5f88 @email="rodrigo@test.com" ...>
       }
     },
@@ -795,7 +808,7 @@ user_authenticated.transitions
     },
     :success => {
       :type  => :ok,
-      :value => {
+      :result => {
         :user => #<User:0x00007fb57b1c5f88 @email="rodrigo@test.com" ...>
       }
     },
@@ -805,13 +818,13 @@ user_authenticated.transitions
 ```
 
 The example above shows the output generated by the `Micro::Case::Result#transitions`.
-With it is possible to analyze the use cases execution order and what were the given `inputs` (attributes) and `outputs` (`success.value`) in the entire execution.
+With it is possible to analyze the use cases execution order and what were the given `inputs` (`[:attributes]`) and `outputs` (`[:success][:result]`) in the entire execution.
 
-And look up the `accessible_attributes` property, because it shows whats attributes are accessible in that flow step. For example, in the last step, you can see that the `accessible_attributes` increased because of the [flow data accumulation](#is-it-possible-a-flow-accumulates-its-input-and-merges-each-success-result-to-use-as-the-argument-of-the-next-use-cases).
+And look up the `accessible_attributes` property, it shows whats attributes are accessible in that flow step. For example, in the last step, you can see that the `accessible_attributes` increased because of the [data flow accumulation](#is-it-possible-a-flow-accumulates-its-input-and-merges-each-success-result-to-use-as-the-argument-of-the-next-use-cases).
 
 > **Note:** The [`Micro::Case::Result#then`](#how-to-use-the-microcaseresultthen-method) increments the `Micro::Case::Result#transitions`.
 
-PS: Use the `Micro::Case::Result.disable_transition_tracking` global feature toggle to disable this feature (use once) and increase the use cases' performance.
+PS: Use the `Micro::Case::Result.disable_transition_tracking` feature toggle to disable this feature (use once, because it is global) and increase the use cases' performance.
 
 ##### `Micro::Case::Result#transitions` schema
 ```ruby
@@ -824,7 +837,7 @@ PS: Use the `Micro::Case::Result.disable_transition_tracking` global feature tog
     [success:, failure:] => {   # (Output)
       type:  <Symbol>,          # Result type. Defaults:
                                 # Success = :ok, Failure = :error/:exception
-      value: <Hash>             # The data returned by the use case
+      result: <Hash>            # The data returned by the use case
     },
     accessible_attributes: <Array>, # Properties that can be accessed by the use case's attributes,
                                     # starting with Hash used to invoke it and which are incremented
@@ -842,7 +855,7 @@ class ConvertTextToNumber < Micro::Case
   attribute :text
 
   def call!
-    Success { { number: text.to_i } }
+    Success result: { number: text.to_i }
   end
 end
 
@@ -850,7 +863,7 @@ class ConvertNumberToText < Micro::Case
   attribute :number
 
   def call!
-    Success { { text: number.to_s } }
+    Success result: { text: number.to_s }
   end
 end
 
@@ -862,17 +875,17 @@ class Double < Micro::Case
   attribute :number
 
   def call!
-    Success { { number: number * 2 } }
+    Success result: { number: number * 2 }
   end
 end
 
 result = Double.call(text: '4')
 
 result.success? # true
-result.value    # "8"
+result[:number] # "8"
 
 # NOTE: This feature can be used with the Micro::Case::Safe.
-#       Checkout the test: test/micro/case/safe/flow/with_classes/using_itself_test.rb
+#       Checkout this test: https://github.com/serradura/u-case/blob/714c6b658fc6aa02617e6833ddee09eddc760f2a/test/micro/case/safe/with_inner_flow_test.rb
 ```
 
 [⬆️ Back to Top](#table-of-contents-)
@@ -886,7 +899,7 @@ class Double < Micro::Case::Strict
   attribute :numbers
 
   def call!
-    Success(numbers.map { |number| number * 2 })
+    Success result: { numbers: numbers.map { |number| number * 2 } }
   end
 end
 
@@ -900,7 +913,7 @@ Double.call({})
 
 ### `Micro::Case::Safe` - Is there some feature to auto handle exceptions inside of a use case or flow?
 
-Answer: Yes, there is!
+Answer: Yes, there is one!
 
 **Use cases:**
 
@@ -915,14 +928,18 @@ class Divide < Micro::Case::Safe
   attributes :a, :b
 
   def call!
-    return Success(a / b) if a.is_a?(Integer) && b.is_a?(Integer)
-    Failure(:not_an_integer)
+    if a.is_a?(Integer) && b.is_a?(Integer)
+      Success result: { number: a / b}
+    else
+      Failure(:not_an_integer)
+    end
   end
 end
 
 result = Divide.call(a: 2, b: 0)
-result.type == :exception             # true
-result.value.is_a?(ZeroDivisionError) # true
+result.type == :exception                   # true
+result.data                                 # { exception: #<ZeroDivisionError...> }
+result[:exception].is_a?(ZeroDivisionError) # true
 
 result.on_failure(:exception) do |exception|
   AppLogger.error(exception.message) # E, [2019-08-21T00:05:44.195506 #9532] ERROR -- : divided by 0
@@ -943,12 +960,12 @@ end
 # Another note:
 # ------------
 # It is possible to rescue an exception even when is a safe use case.
-# Examples: https://github.com/serradura/u-case/blob/5a85fc238b63811a32737493dc6c59965f92491d/test/micro/case/safe_test.rb#L95-L123
+# Examples: https://github.com/serradura/u-case/blob/714c6b658fc6aa02617e6833ddee09eddc760f2a/test/micro/case/safe_test.rb#L90-L118
 ```
 
 [⬆️ Back to Top](#table-of-contents-)
 
-#### `Micro::Case::Safe::Flow`
+#### `Micro::Cases::Safe::Flow`
 
 As the safe use cases, safe flows can intercept an exception in any of its steps. These are the ways to define one:
 
@@ -991,7 +1008,7 @@ class Divide < Micro::Case::Safe
   attributes :a, :b
 
   def call!
-    Success(division: a / b)
+    Success result: { division: a / b }
   end
 end
 
@@ -1041,9 +1058,9 @@ class Multiply < Micro::Case
   validates :a, :b, presence: true, numericality: true
 
   def call!
-    return Failure(:validation_error) { {errors: self.errors} } unless valid?
+    return Failure :validation_error, result: { errors: self.errors } if invalid?
 
-    Success(number: a * b)
+    Success result: { number: a * b }
   end
 end
 
@@ -1065,7 +1082,7 @@ class Multiply < Micro::Case
   validates :a, :b, presence: true, numericality: true
 
   def call!
-    Success(number: a * b)
+    Success result: { number: a * b }
   end
 end
 
@@ -1077,7 +1094,7 @@ end
 
 #### If I enabled the auto validation, is it possible to disable it only in specific use case classes?
 
-Answer: Yes, it is. To do this, you only need to use the `disable_auto_validation` macro. e.g:
+Answer: Yes, it is possible. To do this, you only need to use the `disable_auto_validation` macro. e.g:
 
 ```ruby
 require 'u-case/with_activemodel_validation'
@@ -1090,7 +1107,7 @@ class Multiply < Micro::Case
   validates :a, :b, presence: true, numericality: true
 
   def call!
-    Success(number: a * b)
+    Success result: { number: a * b }
   end
 end
 
@@ -1116,13 +1133,13 @@ class Todo::List::AddItem < Micro::Case
   validates :params, kind: ActionController::Parameters
 
   def call!
-    todo_params = Todo::Params.to_save(params)
+    todo_params = params.require(:todo).permit(:title, :due_at)
 
     todo = user.todos.create(todo_params)
 
-    Success { { todo: todo} }
+    Success result: { todo: todo }
   rescue ActionController::ParameterMissing => e
-    Failure(:parameter_missing) { { message: e.message } }
+    Failure :parameter_missing, result: { message: e.message }
   end
 end
 ```
