@@ -10,7 +10,7 @@ module Micro
       def call
         __call
       rescue => exception
-        raise exception if Error::ByWrongUsage.check(exception)
+        raise exception if Error.by_wrong_usage?(exception)
 
         Failure(result: exception)
       end
