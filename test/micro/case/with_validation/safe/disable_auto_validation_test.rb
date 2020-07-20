@@ -35,7 +35,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
 
         result2 = Multiply.call(a: 2, b: 'a')
 
-        assert_exception_result(result2, value: TypeError)
+        assert_exception_result(result2, value: { exception: TypeError })
       end
     end
   end

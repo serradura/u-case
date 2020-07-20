@@ -6,7 +6,7 @@ class Micro::Case::SafeTest < Minitest::Test
 
     def call!
       if a.is_a?(Integer) && b.is_a?(Integer)
-        Success(result: a / b)
+        Success(result: { number: a / b })
       else
         Failure(:not_an_integer)
       end
@@ -16,25 +16,25 @@ class Micro::Case::SafeTest < Minitest::Test
   def test_instance_call_method
     result = Divide.new(a: 2, b: 2).call
 
-    assert_success_result(result, value: 1)
+    assert_success_result(result, value: { number: 1 })
 
     # ---
 
     result = Divide.new(a: 2.0, b: 2).call
 
-    assert_failure_result(result, value: :not_an_integer, type: :not_an_integer)
+    assert_failure_result(result, type: :not_an_integer, value: { not_an_integer: true })
   end
 
   def test_class_call_method
-    result = Divide.call(a: 2, b: 2)
+    result = Divide.call(a: 4, b: 2)
 
-    assert_success_result(result, value: 1)
+    assert_success_result(result, { number: 2 })
 
     # ---
 
     result = Divide.call(a: 2.0, b: 2)
 
-    assert_failure_result(result, value: :not_an_integer, type: :not_an_integer)
+    assert_failure_result(result, type: :not_an_integer, value: { not_an_integer: true })
   end
 
   class Foo < Micro::Case::Safe
@@ -73,7 +73,7 @@ class Micro::Case::SafeTest < Minitest::Test
       Divide.new(a: 2, b: 0).call,
       Divide.call(a: 2, b: 0)
     ].each do |result|
-      assert_exception_result(result, value: ZeroDivisionError)
+      assert_exception_result(result, value: { exception: ZeroDivisionError })
     end
   end
 
@@ -122,27 +122,27 @@ class Micro::Case::SafeTest < Minitest::Test
       Divide2ByArgV1.call(arg: 0),
       Divide2ByArgV2.call(arg: 0)
     ].each do |result|
-      assert_exception_result(result, value: ZeroDivisionError)
+      assert_exception_result(result, value: { exception: ZeroDivisionError })
     end
 
     # ---
 
     result = Divide2ByArgV3.call(arg: 0)
 
-    assert_exception_result(result, value: ZeroDivisionError, type: :foo)
+    assert_exception_result(result, type: :foo, value: { exception: ZeroDivisionError })
 
     # ---
 
     result = GenerateZeroDivisionError.call(arg: 2)
     assert_success_result(result)
 
-    assert_kind_of(ZeroDivisionError, result.value)
+    assert_kind_of(ZeroDivisionError, result.value[:exception])
   end
 
   def test_that_when_a_failure_result_is_a_symbol_both_type_and_value_will_be_the_same
     result = Divide.call(a: 2, b: 'a')
 
-    assert_failure_result(result, value: :not_an_integer)
+    assert_failure_result(result, value: { not_an_integer: true })
   end
 
   def test_to_proc
@@ -155,6 +155,9 @@ class Micro::Case::SafeTest < Minitest::Test
 
     values = results.map(&:value)
 
-    assert_equal([1, 2, 3, 4], values)
+    assert_equal(
+      [{number: 1}, {number: 2}, {number: 3}, {number: 4}],
+      values
+    )
   end
 end
