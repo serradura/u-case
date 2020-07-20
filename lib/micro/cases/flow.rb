@@ -84,12 +84,11 @@ module Micro
           @next_use_cases.reduce(first_result) do |result, use_case|
             break result if result.failure?
 
-            value = result.value
-            input = value.is_a?(Hash) ? memo.tap { |data| data.merge!(value) } : value
+            memo.merge!(result.data)
 
             result.__set_transitions_accessible_attributes__(memo)
 
-            next_use_case_result(use_case, result, input)
+            next_use_case_result(use_case, result, memo)
           end
         end
     end

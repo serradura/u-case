@@ -13,9 +13,10 @@ module Micro
         @@transition_tracking_disabled = true
       end
 
-      attr_reader :value, :type
+      attr_reader :type, :value, :data
 
       def initialize
+        @data = Kind::Empty::HASH
         @__transitions__ = []
         @__transitions_accessible_attributes__ = {}
       end
@@ -24,11 +25,23 @@ module Micro
         [value, type]
       end
 
+      MapDataFromValue = -> value do
+        return value if value.is_a?(Hash)
+        return { value => true } if value.is_a?(Symbol)
+        return { exception: value } if value.is_a?(Exception)
+
+        { value: value }
+      end
+
+      private_constant :MapDataFromValue
+
       def __set__(is_success, value, type, use_case)
         raise Error::InvalidResultType unless type.is_a?(Symbol)
         raise Error::InvalidUseCase if !is_a_use_case?(use_case)
 
         @success, @value, @type, @use_case = is_success, value, type, use_case
+
+        @data = MapDataFromValue.call(value)
 
         __set_transition__ unless @@transition_tracking_disabled
 
@@ -90,7 +103,7 @@ module Micro
 
           return self if failure?
 
-          input = attributes.is_a?(Hash) ? self.value.merge(attributes) : self.value
+          input = attributes.is_a?(Hash) ? self.data.merge(attributes) : self.data
 
           arg.__call_and_set_transition__(self, input)
         end
@@ -141,7 +154,7 @@ module Micro
 
           @__transitions__ << {
             use_case: { class: use_case_class, attributes: use_case_attributes },
-            result => { type: @type, value: @value },
+            result => { type: @type, value: @value, data: data },
             accessible_attributes: @__transitions_accessible_attributes__.keys
           }
         end
