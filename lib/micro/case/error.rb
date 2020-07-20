@@ -17,8 +17,19 @@ module Micro
         def initialize; super('type must be a Symbol'.freeze); end
       end
 
-      class InvalidResultValue < TypeError
-        def initialize; super('value must be a Hash, Symbol or an Exception'.freeze); end
+      class InvalidResultData < TypeError
+      end
+
+      class InvalidSuccessResult < InvalidResultData
+        def initialize(object)
+          super("Success(result: #{object.inspect}) must be a Hash or Symbol")
+        end
+      end
+
+      class InvalidFailureResult < InvalidResultData
+        def initialize(object)
+          super("Failure(result: #{object.inspect}) must be a Hash, Symbol or an Exception")
+        end
       end
 
       class InvalidResultInstance < ArgumentError
@@ -37,10 +48,8 @@ module Micro
         def initialize; super('only a failure result can access its use case object'.freeze); end
       end
 
-      module ByWrongUsage
-        def self.check(exception)
-          exception.is_a?(Error::UnexpectedResult) || exception.is_a?(InvalidResultValue) || exception.is_a?(ArgumentError)
-        end
+      def self.by_wrong_usage?(exception)
+        exception.is_a?(InvalidResultData) || exception.is_a?(Error::UnexpectedResult) || exception.is_a?(ArgumentError)
       end
     end
   end

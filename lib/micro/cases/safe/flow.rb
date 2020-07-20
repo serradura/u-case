@@ -8,7 +8,7 @@ module Micro
           instance = use_case.__new__(result, input)
           instance.call
         rescue => exception
-          raise exception if Case::Error::ByWrongUsage.check(exception)
+          raise exception if Case::Error.by_wrong_usage?(exception)
 
           result.__set__(false, exception, :exception, instance)
         end

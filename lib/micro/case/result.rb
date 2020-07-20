@@ -13,9 +13,9 @@ module Micro
         @@transition_tracking_disabled = true
       end
 
-      attr_reader :type, :value
+      attr_reader :type, :data
 
-      alias_method :data, :value
+      alias_method :value, :data
 
       def initialize
         @__transitions__ = []
@@ -23,24 +23,26 @@ module Micro
       end
 
       def to_ary
-        [value, type]
+        [data, type]
       end
 
-      MapResultValue = -> value do
-        return value if value.is_a?(Hash)
-        return { value => true } if value.is_a?(Symbol)
-        return { exception: value } if value.is_a?(Exception)
+      FetchResultData = -> (data, is_success) do
+        return data if data.is_a?(Hash)
+        return { data => true } if data.is_a?(Symbol)
+        return { exception: data } if data.is_a?(Exception)
 
-        raise ::Micro::Case::Error::InvalidResultValue
+        err = is_success ? :InvalidSuccessResult : :InvalidFailureResult
+
+        raise Micro::Case::Error.const_get(err), data
       end
 
-      def __set__(is_success, value, type, use_case)
+      def __set__(is_success, data, type, use_case)
         raise Error::InvalidResultType unless type.is_a?(Symbol)
         raise Error::InvalidUseCase if !is_a_use_case?(use_case)
 
         @success, @type, @use_case = is_success, type, use_case
 
-        @value = MapResultValue.call(value)
+        @data = FetchResultData.call(data, is_success)
 
         __set_transition__ unless @@transition_tracking_disabled
 
@@ -62,7 +64,7 @@ module Micro
       end
 
       def on_success(expected_type = nil)
-        yield(value) if success_type?(expected_type)
+        yield(data) if success_type?(expected_type)
 
         self
       end
@@ -70,7 +72,7 @@ module Micro
       def on_failure(expected_type = nil)
         return self unless failure_type?(expected_type)
 
-        hook_data = expected_type.nil? ? self : value
+        hook_data = expected_type.nil? ? self : data
 
         yield(hook_data, @use_case)
 
@@ -80,8 +82,8 @@ module Micro
       def on_exception(expected_exception = nil)
         return self unless failure_type?(:exception)
 
-        if !expected_exception || (Kind.is(Exception, expected_exception) && value.fetch(:exception).is_a?(expected_exception))
-          yield(value, @use_case)
+        if !expected_exception || (Kind.is(Exception, expected_exception) && data.fetch(:exception).is_a?(expected_exception))
+          yield(data, @use_case)
         end
 
         self
@@ -102,7 +104,7 @@ module Micro
 
           return self if failure?
 
-          input = attributes.is_a?(Hash) ? self.value.merge(attributes) : self.value
+          input = attributes.is_a?(Hash) ? self.data.merge(attributes) : self.data
 
           arg.__call_and_set_transition__(self, input)
         end
@@ -153,12 +155,12 @@ module Micro
 
           @__transitions__ << {
             use_case: { class: use_case_class, attributes: use_case_attributes },
-            result => { type: @type, value: @value },
+            result => { type: @type, value: data },
             accessible_attributes: @__transitions_accessible_attributes__.keys
           }
         end
 
-        private_constant :MapResultValue
+        private_constant :FetchResultData
     end
   end
 end
