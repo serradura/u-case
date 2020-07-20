@@ -47,7 +47,7 @@ class Micro::Case::ResultTest < Minitest::Test
     assert_equal(result.transitions, [
       {
         use_case: { class: Micro::Case, attributes: {} },
-        success: { type: :ok, value: { number: 1 } },
+        success: { type: :ok, result: { number: 1 } },
         accessible_attributes: []
       }
     ])
@@ -84,7 +84,7 @@ class Micro::Case::ResultTest < Minitest::Test
     assert_equal(result.transitions, [
       {
         use_case: { class: Micro::Case, attributes: {} },
-        failure: { type: :error, value: { number: 0 } },
+        failure: { type: :error, result: { number: 0 } },
         accessible_attributes: []
       }
     ])
