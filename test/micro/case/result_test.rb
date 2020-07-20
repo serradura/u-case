@@ -18,10 +18,10 @@ class Micro::Case::ResultTest < Minitest::Test
   end
 
   def test_success_result
-    result = success_result(value: { number: 1 }, type: :ok)
+    result = success_result(value: { a: 1, b: 2 }, type: :ok)
 
     assert_predicate(result, :success?)
-    assert_equal(1, result.value[:number])
+    assert_equal(1, result.value[:a])
 
     assert_raises_with_message(
       Micro::Case::Error::InvalidAccessToTheUseCaseObject,
@@ -35,7 +35,7 @@ class Micro::Case::ResultTest < Minitest::Test
       result
         .on_failure { raise }
         .on_success { assert(true) }
-        .on_success { |(value, _type)| assert_equal(1, value[:number]) }
+        .on_success { |(value, _type)| assert_equal(1, value[:a]) }
     )
 
     # ---
@@ -47,21 +47,28 @@ class Micro::Case::ResultTest < Minitest::Test
     assert_equal(result.transitions, [
       {
         use_case: { class: Micro::Case, attributes: {} },
-        success: { type: :ok, result: { number: 1 } },
+        success: { type: :ok, result: { a: 1, b: 2 } },
         accessible_attributes: []
       }
     ])
+
+    # ---
+
+    assert_equal(1, result[:a])
+
+    assert_equal([1], result.values_at(:a))
+    assert_equal([2, 1], result.values_at(:b, :a))
   end
 
   def test_failure_result
     use_case = Micro::Case.new({})
 
-    result = failure_result(value: { number: 0 }, type: :error, use_case: use_case)
+    result = failure_result(value: { a: 0, b: -1 }, type: :error, use_case: use_case)
 
     refute_predicate(result, :success?)
     assert_predicate(result, :failure?)
 
-    assert_equal(0, result.value[:number])
+    assert_equal(0, result.value[:a])
     assert_same(use_case, result.use_case)
 
     # ---
@@ -70,7 +77,7 @@ class Micro::Case::ResultTest < Minitest::Test
       result,
       result
         .on_failure { assert(true) }
-        .on_failure { |data| assert_equal(0, data.value[:number]) }
+        .on_failure { |data| assert_equal(0, data.value[:a]) }
         .on_failure { |_data, ucase| assert_same(ucase, use_case) }
         .on_success { raise }
     )
@@ -84,10 +91,17 @@ class Micro::Case::ResultTest < Minitest::Test
     assert_equal(result.transitions, [
       {
         use_case: { class: Micro::Case, attributes: {} },
-        failure: { type: :error, result: { number: 0 } },
+        failure: { type: :error, result: { a: 0, b: -1 } },
         accessible_attributes: []
       }
     ])
+
+    # ---
+
+    assert_equal(0, result[:a])
+
+    assert_equal([0], result.values_at(:a))
+    assert_equal([-1, 0], result.values_at(:b, :a))
   end
 
   def test_the_result_value
