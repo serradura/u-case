@@ -156,20 +156,20 @@ module Micro
         __get_result(true, value, type)
       end
 
-      def Failure(type = :error, result: nil)
-        value = result || type
-
-        type = __map_failure_type(value, type)
-
-        __get_result(false, value, type)
-      end
-
-      def __map_failure_type(value, type)
+      MapFailureType = -> (value, type) do
         return type if type != :error
         return value if value.is_a?(Symbol)
         return :exception if value.is_a?(Exception)
 
         type
+      end
+
+      def Failure(type = :error, result: nil)
+        value = result || type
+
+        type = MapFailureType.call(value, type)
+
+        __get_result(false, value, type)
       end
 
       def __result__
@@ -179,5 +179,7 @@ module Micro
       def __get_result(is_success, value, type)
         __result__.__set__(is_success, value, type, self)
       end
+
+      private_constant :MapFailureType
   end
 end

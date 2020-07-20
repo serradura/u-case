@@ -8,7 +8,7 @@ module Steps
       if !numbers.nil? && numbers.all? { |value| String(value) =~ /\d+/ }
         Success result: { numbers: numbers.map(&:to_i) }
       else
-        Failure result: 'numbers must contain only numeric types'
+        Failure result: { message: 'numbers must contain only numeric types' }
       end
     end
   end

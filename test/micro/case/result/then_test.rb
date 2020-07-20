@@ -17,8 +17,8 @@ class Micro::Case::Result::ThenTest < Minitest::Test
 
   if RUBY_VERSION < '2.5.0'
     def test_the_not_implemented_error
-      result1 = success_result(value: 0)
-      result2 = failure_result(value: 1)
+      result1 = success_result(value: {number: 0})
+      result2 = failure_result(value: {number: 1})
 
       assert_raises(NotImplementedError) { result1.then { 0 } }
       assert_raises(NotImplementedError) { result2.then { 0 } }
@@ -28,15 +28,15 @@ class Micro::Case::Result::ThenTest < Minitest::Test
     end
   else
     def test_the_not_implemented_error
-      result1 = success_result(value: 0)
-      result2 = failure_result(value: 1)
+      result1 = success_result(value: {number: 0})
+      result2 = failure_result(value: {number: 1})
 
       assert_raises(Micro::Case::Error::InvalidInvocationOfTheThenMethod) { result1.then(1) { 0 } }
       assert_raises(Micro::Case::Error::InvalidInvocationOfTheThenMethod) { result2.then(1) { 0 } }
     end
 
     def test_the_method_then_with_a_block
-      success = success_result(value: 0)
+      success = success_result(value: {number: 0})
       success_incr = 0
 
       then_output1 =
@@ -47,7 +47,7 @@ class Micro::Case::Result::ThenTest < Minitest::Test
 
       # ---
 
-      failure = failure_result(value: 1)
+      failure = failure_result(value: {number: 1})
       failure_incr = 0
 
       then_output2 =
@@ -58,13 +58,13 @@ class Micro::Case::Result::ThenTest < Minitest::Test
     end
 
     def test_the_method_then_without_a_block_or_an_argument
-      success = success_result(value: 0)
+      success = success_result(value: {number: 0})
 
       assert_instance_of(Enumerator, success.then)
 
       # ---
 
-      failure = failure_result(value: 1)
+      failure = failure_result(value: {number: 1})
 
       assert_instance_of(Enumerator, failure.then)
     end
@@ -101,7 +101,7 @@ class Micro::Case::Result::ThenTest < Minitest::Test
           class: ConvertTextIntoInteger, attributes: { text: '0'}
         },
         success: {
-          type: :ok, value: { number: 0 }, data: { number: 0 }
+          type: :ok, value: { number: 0 }
         },
         accessible_attributes: [:text]
       },
@@ -110,7 +110,7 @@ class Micro::Case::Result::ThenTest < Minitest::Test
           class: Add3, attributes: { number: 0 }
         },
         success: {
-          type: :ok, value: { number: 3 }, data: { number: 3 }
+          type: :ok, value: { number: 3 }
         },
         accessible_attributes: [:text, :number]
       }
@@ -124,7 +124,7 @@ class Micro::Case::Result::ThenTest < Minitest::Test
 
     result2 = ConvertTextIntoInteger.call(text: 0).then(Add3)
 
-    assert_failure_result(result2, value: :text_isnt_a_string_only_with_numbers)
+    assert_failure_result(result2, value: { text_isnt_a_string_only_with_numbers: true })
 
     expected_transitions2 = [
       {
@@ -133,8 +133,7 @@ class Micro::Case::Result::ThenTest < Minitest::Test
         },
         failure: {
           type: :text_isnt_a_string_only_with_numbers,
-          value: :text_isnt_a_string_only_with_numbers,
-          data: {text_isnt_a_string_only_with_numbers: true}
+          value: { text_isnt_a_string_only_with_numbers: true }
         },
         accessible_attributes: [:text]
       }
@@ -146,8 +145,8 @@ class Micro::Case::Result::ThenTest < Minitest::Test
   end
 
   def test_the_not_implemented_error_when_call_the_method_then_without_an_use_case
-    result1 = success_result(value: 0)
-    result2 = failure_result(value: 1)
+    result1 = success_result(value: {number: 0})
+    result2 = failure_result(value: {number: 1})
 
     assert_raises(Micro::Case::Error::InvalidInvocationOfTheThenMethod) { result1.then(1) }
     assert_raises(Micro::Case::Error::InvalidInvocationOfTheThenMethod) { result2.then(1) }
@@ -209,17 +208,17 @@ class Micro::Case::Result::ThenTest < Minitest::Test
     [
       {
         use_case: { class: FooBar, attributes: { foo: 'foo', bar: 'bar'} },
-        success: { type: :filled_foo_and_bar, value: :filled_foo_and_bar, data: { filled_foo_and_bar: true } },
+        success: { type: :filled_foo_and_bar, value: { filled_foo_and_bar: true } },
         accessible_attributes: [:foo, :bar]
       },
       {
         use_case: { class: Foo, attributes: { foo: 'foo' } },
-        success: { type: :filled_foo, value: :filled_foo, data: { filled_foo: true } },
+        success: { type: :filled_foo, value: { filled_foo: true } },
         accessible_attributes: [:foo, :bar, :filled_foo_and_bar]
       },
       {
         use_case: { class: Bar, attributes: { bar: 'bar' }},
-        success: { type: :filled_bar, value: :filled_bar, data: { filled_bar: true } },
+        success: { type: :filled_bar, value: { filled_bar: true } },
         accessible_attributes: [:foo, :bar, :filled_foo_and_bar, :filled_foo]
       }
     ].each_with_index do |expected_transition, index|
@@ -241,22 +240,22 @@ class Micro::Case::Result::ThenTest < Minitest::Test
     [
       {
         use_case: { class: Foo, attributes: { foo: 'foo' } },
-        success: { type: :filled_foo, value: :filled_foo, data: { filled_foo: true } },
+        success: { type: :filled_foo, value: { filled_foo: true } },
         accessible_attributes: [:foo, :bar]
       },
       {
         use_case: { class: Bar, attributes: { bar: 'bar' }},
-        success: { type: :filled_bar, value: :filled_bar, data: { filled_bar: true } },
+        success: { type: :filled_bar, value: { filled_bar: true } },
         accessible_attributes: [:foo, :bar, :filled_foo]
       },
       {
         use_case: { class: FooBar, attributes: { foo: 'foo', bar: 'bar'} },
-        success: { type: :filled_foo_and_bar, value: :filled_foo_and_bar, data: { filled_foo_and_bar: true } },
+        success: { type: :filled_foo_and_bar, value: { filled_foo_and_bar: true } },
         accessible_attributes: [:foo, :bar, :filled_foo, :filled_bar]
       },
       {
         use_case: { class: Bar, attributes: { bar: 'bar' }},
-        success: { type: :filled_bar, value: :filled_bar, data: { filled_bar: true } },
+        success: { type: :filled_bar, value: { filled_bar: true } },
         accessible_attributes: [:foo, :bar, :filled_foo, :filled_bar, :filled_foo_and_bar]
       },
     ].each_with_index do |expected_transition, index|
@@ -277,12 +276,12 @@ class Micro::Case::Result::ThenTest < Minitest::Test
     [
       {
         use_case: { class: Foo, attributes: { foo: 'foo' } },
-        success: { type: :filled_foo, value: :filled_foo, data: { filled_foo: true } },
+        success: { type: :filled_foo, value: { filled_foo: true } },
         accessible_attributes: [:foo]
       },
       {
         use_case: { class: FooBar, attributes: { foo: 'foo', bar: 'bar'} },
-        success: { type: :filled_foo_and_bar, value: :filled_foo_and_bar, data: { filled_foo_and_bar: true } },
+        success: { type: :filled_foo_and_bar, value: { filled_foo_and_bar: true } },
         accessible_attributes: [:foo, :filled_foo, :bar]
       }
     ].each_with_index do |expected_transition, index|
@@ -303,12 +302,12 @@ class Micro::Case::Result::ThenTest < Minitest::Test
     [
       {
         use_case: { class: Bar, attributes: { bar: 'bar' }},
-        success: { type: :filled_bar, value: :filled_bar, data: { filled_bar: true } },
+        success: { type: :filled_bar, value: { filled_bar: true } },
         accessible_attributes: [:bar]
       },
       {
         use_case: { class: FooBar, attributes: { foo: 'foo', bar: 'bar'} },
-        success: { type: :filled_foo_and_bar, value: :filled_foo_and_bar, data: { filled_foo_and_bar: true } },
+        success: { type: :filled_foo_and_bar, value: { filled_foo_and_bar: true } },
         accessible_attributes: [:bar, :filled_bar, :foo]
       }
     ].each_with_index do |expected_transition, index|
@@ -329,12 +328,12 @@ class Micro::Case::Result::ThenTest < Minitest::Test
     [
       {
         use_case: { class: FooBar, attributes: { foo: 'foo', bar: 'bar'} },
-        success: { type: :filled_foo_and_bar, value: :filled_foo_and_bar, data: { filled_foo_and_bar: true } },
+        success: { type: :filled_foo_and_bar, value: { filled_foo_and_bar: true } },
         accessible_attributes: [:foo, :bar]
       },
       {
         use_case: { class: FooBarBaz, attributes: { foo: 'foo', bar: 'bar', baz: 'baz'} },
-        success: { type: :filled_foo_and_bar_and_baz, value: :filled_foo_and_bar_and_baz, data: { filled_foo_and_bar_and_baz: true } },
+        success: { type: :filled_foo_and_bar_and_baz, value: { filled_foo_and_bar_and_baz: true } },
         accessible_attributes: [:foo, :bar, :filled_foo_and_bar, :baz]
       },
     ].each_with_index do |expected_transition, index|
@@ -355,17 +354,17 @@ class Micro::Case::Result::ThenTest < Minitest::Test
     [
       {
         use_case: { class: Foo, attributes: { foo: 'foo' } },
-        success: { type: :filled_foo, value: :filled_foo, data: { filled_foo: true } },
+        success: { type: :filled_foo, value: { filled_foo: true } },
         accessible_attributes: [:foo, :bar]
       },
       {
         use_case: { class: Bar, attributes: { bar: 'bar' }},
-        success: { type: :filled_bar, value: :filled_bar, data: { filled_bar: true } },
+        success: { type: :filled_bar, value: { filled_bar: true } },
         accessible_attributes: [:foo, :bar, :filled_foo]
       },
       {
         use_case: { class: FooBarBaz, attributes: { foo: 'foo', bar: 'bar', baz: 'baz'} },
-        success: { type: :filled_foo_and_bar_and_baz, value: :filled_foo_and_bar_and_baz, data: { filled_foo_and_bar_and_baz: true } },
+        success: { type: :filled_foo_and_bar_and_baz, value: { filled_foo_and_bar_and_baz: true } },
         accessible_attributes: [:foo, :bar, :filled_foo, :filled_bar, :baz]
       },
     ].each_with_index do |expected_transition, index|
