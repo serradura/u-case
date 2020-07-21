@@ -2,30 +2,36 @@ require 'ostruct'
 require 'test_helper'
 require 'support/steps'
 
-class Micro::Case::Flow::BlendTest < Minitest::Test
-  Add2ToAllNumbers = Steps::ConvertToNumbers >> Steps::Add2
+class Micro::Cases::Flow::BlendTest < Minitest::Test
+  Add2ToAllNumbers = Micro::Cases.flow([
+    Steps::ConvertToNumbers, Steps::Add2
+  ])
 
-  DoubleAllNumbers = Micro::Case::Flow([
+  DoubleAllNumbers = Micro::Cases.flow([
     Steps::ConvertToNumbers,
     Steps::Double
   ])
 
   class SquareAllNumbers < Micro::Case
     flow Steps::ConvertToNumbers,
-         Steps::Square
+        Steps::Square
   end
 
-  DoubleAllNumbersAndAdd2 = DoubleAllNumbers >> Steps::Add2
+  DoubleAllNumbersAndAdd2 = Micro::Cases.flow([
+    DoubleAllNumbers, Steps::Add2
+  ])
 
-  SquareAllNumbersAndAdd2 = Micro::Case::Flow([
+  SquareAllNumbersAndAdd2 = Micro::Cases.flow([
     SquareAllNumbers, Steps::Add2
   ])
 
-  SquareAllNumbersAndDouble = SquareAllNumbersAndAdd2 >> DoubleAllNumbers
+  SquareAllNumbersAndDouble = Micro::Cases.flow([
+    SquareAllNumbersAndAdd2, DoubleAllNumbers
+  ])
 
   class DoubleAllNumbersAndSquareAndAdd2 < Micro::Case
     flow DoubleAllNumbers,
-         SquareAllNumbersAndAdd2
+        SquareAllNumbersAndAdd2
   end
 
   EXAMPLES = [
@@ -50,7 +56,7 @@ class Micro::Case::Flow::BlendTest < Minitest::Test
     EXAMPLES.map(&:flow).each do |flow|
       result = flow.call(numbers: %w[1 1 2 a 3 4])
 
-      assert_failure_result(result, value: 'numbers must contain only numeric types')
+      assert_failure_result(result, value: { message: 'numbers must contain only numeric types' })
     end
   end
 end

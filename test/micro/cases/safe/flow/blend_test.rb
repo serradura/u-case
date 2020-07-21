@@ -2,30 +2,36 @@ require 'ostruct'
 require 'test_helper'
 require 'support/steps'
 
-class Micro::Case::Safe::Flow::BlendTest < Minitest::Test
-  Add2ToAllNumbers = Steps::ConvertToNumbers & Steps::Add2
+class Micro::Cases::Safe::Flow::BlendTest < Minitest::Test
+  Add2ToAllNumbers = Micro::Cases.safe_flow([
+    Steps::ConvertToNumbers, Steps::Add2
+  ])
 
-  DoubleAllNumbers = Micro::Case::Safe::Flow([
+  DoubleAllNumbers = Micro::Cases.safe_flow([
     Steps::ConvertToNumbers,
     Steps::Double
   ])
 
   class SquareAllNumbers < Micro::Case::Safe
     flow Steps::ConvertToNumbers,
-         Steps::Square
+        Steps::Square
   end
 
-  DoubleAllNumbersAndAdd2 = DoubleAllNumbers & Steps::Add2
+  DoubleAllNumbersAndAdd2 = Micro::Cases.safe_flow([
+    DoubleAllNumbers, Steps::Add2
+  ])
 
-  SquareAllNumbersAndAdd2 = Micro::Case::Safe::Flow([
+  SquareAllNumbersAndAdd2 = Micro::Cases.safe_flow([
     SquareAllNumbers, Steps::Add2
   ])
 
-  SquareAllNumbersAndDouble = SquareAllNumbersAndAdd2 & DoubleAllNumbers
+  SquareAllNumbersAndDouble = Micro::Cases.safe_flow([
+    SquareAllNumbersAndAdd2, DoubleAllNumbers
+  ])
 
   class DoubleAllNumbersAndSquareAndAdd2 < Micro::Case::Safe
     flow DoubleAllNumbers,
-         SquareAllNumbersAndAdd2
+        SquareAllNumbersAndAdd2
   end
 
   EXAMPLES = [
@@ -50,7 +56,7 @@ class Micro::Case::Safe::Flow::BlendTest < Minitest::Test
     EXAMPLES.map(&:flow).each do |flow|
       result = flow.call(numbers: %w[1 1 2 a 3 4])
 
-      assert_failure_result(result, value: 'numbers must contain only numeric types')
+      assert_failure_result(result, value: { message: 'numbers must contain only numeric types' })
     end
   end
 
@@ -58,20 +64,23 @@ class Micro::Case::Safe::Flow::BlendTest < Minitest::Test
     attributes :numbers
 
     def call!
-      Success(numbers: numbers.map { |number| number / 0 })
+      Success result: { numbers: numbers.map { |number| number / 0 } }
     end
   end
 
-  Add2ToAllNumbersAndDivideByZero = Add2ToAllNumbers & DivideNumbersByZero
+  class Add2ToAllNumbersAndDivideByZero < Micro::Case::Safe
+    flow Add2ToAllNumbers,
+      DivideNumbersByZero
+  end
 
-  DoubleAllNumbersAndDivideByZero = Micro::Case::Safe::Flow([
+  DoubleAllNumbersAndDivideByZero = Micro::Cases.safe_flow([
     DoubleAllNumbers,
     DivideNumbersByZero
   ])
 
   class SquareAllNumbersAndDivideByZero < Micro::Case::Safe
     flow SquareAllNumbers,
-         DivideNumbersByZero
+        DivideNumbersByZero
   end
 
   def test_the_expection_interception
@@ -80,26 +89,30 @@ class Micro::Case::Safe::Flow::BlendTest < Minitest::Test
       DoubleAllNumbersAndDivideByZero.call(numbers: %w[6 4 8]),
       SquareAllNumbersAndDivideByZero.call(numbers: %w[8 4 6])
     ].each do |result|
-      assert_exception_result(result, value: ZeroDivisionError)
+      assert_exception_result(result, value: { exception: ZeroDivisionError })
     end
   end
 
   class EmptyHash < Micro::Case
-    def call!; Success({}); end
+    def call!; Success(result: {}); end
   end
 
   class Add < Micro::Case::Strict
     attributes :a, :b
 
-    def call!; Success(a + b); end
+    def call!; Success(result: { number: a + b }); end
   end
 
   def test_that_raises_wrong_usage_exceptions
-    flow_1 = EmptyHash & DivideNumbersByZero
+    flow_1 = Micro::Cases.safe_flow([
+      EmptyHash, DivideNumbersByZero
+    ])
 
     assert_raises_with_message(ArgumentError, 'missing keyword: :numbers') { flow_1.call({}) }
 
-    flow_2 = EmptyHash & Add
+    flow_2 = Micro::Cases.safe_flow([
+      EmptyHash, Add
+    ])
 
     assert_raises_with_message(ArgumentError, 'missing keywords: :a, :b') { flow_2.call({}) }
   end

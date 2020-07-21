@@ -13,34 +13,25 @@ module Micro
         @@transition_tracking_disabled = true
       end
 
-      class Data
-        attr_reader :value, :type
+      attr_reader :type, :data
 
-        def initialize(value, type)
-          @value, @type = value, type
-        end
-
-        def to_ary; [value, type]; end
-      end
-
-      private_constant :Data
-
-      attr_reader :value, :type
+      alias_method :value, :data
 
       def initialize
         @__transitions__ = []
         @__transitions_accessible_attributes__ = {}
       end
 
-      def __set__(is_success, value, type, use_case)
-        raise Error::InvalidResultType unless type.is_a?(Symbol)
-        raise Error::InvalidUseCase if !is_a_use_case?(use_case)
+      def to_ary
+        [data, type]
+      end
 
-        @success, @value, @type, @use_case = is_success, value, type, use_case
+      def [](key)
+        data[key]
+      end
 
-        __set_transition__ unless @@transition_tracking_disabled
-
-        self
+      def values_at(*keys)
+        data.values_at(*keys)
       end
 
       def success?
@@ -58,7 +49,7 @@ module Micro
       end
 
       def on_success(expected_type = nil)
-        yield(value) if success_type?(expected_type)
+        yield(data) if success_type?(expected_type)
 
         self
       end
@@ -66,9 +57,9 @@ module Micro
       def on_failure(expected_type = nil)
         return self unless failure_type?(expected_type)
 
-        data = expected_type.nil? ? Data.new(value, type).tap(&:freeze) : value
+        hook_data = expected_type.nil? ? self : data
 
-        yield(data, @use_case)
+        yield(hook_data, @use_case)
 
         self
       end
@@ -76,8 +67,8 @@ module Micro
       def on_exception(expected_exception = nil)
         return self unless failure_type?(:exception)
 
-        if !expected_exception || (Kind.is(Exception, expected_exception) && value.is_a?(expected_exception))
-          yield(value, @use_case)
+        if !expected_exception || (Kind.is(Exception, expected_exception) && data.fetch(:exception).is_a?(expected_exception))
+          yield(data, @use_case)
         end
 
         self
@@ -98,7 +89,7 @@ module Micro
 
           return self if failure?
 
-          input = attributes.is_a?(Hash) ? self.value.merge(attributes) : self.value
+          input = attributes.is_a?(Hash) ? self.data.merge(attributes) : self.data
 
           arg.__call_and_set_transition__(self, input)
         end
@@ -108,6 +99,29 @@ module Micro
         @__transitions__.clone
       end
 
+      FetchData = -> (data, is_success) do
+        return data if data.is_a?(Hash)
+        return { data => true } if data.is_a?(Symbol)
+        return { exception: data } if data.is_a?(Exception)
+
+        err = is_success ? :InvalidSuccessResult : :InvalidFailureResult
+
+        raise Micro::Case::Error.const_get(err), data
+      end
+
+      def __set__(is_success, data, type, use_case)
+        raise Error::InvalidResultType unless type.is_a?(Symbol)
+        raise Error::InvalidUseCase if !is_a_use_case?(use_case)
+
+        @success, @type, @use_case = is_success, type, use_case
+
+        @data = FetchData.call(data, is_success)
+
+        __set_transition__ unless @@transition_tracking_disabled
+
+        self
+      end
+
       def __set_transitions_accessible_attributes__(attributes_data)
         return attributes_data if @@transition_tracking_disabled
 
@@ -115,17 +129,6 @@ module Micro
       end
 
       private
-
-        def __set_transitions_accessible_attributes__!(attributes_data)
-          attributes = Utils.symbolize_hash_keys(attributes_data)
-
-          __update_transitions_accessible_attributes__(attributes)
-        end
-
-        def __update_transitions_accessible_attributes__(attributes)
-          @__transitions_accessible_attributes__.merge!(attributes)
-          @__transitions_accessible_attributes__
-        end
 
         def success_type?(expected_type)
           success? && (expected_type.nil? || expected_type == type)
@@ -139,6 +142,17 @@ module Micro
           (arg.is_a?(Class) && arg < ::Micro::Case) || arg.is_a?(::Micro::Case)
         end
 
+        def __set_transitions_accessible_attributes__!(attributes_data)
+          attributes = Utils.symbolize_hash_keys(attributes_data)
+
+          __update_transitions_accessible_attributes__(attributes)
+        end
+
+        def __update_transitions_accessible_attributes__(attributes)
+          @__transitions_accessible_attributes__.merge!(attributes)
+          @__transitions_accessible_attributes__
+        end
+
         def __set_transition__
           use_case_class = @use_case.class
           use_case_attributes = Utils.symbolize_hash_keys(@use_case.attributes)
@@ -149,10 +163,12 @@ module Micro
 
           @__transitions__ << {
             use_case: { class: use_case_class, attributes: use_case_attributes },
-            result => { type: @type, value: @value },
+            result => { type: @type, result: data },
             accessible_attributes: @__transitions_accessible_attributes__.keys
           }
         end
+
+        private_constant :FetchData
     end
   end
 end

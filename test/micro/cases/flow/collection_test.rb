@@ -2,38 +2,37 @@ require 'ostruct'
 require 'test_helper'
 require 'support/steps'
 
-class Micro::Case::Safe::Flow::CollectionMapperTest < Minitest::Test
-  Add2ToAllNumbers = Micro::Case::Safe::Flow([
+class Micro::Cases::Flow::CollectionTest < Minitest::Test
+  Add2ToAllNumbers = Micro::Cases.flow([
     Steps::ConvertToNumbers,
     Steps::Add2
   ])
 
-  DoubleAllNumbers = Micro::Case::Safe::Flow([
+  DoubleAllNumbers = Micro::Cases.flow([
     Steps::ConvertToNumbers,
     Steps::Double
   ])
 
-  SquareAllNumbers = Micro::Case::Safe::Flow([
+  SquareAllNumbers = Micro::Cases.flow([
     Steps::ConvertToNumbers,
     Steps::Square
   ])
 
-  DoubleAllNumbersAndAdd2 = Micro::Case::Safe::Flow([
+  DoubleAllNumbersAndAdd2 = Micro::Cases.flow([
     DoubleAllNumbers,
     Steps::Add2
   ])
 
-  SquareAllNumbersAndAdd2 = Micro::Case::Safe::Flow([
+  SquareAllNumbersAndAdd2 = Micro::Cases.flow([
     SquareAllNumbers,
     Steps::Add2
   ])
 
   SquareAllNumbersAndDouble =
-    Micro::Case::Safe::Flow([SquareAllNumbersAndAdd2, DoubleAllNumbers])
+    Micro::Cases.flow([SquareAllNumbersAndAdd2, DoubleAllNumbers])
 
   DoubleAllNumbersAndSquareAndAdd2 =
-    Micro::Case::Safe::Flow([DoubleAllNumbers, SquareAllNumbersAndAdd2])
-
+    Micro::Cases.flow([DoubleAllNumbers, SquareAllNumbersAndAdd2])
 
   EXAMPLES = [
     { flow: Add2ToAllNumbers, result: [3, 3, 4, 4, 5, 6] },
@@ -65,7 +64,7 @@ class Micro::Case::Safe::Flow::CollectionMapperTest < Minitest::Test
     EXAMPLES.map(&:flow).each do |flow|
       result = flow.call(numbers: %w[1 1 2 a 3 4])
 
-      assert_failure_result(result, value: 'numbers must contain only numeric types')
+      assert_failure_result(result, value: { message: 'numbers must contain only numeric types' })
     end
   end
 end

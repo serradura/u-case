@@ -5,8 +5,8 @@ module UserTodoList
     attribute :todo
 
     flow Users::Authenticate,
-         Todos::FindWithUser,
-         self.call!
+        Todos::FindWithUser,
+        self.call!
 
     def call!
       if todo.pending?
@@ -14,7 +14,7 @@ module UserTodoList
         todo.save
       end
 
-      return Success { attributes(:todo) }
+      Success result: attributes(:todo)
     end
   end
 end
