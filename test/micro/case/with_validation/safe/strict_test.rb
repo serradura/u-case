@@ -10,7 +10,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
         validates :a, :b, presence: true, numericality: true
 
         def call!
-          Success(number: a * b)
+          Success result: { number: a * b }
         end
       end
 
@@ -19,7 +19,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
         validates :number, presence: true, numericality: true
 
         def call!
-          Success(number.to_s)
+          Success result: { string: number.to_s }
         end
       end
 
@@ -30,9 +30,9 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
 
         # ---
 
-        flow = Micro::Case::Flow([Multiply, NumberToString])
+        flow = Micro::Cases.flow([Multiply, NumberToString])
 
-        assert_success_result(flow.call(a: 2, b: 2), value: '4')
+        assert_success_result(flow.call(a: 2, b: 2), value: { string: '4' } )
       end
 
       def test_failure

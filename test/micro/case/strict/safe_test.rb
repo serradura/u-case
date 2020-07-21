@@ -6,7 +6,7 @@ class Micro::Case::Strict::SafeTest < Minitest::Test
 
     def call!
       if a.is_a?(Numeric) && b.is_a?(Numeric)
-        Success(a * b)
+        Success result: { number: a * b }
       else
         Failure(:invalid_data)
       end
@@ -17,30 +17,30 @@ class Micro::Case::Strict::SafeTest < Minitest::Test
     attributes :number
 
     def call!
-      return Failure { 'number must be greater than 0' } if number <= 0
+      return Multiply.call(a: number, b: number) if number > 0
 
-      Multiply.call(a: number, b: number)
+      Failure result: { message: 'number must be greater than 0' }
     end
   end
 
   def test_instance_call_method
     result = Multiply.new(a: 2, b: 2).call
 
-    assert_success_result(result, value: 4)
+    assert_success_result(result, value: { number: 4 })
 
     result = Multiply.new(a: 1, b: '1').call
 
-    assert_failure_result(result, value: :invalid_data, type: :invalid_data)
+    assert_failure_result(result, type: :invalid_data, value: {invalid_data: true})
   end
 
   def test_class_call_method
     result = Double.call(number: 2)
 
-    assert_success_result(result, value: 4)
+    assert_success_result(result, value: { number: 4 })
 
     result = Double.call(number: 0)
 
-    assert_failure_result(result, value: 'number must be greater than 0', type: :error)
+    assert_failure_result(result, type: :error, value: { message: 'number must be greater than 0' })
   end
 
   class Foo < Micro::Case::Strict::Safe
@@ -87,7 +87,7 @@ class Micro::Case::Strict::SafeTest < Minitest::Test
 
     def call!
       if a.is_a?(Integer) && b.is_a?(Integer)
-        Success(a / b)
+        Success(result: a / b)
       else
         Failure(:not_an_integer)
       end
@@ -97,13 +97,13 @@ class Micro::Case::Strict::SafeTest < Minitest::Test
   def test_that_exceptions_generate_a_failure
     result_1 = Divide.new(a: 2, b: 0).call
 
-    assert_exception_result(result_1, value: ZeroDivisionError)
+    assert_exception_result(result_1, value: { exception: ZeroDivisionError })
 
     # ---
 
     result_2 = Divide.call(a: 2, b: 0)
 
-    assert_exception_result(result_2, value: ZeroDivisionError)
+    assert_exception_result(result_2, value: { exception: ZeroDivisionError })
   end
 
   def test_to_proc
@@ -116,6 +116,9 @@ class Micro::Case::Strict::SafeTest < Minitest::Test
 
     values = results.map(&:value)
 
-    assert_equal([2, 4, 6, 8], values)
+    assert_equal(
+      [{number: 2}, {number: 4}, {number: 6}, {number: 8}],
+      values
+    )
   end
 end

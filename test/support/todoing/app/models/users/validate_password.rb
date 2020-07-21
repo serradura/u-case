@@ -8,7 +8,7 @@ module Users
       return Failure(:user_must_be_persisted) if user.new_record?
       return Failure(:wrong_password) if user.wrong_password?(password)
 
-      return Success { attributes(:user) }
+      Success result: attributes(:user)
     end
   end
 end

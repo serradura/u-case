@@ -15,7 +15,7 @@ end
 
 $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 
-require 'u-case/with_validation' if ENV.fetch('ACTIVEMODEL_VERSION', '6.1.0') < '6.1.0'
+require 'u-case/with_activemodel_validation' if ENV.fetch('ACTIVEMODEL_VERSION', '6.1.0') < '6.1.0'
 require 'micro/case'
 
 require 'minitest/pride'
@@ -83,7 +83,7 @@ module MicroCaseAssertions
   def assert_exception_result(result, value: :____skip____, type: :exception)
     assert_kind_of_result(result)
     assert_equal(type, result.type)
-    assert_kind_of(value, result.value) if value != :____skip____
+    assert_kind_of(value[:exception], result.value[:exception]) if value != :____skip____
     assert_predicate(result, :failure?)
 
     # assert the on_failure hook

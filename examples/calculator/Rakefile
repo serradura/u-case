@@ -5,13 +5,14 @@ require_relative 'calc/normalize_args'
 require_relative 'calc/transform_into_numbers'
 
 module Calc
-  TransformArgsIntoNumbers = NormalizeArgs & TransformIntoNumbers
+  TransformArgsIntoNumbers =
+    Micro::Case::Safe::Flow([NormalizeArgs, TransformIntoNumbers])
 
   module With
-    Add = TransformArgsIntoNumbers & Operation::Add
-    Divide = TransformArgsIntoNumbers & Operation::Divide
-    Subtract = TransformArgsIntoNumbers & Operation::Subtract
-    Multiply = TransformArgsIntoNumbers & Operation::Multiply
+    Add = Micro::Case::Safe::Flow([TransformArgsIntoNumbers, Operation::Add])
+    Divide = Micro::Case::Safe::Flow([TransformArgsIntoNumbers, Operation::Divide])
+    Subtract = Micro::Case::Safe::Flow([TransformArgsIntoNumbers, Operation::Subtract])
+    Multiply = Micro::Case::Safe::Flow([TransformArgsIntoNumbers, Operation::Multiply])
   end
 end
 

@@ -6,9 +6,9 @@ module Steps
 
     def call!
       if !numbers.nil? && numbers.all? { |value| String(value) =~ /\d+/ }
-        Success(numbers: numbers.map(&:to_i))
+        Success result: { numbers: numbers.map(&:to_i) }
       else
-        Failure('numbers must contain only numeric types')
+        Failure result: { message: 'numbers must contain only numeric types' }
       end
     end
   end
@@ -17,7 +17,7 @@ module Steps
     attribute :numbers
 
     def call!
-      Success(numbers: numbers.map { |number| number + 2 })
+      Success result: { numbers: numbers.map { |number| number + 2 } }
     end
   end
 
@@ -25,7 +25,7 @@ module Steps
     attribute :numbers
 
     def call!
-      Success(numbers: numbers.map { |number| number * 2 })
+      Success result: { numbers: numbers.map { |number| number * 2 } }
     end
   end
 
@@ -33,7 +33,7 @@ module Steps
     attribute :numbers
 
     def call!
-      Success(numbers: numbers.map { |number| number * number })
+      Success result: { numbers: numbers.map { |number| number * number } }
     end
   end
 end
