@@ -20,11 +20,11 @@ The main project goals are:
 
 ## Documentation <!-- omit in toc -->
 
-Version    | Documentation
----------- | -------------
-Unreleased | https://github.com/serradura/u-case/blob/master/README.md
-2.6.0      | https://github.com/serradura/u-case/blob/v2.x/README.md
-1.1.0      | https://github.com/serradura/u-case/blob/v1.x/README.md
+Version   | Documentation
+--------- | -------------
+3.0.0.rc1 | https://github.com/serradura/u-case/blob/master/README.md
+2.6.0     | https://github.com/serradura/u-case/blob/v2.x/README.md
+1.1.0     | https://github.com/serradura/u-case/blob/v1.x/README.md
 
 ## Table of Contents <!-- omit in toc -->
 - [Required Ruby version](#required-ruby-version)
