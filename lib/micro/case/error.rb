@@ -18,21 +18,20 @@ module Micro
       end
 
       class InvalidResult < TypeError
-        BASE = "The result returned from %{use_case}#call! must be a Hash.\n\nExample:"
-        CUSTOM_TYPE = "%{result}(:%{custom_type}, result: { key: 'value' })"
-        DEFAULT_TYPE = "%{result}(result: { key: 'value' })"
-
         def initialize(is_success, type, use_case)
+          base =
+            "The result returned from #{use_case.class.name}#call! must be a Hash."
+
           result = is_success ? 'Success'.freeze : 'Failure'.freeze
 
           example =
             if type === :ok || type === :error || type === :exception
-              DEFAULT_TYPE % { result: result }
+              "#{result}(result: { key: 'value' })"
             else
-              CUSTOM_TYPE % { result: result, custom_type: type }
+              "#{result}(:#{type}, result: { key: 'value' })"
             end
 
-          super("#{BASE % { use_case: use_case.class.name }}\n  #{example}")
+          super("#{base}\n\nExample:\n  #{example}")
         end
       end
 
