@@ -22,7 +22,7 @@ The main project goals are:
 
 Version   | Documentation
 --------- | -------------
-3.0.0.rc1 | https://github.com/serradura/u-case/blob/master/README.md
+3.0.0.rc2 | https://github.com/serradura/u-case/blob/master/README.md
 2.6.0     | https://github.com/serradura/u-case/blob/v2.x/README.md
 1.1.0     | https://github.com/serradura/u-case/blob/v1.x/README.md
 
@@ -82,7 +82,7 @@ Version   | Documentation
 
     A simple type system (at runtime) for Ruby.
 
-    Used to validate method inputs, expose `Kind.of.Micro::Case::Result` type checker and its [`activemodel validation`](https://github.com/serradura/kind#kindvalidator-activemodelvalidations) module is auto required by [`u-case/with_activemodel_validation`](#u-casewith_activemodel_validation---how-to-validate-use-case-attributes) mode.
+    Used to validate method inputs using its [`activemodel validation`](https://github.com/serradura/kind#kindvalidator-activemodelvalidations) module is auto required by [`u-case/with_activemodel_validation`](#u-casewith_activemodel_validation---how-to-validate-use-case-attributes) mode, and expose `Kind::Of::Micro::Case`, `Kind::Of::Micro::Case::Result` type checkers.
 2. [`u-attributes`](https://github.com/serradura/u-attributes) gem.
 
     This gem allows defining read-only attributes, that is, your objects will have only getters to access their attributes data.
@@ -508,9 +508,11 @@ class Add < Micro::Case
   attributes :a, :b
 
   def call!
-    return Success result: { sum: a + b } if Kind.of.Numeric?(a, b)
-
-    Failure(:attributes_arent_numbers)
+    if Kind.of?(Numeric, a, b)
+      Success result: { sum: a + b }
+    else
+      Failure(:attributes_arent_numbers)
+    end
   end
 end
 
