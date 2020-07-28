@@ -17,18 +17,22 @@ module Micro
         def initialize; super('type must be a Symbol'.freeze); end
       end
 
-      class InvalidResultData < TypeError
-      end
+      class InvalidResult < TypeError
+        BASE = "The result returned from %{use_case}#call! must be a Hash.\n\nExample:"
+        CUSTOM_TYPE = "%{result}(:%{custom_type}, result: { key: 'value' })"
+        DEFAULT_TYPE = "%{result}(result: { key: 'value' })"
 
-      class InvalidSuccessResult < InvalidResultData
-        def initialize(object)
-          super("Success(result: #{object.inspect}) must be a Hash or Symbol")
-        end
-      end
+        def initialize(is_success, type, use_case)
+          result = is_success ? 'Success'.freeze : 'Failure'.freeze
 
-      class InvalidFailureResult < InvalidResultData
-        def initialize(object)
-          super("Failure(result: #{object.inspect}) must be a Hash, Symbol or an Exception")
+          example =
+            if type === :ok || type === :error || type === :exception
+              DEFAULT_TYPE % { result: result }
+            else
+              CUSTOM_TYPE % { result: result, custom_type: type }
+            end
+
+          super("#{BASE % { use_case: use_case.class.name }}\n  #{example}")
         end
       end
 
@@ -49,7 +53,7 @@ module Micro
       end
 
       def self.by_wrong_usage?(exception)
-        exception.is_a?(InvalidResultData) || exception.is_a?(Error::UnexpectedResult) || exception.is_a?(ArgumentError)
+        exception.is_a?(InvalidResult) || exception.is_a?(UnexpectedResult) || exception.is_a?(ArgumentError)
       end
     end
   end
