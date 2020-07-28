@@ -74,7 +74,7 @@ class Micro::Case::Result::ThenTest < Minitest::Test
     attribute :text
 
     def call!
-      if Kind.of.String?(text) && text =~ /\A\d+\z/
+      if Kind::Of::String?(text) && text =~ /\A\d+\z/
         Success result: { number: text.to_i }
       else
         Failure(:text_isnt_a_string_only_with_numbers)
