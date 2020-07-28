@@ -99,14 +99,11 @@ module Micro
         @__transitions__.clone
       end
 
-      FetchData = -> (data, is_success) do
+      FetchData = -> (data) do
         return data if data.is_a?(Hash)
         return { data => true } if data.is_a?(Symbol)
-        return { exception: data } if data.is_a?(Exception)
 
-        err = is_success ? :InvalidSuccessResult : :InvalidFailureResult
-
-        raise Micro::Case::Error.const_get(err), data
+        { exception: data } if data.is_a?(Exception)
       end
 
       def __set__(is_success, data, type, use_case)
@@ -115,7 +112,9 @@ module Micro
 
         @success, @type, @use_case = is_success, type, use_case
 
-        @data = FetchData.call(data, is_success)
+        @data = FetchData.call(data)
+
+        raise Micro::Case::Error::InvalidResult.new(is_success, type, use_case) unless @data
 
         __set_transition__ unless @@transition_tracking_disabled
 
