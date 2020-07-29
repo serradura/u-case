@@ -47,10 +47,6 @@ module Micro
         def initialize; super('Invalid invocation of the Micro::Case::Result#then method'); end
       end
 
-      class InvalidAccessToTheUseCaseObject < StandardError
-        def initialize; super('only a failure result can access its use case object'.freeze); end
-      end
-
       def self.by_wrong_usage?(exception)
         exception.is_a?(InvalidResult) || exception.is_a?(UnexpectedResult) || exception.is_a?(ArgumentError)
       end
