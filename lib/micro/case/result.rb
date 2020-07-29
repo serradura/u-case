@@ -13,7 +13,7 @@ module Micro
         @@transition_tracking_disabled = true
       end
 
-      attr_reader :type, :data
+      attr_reader :type, :data, :use_case
 
       alias_method :value, :data
 
@@ -42,14 +42,12 @@ module Micro
         !success?
       end
 
-      def use_case
-        return @use_case if failure?
-
-        raise Error::InvalidAccessToTheUseCaseObject
-      end
-
       def on_success(expected_type = nil)
-        yield(data) if success_type?(expected_type)
+        return self unless success_type?(expected_type)
+
+        hook_data = expected_type.nil? ? self : data
+
+        yield(hook_data, @use_case)
 
         self
       end

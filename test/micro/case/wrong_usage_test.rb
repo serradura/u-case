@@ -50,7 +50,7 @@ class Micro::Case::WrongUsageTest < Minitest::Test
       else
         Success result: { division: a / b }
       end
-    rescue ZeroDivisionError => exception
+    rescue ZeroDivisionError
       Failure result: 0
     end
   end

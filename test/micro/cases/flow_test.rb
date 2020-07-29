@@ -7,7 +7,9 @@ class Micro::Cases::FlowTest < Minitest::Test
 
     result1 = Jobs::Run.call(new_job)
 
-    result1.on_success(:state_updated) do |job:, changes:|
+    result1.on_success(:state_updated) do |data|
+      job, changes = data.values_at(:job, :changes)
+
       refute(job.sleeping?)
       assert(changes.changed?(:state, from: 'sleeping', to: 'running'))
     end
@@ -168,7 +170,9 @@ class Micro::Cases::FlowTest < Minitest::Test
   def test_calling_with_a_flow
     result = Jobs::Run.call(Jobs::Build)
 
-    result.on_success(:state_updated) do |job:, changes:|
+    result.on_success(:state_updated) do |data|
+      job, changes = data.values_at(:job, :changes)
+
       refute(job.sleeping?)
       assert(changes.changed?(:state, from: 'sleeping', to: 'running'))
     end
@@ -186,7 +190,9 @@ class Micro::Cases::FlowTest < Minitest::Test
 
     result = Jobs::Run.call(set_job_id)
 
-    result.on_success(:state_updated) do |job:, changes:|
+    result.on_success(:state_updated) do |data|
+      job, changes = data.values_at(:job, :changes)
+
       refute(job.sleeping?)
       assert(changes.changed?(:state, from: 'sleeping', to: 'running'))
     end
