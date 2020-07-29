@@ -219,12 +219,16 @@ class Micro::Case::ResultTest < Minitest::Test
   end
 
   def test_the_disable_transition_tracking_config
-    Micro::Case::Result.disable_transition_tracking
+    Micro::Case.config do |config|
+      config.enable_transitions = false
+    end
 
     result = success_result(value: { number: 1 }, type: :ok)
 
     assert_predicate(result.transitions, :empty?)
 
-    Micro::Case::Result.class_variable_set(:@@transition_tracking_disabled, false)
+    Micro::Case.config do |config|
+      config.enable_transitions = true
+    end
   end
 end

@@ -9,10 +9,6 @@ module Micro
 
       @@transition_tracking_disabled = false
 
-      def self.disable_transition_tracking
-        @@transition_tracking_disabled = true
-      end
-
       attr_reader :type, :data, :use_case
 
       alias_method :value, :data
