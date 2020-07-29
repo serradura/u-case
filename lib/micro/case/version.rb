@@ -2,6 +2,6 @@
 
 module Micro
   class Case
-    VERSION = '3.0.0.rc2'.freeze
+    VERSION = '3.0.0.rc3'.freeze
   end
 end
