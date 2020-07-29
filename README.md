@@ -22,7 +22,7 @@ The main project goals are:
 
 Version   | Documentation
 --------- | -------------
-3.0.0.rc2 | https://github.com/serradura/u-case/blob/master/README.md
+3.0.0.rc3 | https://github.com/serradura/u-case/blob/master/README.md
 2.6.0     | https://github.com/serradura/u-case/blob/v2.x/README.md
 1.1.0     | https://github.com/serradura/u-case/blob/v1.x/README.md
 
@@ -47,6 +47,7 @@ Version   | Documentation
     - [Is it possible a flow accumulates its input and merges each success result to use as the argument of the next use cases?](#is-it-possible-a-flow-accumulates-its-input-and-merges-each-success-result-to-use-as-the-argument-of-the-next-use-cases)
     - [How to understand what is happening during a flow execution?](#how-to-understand-what-is-happening-during-a-flow-execution)
       - [`Micro::Case::Result#transitions` schema](#microcaseresulttransitions-schema)
+      - [Is it possible disable the `Micro::Case::Result#transitions`?](#is-it-possible-disable-the-microcaseresulttransitions)
     - [Is it possible to declare a flow which includes the use case itself?](#is-it-possible-to-declare-a-flow-which-includes-the-use-case-itself)
   - [`Micro::Case::Strict` - What is a strict use case?](#microcasestrict---what-is-a-strict-use-case)
   - [`Micro::Case::Safe` - Is there some feature to auto handle exceptions inside of a use case or flow?](#microcasesafe---is-there-some-feature-to-auto-handle-exceptions-inside-of-a-use-case-or-flow)
@@ -55,6 +56,7 @@ Version   | Documentation
   - [`u-case/with_activemodel_validation` - How to validate use case attributes?](#u-casewith_activemodel_validation---how-to-validate-use-case-attributes)
     - [If I enabled the auto validation, is it possible to disable it only in specific use case classes?](#if-i-enabled-the-auto-validation-is-it-possible-to-disable-it-only-in-specific-use-case-classes)
     - [`Kind::Validator`](#kindvalidator)
+- [`Micro::Case.config`](#microcaseconfig)
 - [Benchmarks](#benchmarks)
   - [`Micro::Case` (v2.6.0)](#microcase-v260)
     - [Best overall](#best-overall)
@@ -164,12 +166,13 @@ result.value # { number: 6 }
 A `Micro::Case::Result` stores the use cases output data. These are their main methods:
 - `#success?` returns true if is a successful result.
 - `#failure?` returns true if is an unsuccessful result.
-- `#data` the result data itself.
+- `#use_case` returns the use case responsible for it. This feature is handy to handle a flow failure (this topic will be covered ahead).
 - `#type` a Symbol which gives meaning for the result, this is useful to declare different types of failures or success.
-- `#on_success` or `#on_failure` are hook methods that help you to define the application flow.
-- `#use_case` if is a failure result, the use case responsible for it will be accessible through this method. This feature is handy to handle a flow failure (this topic will be covered ahead).
-- `#then` this method will allow applying a new use case if the current result was a success. The idea of this feature is to allow the creation of dynamic flows.
+- `#data` the result data itself.
 - `#[]` and `#values_at` are shortcuts to access the `#data` values.
+- `#on_success` or `#on_failure` are hook methods that help you to define the application flow.
+- `#then` this method will allow applying a new use case if the current result was a success. The idea of this feature is to allow the creation of dynamic flows.
+- `#transitions` returns an array with all of transformations wich a result [has during a flow](#how-to-understand-what-is-happening-during-a-flow-execution).
 
 > **Note:** for backward compatibility, you could use the `#value` method as an alias of `#data` method.
 
@@ -207,7 +210,7 @@ result = Divide.call(a: 2, b: 2)
 result.type     # :ok
 result.data     # { number: 1 }
 result.success? # true
-result.use_case # raises `Micro::Case::Error::InvalidAccessToTheUseCaseObject: only a failure result can access its own use case`
+result.use_case # #<Divide:0x0000 @__attributes={"a"=>2, "b"=>2}, @a=2, @b=2, @__result=...>
 
 # Failure result (type == :error)
 
@@ -216,7 +219,7 @@ bad_result = Divide.call(a: 2, b: '2')
 bad_result.type     # :error
 bad_result.data     # { invalid_attributes: { "b"=>"2" } }
 bad_result.failure? # true
-bad_result.use_case # #<Divide:0x0000 @__attributes={"a"=>2, "b"=>"2"}, @a=2, @b="2", @__result=#<Micro::Case::Result:0x0000 @use_case=#<Divide:0x0000 ...>, @type=:error, @value={"b"=>"2"}, @success=false>
+bad_result.use_case # #<Divide:0x0000 @__attributes={"a"=>2, "b"=>"2"}, @a=2, @b="2", @__result=...>
 
 # Failure result (type == :exception)
 
@@ -834,8 +837,6 @@ And look up the `accessible_attributes` property, it shows whats attributes are 
 
 > **Note:** The [`Micro::Case::Result#then`](#how-to-use-the-microcaseresultthen-method) increments the `Micro::Case::Result#transitions`.
 
-PS: Use the `Micro::Case::Result.disable_transition_tracking` feature toggle to disable this feature (use once, because it is global) and increase the use cases' performance.
-
 ##### `Micro::Case::Result#transitions` schema
 ```ruby
 [
@@ -855,6 +856,10 @@ PS: Use the `Micro::Case::Result.disable_transition_tracking` feature toggle to 
   }
 ]
 ```
+
+##### Is it possible disable the `Micro::Case::Result#transitions`?
+
+Answer: Yes, it is! You can use the `Micro::Case.config` to do this. [Link to](#microcaseconfig) this section.
 
 #### Is it possible to declare a flow which includes the use case itself?
 
@@ -1073,18 +1078,22 @@ class Multiply < Micro::Case
     Success result: { number: a * b }
   end
 end
+```
 
-#
-# But if do you want an automatic way to fail
-# your use cases on validation errors, you can use:
+But if do you want an automatic way to fail your use cases on validation errors, you can:
 
-# In some file. e.g: A Rails initializer
-require 'u-case/with_activemodel_validation' # or require 'micro/case/with_validation'
+1. **require 'u-case/with_activemodel_validation'** mode
 
-# In the Gemfile
-gem 'u-case', require: 'u-case/with_activemodel_validation'
+  ```ruby
+  gem 'u-case', require: 'u-case/with_activemodel_validation'
+  ```
 
-# Using this approach, you can rewrite the previous example with less code. e.g:
+2. Use the `Micro::Case.config` to enable it. [Link to](#microcaseconfig) this section.
+
+Using this approach, you can rewrite the previous example with less code. e.g:
+
+```ruby
+require 'u-case/with_activemodel_validation'
 
 class Multiply < Micro::Case
   attributes :a, :b
@@ -1151,6 +1160,23 @@ class Todo::List::AddItem < Micro::Case
   rescue ActionController::ParameterMissing => e
     Failure :parameter_missing, result: { message: e.message }
   end
+end
+```
+
+## `Micro::Case.config`
+
+The idea of this feature is to allow the configuration of some `u-case` features/modules.
+I recommend you use it only once in your codebase. e.g. In a Rails initializer.
+
+You can see below, which are all of the available configurations with their default values:
+
+```ruby
+Micro::Case.config do |config|
+  # Use ActiveModel to auto-validate your use cases' attributes.
+  config.enable_activemodel_validations = false
+
+  # Use to enable/disable the `Micro::Case::Results#transitions` tracking.
+  config.enable_transitions = true
 end
 ```
 
