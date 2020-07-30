@@ -12,10 +12,15 @@ module Micro
     require 'micro/case/error'
     require 'micro/case/safe'
     require 'micro/case/strict'
+    require 'micro/case/config'
 
     require 'micro/cases'
 
     include Micro::Attributes.without(:strict_initialize)
+
+    def self.config
+      yield(Config.instance)
+    end
 
     def self.call(options = {})
       new(options).call

@@ -18,24 +18,26 @@ class Micro::Case::ResultTest < Minitest::Test
   end
 
   def test_success_result
-    result = success_result(value: { a: 1, b: 2 }, type: :ok)
+    use_case = Micro::Case.new({})
+
+    result = success_result(value: { a: 1, b: 2 }, type: :ok, use_case: use_case)
 
     assert_predicate(result, :success?)
     assert_equal(1, result.value[:a])
 
-    assert_raises_with_message(
-      Micro::Case::Error::InvalidAccessToTheUseCaseObject,
-      'only a failure result can access its use case object'
-    ) { result.use_case }
+    assert_same(use_case, result.use_case)
 
     # ---
 
-    assert_equal(
+    assert_same(
       result,
       result
-        .on_failure { raise }
         .on_success { assert(true) }
-        .on_success { |(value, _type)| assert_equal(1, value[:a]) }
+        .on_success { |data| assert_equal(1, data.value[:a]) }
+        .on_success { |data, _ucase| assert_equal(1, data[:a]) }
+        .on_success { |_data, ucase| assert_same(ucase, use_case) }
+        .on_success { |(data, _type)| assert_equal(1, data[:a]) }
+        .on_failure { raise }
     )
 
     # ---
@@ -73,12 +75,14 @@ class Micro::Case::ResultTest < Minitest::Test
 
     # ---
 
-    assert_equal(
+    assert_same(
       result,
       result
         .on_failure { assert(true) }
         .on_failure { |data| assert_equal(0, data.value[:a]) }
+        .on_failure { |data, _ucase| assert_equal(0, data[:a]) }
         .on_failure { |_data, ucase| assert_same(ucase, use_case) }
+        .on_failure { |(data, _type)| assert_equal(0, data[:a]) }
         .on_success { raise }
     )
 
@@ -215,12 +219,16 @@ class Micro::Case::ResultTest < Minitest::Test
   end
 
   def test_the_disable_transition_tracking_config
-    Micro::Case::Result.disable_transition_tracking
+    Micro::Case.config do |config|
+      config.enable_transitions = false
+    end
 
     result = success_result(value: { number: 1 }, type: :ok)
 
     assert_predicate(result.transitions, :empty?)
 
-    Micro::Case::Result.class_variable_set(:@@transition_tracking_disabled, false)
+    Micro::Case.config do |config|
+      config.enable_transitions = true
+    end
   end
 end
