@@ -15,8 +15,13 @@ end
 
 $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 
-require 'u-case/with_activemodel_validation' if ENV.fetch('ACTIVEMODEL_VERSION', '6.1.0') < '6.1.0'
-require 'micro/case'
+require 'u-case'
+
+if ENV.fetch('ACTIVEMODEL_VERSION', '6.1.0') < '6.1.0'
+  Micro::Case.config do |config|
+    config.enable_activemodel_validation = true
+  end
+end
 
 require 'minitest/pride'
 require 'minitest/autorun'
