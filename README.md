@@ -1163,6 +1163,8 @@ class Todo::List::AddItem < Micro::Case
 end
 ```
 
+[⬆️ Back to Top](#table-of-contents-)
+
 ## `Micro::Case.config`
 
 The idea of this feature is to allow the configuration of some `u-case` features/modules.
@@ -1179,6 +1181,8 @@ Micro::Case.config do |config|
   config.enable_transitions = true
 end
 ```
+
+[⬆️ Back to Top](#table-of-contents-)
 
 ## Benchmarks
 
