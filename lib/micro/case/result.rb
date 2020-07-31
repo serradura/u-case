@@ -11,7 +11,7 @@ module Micro
 
       attr_reader :type, :data, :use_case
 
-      alias_method :value, :data
+      alias value data
 
       def initialize
         @__transitions__ = []
