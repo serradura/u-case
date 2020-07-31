@@ -39,7 +39,7 @@ module Micro
       end
 
       def on_success(expected_type = nil)
-        return self unless success_type?(expected_type)
+        return self unless __success_type?(expected_type)
 
         hook_data = expected_type.nil? ? self : data
 
@@ -49,7 +49,7 @@ module Micro
       end
 
       def on_failure(expected_type = nil)
-        return self unless failure_type?(expected_type)
+        return self unless __failure_type?(expected_type)
 
         hook_data = expected_type.nil? ? self : data
 
@@ -59,7 +59,7 @@ module Micro
       end
 
       def on_exception(expected_exception = nil)
-        return self unless failure_type?(:exception)
+        return self unless __failure_type?(:exception)
 
         if !expected_exception || (Kind.is(Exception, expected_exception) && data.fetch(:exception).is_a?(expected_exception))
           yield(data, @use_case)
@@ -79,7 +79,7 @@ module Micro
         else
           return yield_self if !arg && can_yield_self
 
-          raise Error::InvalidInvocationOfTheThenMethod if !is_a_use_case?(arg)
+          raise Error::InvalidInvocationOfTheThenMethod if !__is_a_use_case?(arg)
 
           return self if failure?
 
@@ -102,7 +102,7 @@ module Micro
 
       def __set__(is_success, data, type, use_case)
         raise Error::InvalidResultType unless type.is_a?(Symbol)
-        raise Error::InvalidUseCase if !is_a_use_case?(use_case)
+        raise Error::InvalidUseCase if !__is_a_use_case?(use_case)
 
         @success, @type, @use_case = is_success, type, use_case
 
@@ -123,15 +123,15 @@ module Micro
 
       private
 
-        def success_type?(expected_type)
+        def __success_type?(expected_type)
           success? && (expected_type.nil? || expected_type == type)
         end
 
-        def failure_type?(expected_type)
+        def __failure_type?(expected_type)
           failure? && (expected_type.nil? || expected_type == type)
         end
 
-        def is_a_use_case?(arg)
+        def __is_a_use_case?(arg)
           (arg.is_a?(Class) && arg < ::Micro::Case) || arg.is_a?(::Micro::Case)
         end
 

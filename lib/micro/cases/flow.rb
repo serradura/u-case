@@ -32,11 +32,11 @@ module Micro
       def call(arg = {})
         memo = arg.is_a?(Hash) ? arg.dup : {}
 
-        first_result = first_use_case_result(arg)
+        first_result = __first_use_case_result(arg)
 
         return first_result if @next_use_cases.empty?
 
-        next_use_cases_result(first_result, memo)
+        __next_use_cases_result(first_result, memo)
       end
 
       def to_proc
@@ -45,42 +45,42 @@ module Micro
 
       private
 
-        def is_a_result?(arg)
+        def __is_a_result?(arg)
           arg.is_a?(Case::Result)
         end
 
-        def arg_to_call?(arg)
+        def __arg_to_call?(arg)
           return true if arg.is_a?(::Micro::Case) || arg.is_a?(Flow)
           return true if arg.is_a?(Class) && arg < ::Micro::Case
           return false
         end
 
-        def call_arg(arg)
+        def __call_arg(arg)
           output = arg.call
 
-          is_a_result?(output) ? output.value : output
+          __is_a_result?(output) ? output.value : output
         end
 
-        def first_use_case_input(arg)
-          return call_arg(arg) if arg_to_call?(arg)
-          return arg.value if is_a_result?(arg)
+        def __first_use_case_input(arg)
+          return __call_arg(arg) if __arg_to_call?(arg)
+          return arg.value if __is_a_result?(arg)
 
           arg
         end
 
-        def first_use_case_result(arg)
-          input = first_use_case_input(arg)
+        def __first_use_case_result(arg)
+          input = __first_use_case_input(arg)
 
           result = Case::Result.new
 
           @first_use_case.__call_and_set_transition__(result, input)
         end
 
-        def next_use_case_result(use_case, result, input)
+        def __next_use_case_result(use_case, result, input)
           use_case.__new__(result, input).call
         end
 
-        def next_use_cases_result(first_result, memo)
+        def __next_use_cases_result(first_result, memo)
           @next_use_cases.reduce(first_result) do |result, use_case|
             break result if result.failure?
 
@@ -88,7 +88,7 @@ module Micro
 
             result.__set_transitions_accessible_attributes__(memo)
 
-            next_use_case_result(use_case, result, memo)
+            __next_use_case_result(use_case, result, memo)
           end
         end
     end
