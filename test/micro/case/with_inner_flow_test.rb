@@ -38,17 +38,6 @@ class Micro::Case::WithInnerFlowTest < Minitest::Test
       [ConvertTextToNumber, Double::Flow_Step, ConvertNumberToText],
       Double.use_cases
     )
-
-    # ---
-
-    instance = Double.new(text: '5')
-
-    assert_success_result(instance.call, value: { text: '10' })
-
-    assert_equal(
-      [ConvertTextToNumber, Double::Flow_Step, ConvertNumberToText],
-      instance.use_cases
-    )
   end
 
   begin

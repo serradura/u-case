@@ -13,18 +13,6 @@ class Micro::Case::SafeTest < Minitest::Test
     end
   end
 
-  def test_instance_call_method
-    result = Divide.new(a: 2, b: 2).call
-
-    assert_success_result(result, value: { number: 1 })
-
-    # ---
-
-    result = Divide.new(a: 2.0, b: 2).call
-
-    assert_failure_result(result, type: :not_an_integer, value: { not_an_integer: true })
-  end
-
   def test_class_call_method
     result = Divide.call(a: 4, b: 2)
 
@@ -42,10 +30,8 @@ class Micro::Case::SafeTest < Minitest::Test
 
   def test_template_method
     assert_raises(NotImplementedError) { Micro::Case::Safe.call }
-    assert_raises(NotImplementedError) { Micro::Case::Safe.new({}).call }
 
     assert_raises(NotImplementedError) { Foo.call }
-    assert_raises(NotImplementedError) { Foo.new({}).call }
   end
 
   class LoremIpsum < Micro::Case::Safe
@@ -61,20 +47,12 @@ class Micro::Case::SafeTest < Minitest::Test
       Micro::Case::Error::UnexpectedResult,
       /LoremIpsum#call! must return an instance of Micro::Case::Result/
     ) { LoremIpsum.call(text: 'lorem ipsum') }
-
-    assert_raises_with_message(
-      Micro::Case::Error::UnexpectedResult,
-      /LoremIpsum#call! must return an instance of Micro::Case::Result/
-    ) { LoremIpsum.new(text: 'ipsum indolor').call }
   end
 
   def test_that_exceptions_generate_a_failure
-    [
-      Divide.new(a: 2, b: 0).call,
-      Divide.call(a: 2, b: 0)
-    ].each do |result|
-      assert_exception_result(result, value: { exception: ZeroDivisionError })
-    end
+    result = Divide.call(a: 2, b: 0)
+
+    assert_exception_result(result, value: { exception: ZeroDivisionError })
   end
 
   class Divide2ByArgV1 < Micro::Case::Safe

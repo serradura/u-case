@@ -68,24 +68,24 @@ module Micro
         self
       end
 
-      def then(arg = nil, attributes = nil, &block)
+      def then(use_case = nil, attributes = nil, &block)
         can_yield_self = respond_to?(:yield_self)
 
         if block
-          raise Error::InvalidInvocationOfTheThenMethod if arg
+          raise Error::InvalidInvocationOfTheThenMethod if use_case
           raise NotImplementedError if !can_yield_self
 
           yield_self(&block)
         else
-          return yield_self if !arg && can_yield_self
+          return yield_self if !use_case && can_yield_self
 
-          raise Error::InvalidInvocationOfTheThenMethod if !__is_a_use_case?(arg)
+          raise Error::InvalidInvocationOfTheThenMethod if !__is_a_use_case?(use_case)
 
           return self if failure?
 
           input = attributes.is_a?(Hash) ? self.data.merge(attributes) : self.data
 
-          arg.__call_and_set_transition__(self, input)
+          use_case.__call_and_set_transition__(self, input)
         end
       end
 
@@ -110,7 +110,7 @@ module Micro
 
         raise Micro::Case::Error::InvalidResult.new(is_success, type, use_case) unless @data
 
-        __set_transition__ unless @@transition_tracking_disabled
+        __set_transition unless @@transition_tracking_disabled
 
         self
       end
@@ -118,7 +118,9 @@ module Micro
       def __set_transitions_accessible_attributes__(attributes_data)
         return attributes_data if @@transition_tracking_disabled
 
-        __set_transitions_accessible_attributes__!(attributes_data)
+        attributes = Utils.symbolize_hash_keys(attributes_data)
+
+        __update_transitions_accessible_attributes(attributes)
       end
 
       private
@@ -135,22 +137,16 @@ module Micro
           (arg.is_a?(Class) && arg < ::Micro::Case) || arg.is_a?(::Micro::Case)
         end
 
-        def __set_transitions_accessible_attributes__!(attributes_data)
-          attributes = Utils.symbolize_hash_keys(attributes_data)
-
-          __update_transitions_accessible_attributes__(attributes)
-        end
-
-        def __update_transitions_accessible_attributes__(attributes)
+        def __update_transitions_accessible_attributes(attributes)
           @__transitions_accessible_attributes__.merge!(attributes)
           @__transitions_accessible_attributes__
         end
 
-        def __set_transition__
+        def __set_transition
           use_case_class = @use_case.class
           use_case_attributes = Utils.symbolize_hash_keys(@use_case.attributes)
 
-          __update_transitions_accessible_attributes__(use_case_attributes)
+          __update_transitions_accessible_attributes(use_case_attributes)
 
           result = @success ? :success : :failure
 

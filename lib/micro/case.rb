@@ -23,7 +23,11 @@ module Micro
     end
 
     def self.call(options = {})
-      new(options).call
+      new(options).__call__
+    end
+
+    class << self
+      alias __call__ call
     end
 
     def self.to_proc
@@ -60,7 +64,7 @@ module Micro
       input =
         arg.is_a?(Hash) ? result.__set_transitions_accessible_attributes__(arg) : arg
 
-      __new__(result, input).call
+      __new__(result, input).__call__
     end
 
     def self.__flow_builder
@@ -112,8 +116,8 @@ module Micro
       raise NotImplementedError
     end
 
-    def call
-      __call
+    def __call__
+      __call!
     end
 
     def __set_result__(result)
@@ -125,6 +129,10 @@ module Micro
 
     private
 
+      # This method was reserved for a new feature
+      def call
+      end
+
       def __setup_use_case(input)
         self.class.__flow_set!
 
@@ -133,7 +141,7 @@ module Micro
         self.attributes = input
       end
 
-      def __call
+      def __call!
         return __call_use_case_flow if __call_use_case_flow?
 
         __call_use_case
@@ -177,12 +185,12 @@ module Micro
         __get_result(false, value, type)
       end
 
-      def __result__
+      def __result
         @__result ||= Result.new
       end
 
       def __get_result(is_success, value, type)
-        __result__.__set__(is_success, value, type, self)
+        __result.__set__(is_success, value, type, self)
       end
 
       private_constant :MapFailureType

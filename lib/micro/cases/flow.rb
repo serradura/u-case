@@ -39,6 +39,8 @@ module Micro
         __next_use_cases_result(first_result, memo)
       end
 
+      alias __call__ call
+
       def to_proc
         Proc.new { |arg| call(arg) }
       end
@@ -56,7 +58,7 @@ module Micro
         end
 
         def __call_arg(arg)
-          output = arg.call
+          output = arg.__call__
 
           __is_a_result?(output) ? output.value : output
         end
@@ -77,7 +79,7 @@ module Micro
         end
 
         def __next_use_case_result(use_case, result, input)
-          use_case.__new__(result, input).call
+          use_case.__new__(result, input).__call__
         end
 
         def __next_use_cases_result(first_result, memo)
