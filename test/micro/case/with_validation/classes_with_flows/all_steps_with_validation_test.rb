@@ -62,17 +62,6 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
           assert_failure_result(result, type: :validation_error)
 
           assert_equal(['must be a kind of: Integer'], result.value[:errors][:number])
-
-          # ---
-
-          instance = Double.new(text: '5')
-
-          assert_success_result(instance.call, value: { text: '10' })
-
-          assert_equal(
-            [ConvertTextToNumber, Double::Flow_Step, ConvertNumberToText],
-            instance.use_cases
-          )
         end
       end
     end

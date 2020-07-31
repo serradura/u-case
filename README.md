@@ -145,14 +145,6 @@ bad_result = Multiply.call(a: 2, b: '2')
 bad_result.failure? # true
 bad_result.data     # { message: "`a` and `b` attributes must be numeric" }
 
-#-----------------------------#
-# Calling a use case instance #
-#-----------------------------#
-
-result = Multiply.new(a: 2, b: 3).call
-
-result.value # { number: 6 }
-
 # Note:
 # ----
 # The result of a Micro::Case.call
