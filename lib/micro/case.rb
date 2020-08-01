@@ -195,4 +195,14 @@ module Micro
 
       private_constant :MapFailureType
   end
+
+  def self.case?(arg)
+    (arg.is_a?(Class) && arg < Case) || arg.is_a?(Case)
+  end
+
+  def self.case_or_flow?(arg)
+    return true if arg.is_a?(Class) && arg < Case
+    return true if arg.is_a?(Case) || arg.is_a?(Cases::Flow)
+    false
+  end
 end
