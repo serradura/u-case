@@ -79,7 +79,8 @@ module Micro
         else
           return yield_self if !use_case && can_yield_self
 
-          raise Error::InvalidInvocationOfTheThenMethod if !__is_a_use_case?(use_case)
+          # TODO: Test the then method with a Micro::Cases.{flow,safe_flow}() instance.
+          raise Error::InvalidInvocationOfTheThenMethod unless ::Micro.case_or_flow?(use_case)
 
           return self if failure?
 
@@ -102,7 +103,7 @@ module Micro
 
       def __set__(is_success, data, type, use_case)
         raise Error::InvalidResultType unless type.is_a?(Symbol)
-        raise Error::InvalidUseCase if !__is_a_use_case?(use_case)
+        raise Error::InvalidUseCase unless ::Micro.case?(use_case)
 
         @success, @type, @use_case = is_success, type, use_case
 
@@ -131,10 +132,6 @@ module Micro
 
         def __failure_type?(expected_type)
           failure? && (expected_type.nil? || expected_type == type)
-        end
-
-        def __is_a_use_case?(arg)
-          (arg.is_a?(Class) && arg < ::Micro::Case) || arg.is_a?(::Micro::Case)
         end
 
         def __update_transitions_accessible_attributes(attributes)
