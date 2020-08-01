@@ -51,12 +51,6 @@ module Micro
           arg.is_a?(Case::Result)
         end
 
-        def __arg_to_call?(arg)
-          return true if arg.is_a?(::Micro::Case) || arg.is_a?(Flow)
-          return true if arg.is_a?(Class) && arg < ::Micro::Case
-          return false
-        end
-
         def __call_arg(arg)
           output = arg.__call__
 
@@ -64,7 +58,7 @@ module Micro
         end
 
         def __first_use_case_input(arg)
-          return __call_arg(arg) if __arg_to_call?(arg)
+          return __call_arg(arg) if ::Micro.case_or_flow?(arg)
           return arg.value if __is_a_result?(arg)
 
           arg
