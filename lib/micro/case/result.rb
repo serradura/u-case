@@ -79,6 +79,8 @@ module Micro
         else
           return yield_self if !use_case && can_yield_self
 
+          return failure? ? self : __call_proc(use_case) if use_case.is_a?(Proc)
+
           # TODO: Test the then method with a Micro::Cases.{flow,safe_flow}() instance.
           raise Error::InvalidInvocationOfTheThenMethod unless ::Micro.case_or_flow?(use_case)
 
@@ -88,6 +90,16 @@ module Micro
 
           use_case.__call_and_set_transition__(self, input)
         end
+      end
+
+      def |(arg)
+        return self if failure?
+
+        return __call_proc(arg) if arg.is_a?(Proc)
+
+        raise Error::InvalidInvocationOfTheThenMethod unless ::Micro.case_or_flow?(arg)
+
+        failure? ? self : arg.__call_and_set_transition__(self, data)
       end
 
       def transitions
@@ -125,6 +137,10 @@ module Micro
       end
 
       private
+
+        def __call_proc(arg)
+          arg.arity.zero? ? arg.call : arg.call(data.clone)
+        end
 
         def __success_type?(expected_type)
           success? && (expected_type.nil? || expected_type == type)
