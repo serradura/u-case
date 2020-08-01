@@ -37,6 +37,8 @@ pry_version =
 group :development, :test do
   gem 'awesome_print', '~> 1.8'
 
+  gem 'byebug', '~> 10.0', '>= 10.0.2' if RUBY_VERSION =~ /\A2.2/
+
   gem 'pry', "~> #{pry_version}"
   gem 'pry-byebug', "~> #{pry_byebug_version}"
 end
