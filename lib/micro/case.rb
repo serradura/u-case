@@ -18,24 +18,28 @@ module Micro
 
     include Micro::Attributes.without(:strict_initialize)
 
-    def self.config
-      yield(Config.instance)
-    end
-
     def self.call(options = {})
-      new(options).call
+      new(options).__call__
     end
 
     def self.to_proc
       Proc.new { |arg| call(arg) }
     end
 
-    def self.call!
-      self
-    end
-
     def self.flow(*args)
       @__flow_use_cases = args
+    end
+
+    class << self
+      alias __call__ call
+
+      def config
+        yield(Config.instance)
+      end
+
+      def call!
+        self
+      end
     end
 
     def self.inherited(subclass)
@@ -60,32 +64,32 @@ module Micro
       input =
         arg.is_a?(Hash) ? result.__set_transitions_accessible_attributes__(arg) : arg
 
-      __new__(result, input).call
+      __new__(result, input).__call__
     end
 
-    def self.__flow_builder
+    def self.__flow_builder__
       Cases::Flow
     end
 
-    def self.__flow_get
+    def self.__flow_get__
       return @__flow if defined?(@__flow)
     end
 
     private_class_method def self.__flow_set(args)
-      return if __flow_get
+      return if __flow_get__
 
-      def self.use_cases; __flow_get.use_cases; end
+      def self.use_cases; __flow_get__.use_cases; end
 
       self.class_eval('def use_cases; self.class.use_cases; end')
 
-      @__flow = __flow_builder.build(args)
+      @__flow = __flow_builder__.build(args)
     end
 
     FLOW_STEP = 'Flow_Step'.freeze
 
     private_constant :FLOW_STEP
 
-    def self.__call!
+    def self.__call__!
       return const_get(FLOW_STEP) if const_defined?(FLOW_STEP, false)
 
       class_eval("class #{FLOW_STEP} < #{self.name}; private def __call; __call_use_case; end; end")
@@ -97,11 +101,11 @@ module Micro
 
     private_class_method def self.__flow_use_cases_get
       Array(__flow_use_cases)
-        .map { |use_case| use_case == self ? self.__call! : use_case }
+        .map { |use_case| use_case == self ? self.__call__! : use_case }
     end
 
-    def self.__flow_set!
-      __flow_set(__flow_use_cases_get) if !__flow_get && __flow_use_cases
+    def self.__flow_set__!
+      __flow_set(__flow_use_cases_get) if !__flow_get__ && __flow_use_cases
     end
 
     def initialize(input)
@@ -112,8 +116,8 @@ module Micro
       raise NotImplementedError
     end
 
-    def call
-      __call
+    def __call__
+      __call!
     end
 
     def __set_result__(result)
@@ -125,15 +129,19 @@ module Micro
 
     private
 
+      # This method was reserved for a new feature
+      def call
+      end
+
       def __setup_use_case(input)
-        self.class.__flow_set!
+        self.class.__flow_set__!
 
         @__input = input
 
         self.attributes = input
       end
 
-      def __call
+      def __call!
         return __call_use_case_flow if __call_use_case_flow?
 
         __call_use_case
@@ -144,15 +152,15 @@ module Micro
 
         return result if result.is_a?(Result)
 
-        raise Error::UnexpectedResult.new(self.class)
+        raise Error::UnexpectedResult.new("#{self.class.name}#call!")
       end
 
       def __call_use_case_flow?
-        self.class.__flow_get
+        self.class.__flow_get__
       end
 
       def __call_use_case_flow
-        self.class.__flow_get.call(@__input)
+        self.class.__flow_get__.call(@__input)
       end
 
       def Success(type = :ok, result: nil)
@@ -177,14 +185,22 @@ module Micro
         __get_result(false, value, type)
       end
 
-      def __result__
+      def __result
         @__result ||= Result.new
       end
 
       def __get_result(is_success, value, type)
-        __result__.__set__(is_success, value, type, self)
+        __result.__set__(is_success, value, type, self)
       end
 
       private_constant :MapFailureType
+  end
+
+  def self.case?(arg)
+    (arg.is_a?(Class) && arg < Case) || arg.is_a?(Case)
+  end
+
+  def self.case_or_flow?(arg)
+    case?(arg) || arg.is_a?(Cases::Flow)
   end
 end

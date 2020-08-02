@@ -37,7 +37,8 @@ Version   | Documentation
     - [How to define custom result types?](#how-to-define-custom-result-types)
     - [Is it possible to define a custom result type without a block?](#is-it-possible-to-define-a-custom-result-type-without-a-block)
     - [How to use the result hooks?](#how-to-use-the-result-hooks)
-    - [Why the failure hook (without a type) exposes result itself?](#why-the-failure-hook-without-a-type-exposes-result-itself)
+    - [Why the hook usage without a type exposes the result itself?](#why-the-hook-usage-without-a-type-exposes-the-result-itself)
+      - [Using decomposition to access the result data and type](#using-decomposition-to-access-the-result-data-and-type)
     - [What happens if a result hook was declared multiple times?](#what-happens-if-a-result-hook-was-declared-multiple-times)
     - [How to use the `Micro::Case::Result#then` method?](#how-to-use-the-microcaseresultthen-method)
       - [What does happens when a `Micro::Case::Result#then` receives a block?](#what-does-happens-when-a-microcaseresultthen-receives-a-block)
@@ -144,14 +145,6 @@ bad_result = Multiply.call(a: 2, b: '2')
 
 bad_result.failure? # true
 bad_result.data     # { message: "`a` and `b` attributes must be numeric" }
-
-#-----------------------------#
-# Calling a use case instance #
-#-----------------------------#
-
-result = Multiply.new(a: 2, b: 3).call
-
-result.value # { number: 6 }
 
 # Note:
 # ----
@@ -360,7 +353,7 @@ Double
 # The use case responsible for the failure will be accessible as the second hook argument
 ```
 
-#### Why the failure hook (without a type) exposes result itself?
+#### Why the hook usage without a type exposes the result itself?
 
 Answer: To allow you to define how to handle the program flow using some
 conditional statement (like an `if`, `case/when`).
@@ -377,12 +370,8 @@ class Double < Micro::Case
   end
 end
 
-#=================================#
-# Using the result type and value #
-#=================================#
-
 Double
-  .call(-1)
+  .call(number: -1)
   .on_failure do |result, use_case|
     case result.type
     when :invalid then raise TypeError, "number must be a numeric value"
@@ -394,19 +383,20 @@ Double
 # The output will be the exception:
 #
 # ArgumentError (number `-1` must be greater than 0)
+```
 
-#=========================================================#
-# Using decomposition to access the result data and type #
-#=========================================================#
+> **Note:** The same that was did in the previous examples could be done with `#on_success` hook!
 
-# The syntax to decompose an Array can be used in methods, blocks and assigments.
-# If you doesn't know it, check out the Ruby doc:
-# https://ruby-doc.org/core-2.2.0/doc/syntax/assignment_rdoc.html#label-Array+Decomposition
-#
-# The object exposed in the hook failure is a Micro::Case::Result, and it can be decomposed using this syntax. e.g:
+##### Using decomposition to access the result data and type
+
+The syntax to decompose an Array can be used in methods, blocks and assigments.
+If you doesn't know it, check out the [Ruby doc](https://ruby-doc.org/core-2.2.0/doc/syntax/assignment_rdoc.html#label-Array+Decomposition).
+
+```ruby
+# The object exposed in the hook is a Micro::Case::Result, and it can be decomposed using this syntax. e.g:
 
 Double
-  .call(-2)
+  .call(number: -2)
   .on_failure do |(data, type), use_case|
     case type
     when :invalid then raise TypeError, 'number must be a numeric value'
@@ -419,6 +409,8 @@ Double
 #
 # ArgumentError (the number `-2` must be greater than 0)
 ```
+
+> **Note:** The same that was did in the previous examples could be done with `#on_success` hook!
 
 [⬆️ Back to Top](#table-of-contents-)
 
@@ -445,10 +437,11 @@ result[:number] * 4 # 24
 
 accum = 0
 
-result.on_success { |result| accum += result[:number] }
-      .on_success { |result| accum += result[:number] }
-      .on_success(:computed) { |result| accum += result[:number] }
-      .on_success(:computed) { |result| accum += result[:number] }
+result
+  .on_success { |result| accum += result[:number] }
+  .on_success { |result| accum += result[:number] }
+  .on_success(:computed) { |result| accum += result[:number] }
+  .on_success(:computed) { |result| accum += result[:number] }
 
 accum # 24
 
@@ -621,9 +614,9 @@ class DoubleAllNumbers < Micro::Case
        Steps::Double
 end
 
-DoubleAllNumbers
-  .call(numbers: %w[1 1 b 2 3 4])
-  .on_failure { |message| p message } # "numbers must contain only numeric types"
+DoubleAllNumbers.
+  call(numbers: %w[1 1 b 2 3 4]).
+  on_failure { |result| puts result[:message] } # "numbers must contain only numeric types"
 
 # Note:
 # ----
@@ -705,11 +698,11 @@ DoubleAllNumbersAndSquareAndAdd2 =
 
 SquareAllNumbersAndDouble
   .call(numbers: %w[1 1 2 2 3 4])
-  .on_success { |value| p value[:numbers] } # [6, 6, 12, 12, 22, 36]
+  .on_success { |result| p result[:numbers] } # [6, 6, 12, 12, 22, 36]
 
 DoubleAllNumbersAndSquareAndAdd2
   .call(numbers: %w[1 1 2 2 3 4])
-  .on_success { |value| p value[:numbers] } # [6, 6, 18, 18, 38, 66]
+  .on_success { |result| p result[:numbers] } # [6, 6, 18, 18, 38, 66]
 ```
 
 Note: You can blend any of the [available syntaxes/approaches](#how-to-create-a-flow-which-has-reusable-steps-to-define-a-complex-use-case) to create use case flows - [examples](https://github.com/serradura/u-case/blob/714c6b658fc6aa02617e6833ddee09eddc760f2a/test/micro/cases/flow/blend_test.rb#L5-L35).
@@ -956,8 +949,8 @@ result.type == :exception                   # true
 result.data                                 # { exception: #<ZeroDivisionError...> }
 result[:exception].is_a?(ZeroDivisionError) # true
 
-result.on_failure(:exception) do |exception|
-  AppLogger.error(exception.message) # E, [2019-08-21T00:05:44.195506 #9532] ERROR -- : divided by 0
+result.on_failure(:exception) do |result|
+  AppLogger.error(result[:exception].message) # E, [2019-08-21T00:05:44.195506 #9532] ERROR -- : divided by 0
 end
 
 # Note:
@@ -965,8 +958,8 @@ end
 # If you need to handle a specific error,
 # I recommend the usage of a case statement. e,g:
 
-result.on_failure(:exception) do |exception, use_case|
-  case exception
+result.on_failure(:exception) do |data, use_case|
+  case exception = data[:exception]
   when ZeroDivisionError then AppLogger.error(exception.message)
   else AppLogger.debug("#{use_case.class.name} was the use case responsible for the exception")
   end
