@@ -7,14 +7,17 @@ gemfile do
 
   gem 'interactor', '~> 3.1', '>= 3.1.1'
 
-  gem 'u-case', '~> 2.6.0'
+  gem 'u-case', '~> 3.0.0.rc4'
 end
 
 require 'benchmark/ips'
 
 require_relative 'add2_to_all_numbers'
 
-Micro::Case::Result.disable_transition_tracking
+Micro::Case.config do |config|
+  # Use to enable/disable the `Micro::Case::Results#transitions` tracking.
+  config.enable_transitions = false
+end
 
 NUMBERS = {numbers: %w[1 1 2 2 3 4]}
 
@@ -28,50 +31,42 @@ Benchmark.ips do |x|
     Add2ToAllNumbers::WithInteractor::Organizer.call(NUMBERS)
   end
 
-  x.report('Micro::Case::Flow') do
+  x.report('Micro::Cases.flow([])') do
     Add2ToAllNumbers::WithMicroCase::Flow.call(NUMBERS)
   end
 
-  x.report('Micro::Case::Safe::Flow') do
+  x.report('Micro::Cases::safe_flow([])') do
     Add2ToAllNumbers::WithMicroCase::SafeFlow.call(NUMBERS)
+  end
+
+  x.report('Micro::Case flow using `then` method') do
+    Add2ToAllNumbers::WithMicroCase::FlowUsingThen.call(NUMBERS)
+  end
+
+  x.report('Micro::Case flow using private methods') do
+    Add2ToAllNumbers::WithMicroCase::FlowUsingPrivateMethods.call(NUMBERS)
   end
 
   x.compare!
 end
 
-# ++++++++++++++++++++++++++++++++++++++++++++++++++++
-# With Micro::Case::Result.disable_transition_tracking
-# ++++++++++++++++++++++++++++++++++++++++++++++++++++
-
 # Warming up --------------------------------------
-# Interactor::Organizer    4.765k i/100ms
-#     Micro::Case::Flow    5.372k i/100ms
-# Micro::Case::Safe::Flow  5.855k i/100ms
+# Interactor::Organizer                   5.219k i/100ms
+# Micro::Cases.flow([])                   6.451k i/100ms
+# Micro::Cases::safe_flow([])             6.421k i/100ms
+# Micro::Case flow using `then` method    7.139k i/100ms
+# Micro::Case flow using private methods 10.355k i/100ms
+
 # Calculating -------------------------------------
-# Interactor::Organizer    48.598k (± 5.2%) i/s -    243.015k in   5.014307s
-#     Micro::Case::Flow    61.606k (± 4.4%) i/s -    311.576k in   5.068602s
-# Micro::Case::Safe::Flow  60.688k (± 4.8%) i/s -    304.460k in   5.028877s
+# Interactor::Organizer                    52.959k (± 1.7%) i/s -    266.169k in   5.027332s
+# Micro::Cases.flow([])                    63.947k (± 1.7%) i/s -    322.550k in   5.045597s
+# Micro::Cases::safe_flow([])              63.047k (± 3.1%) i/s -    321.050k in   5.097228s
+# Micro::Case flow using `then` method     69.644k (± 4.0%) i/s -    349.811k in   5.031120s
+# Micro::Case flow using private methods  103.297k (± 1.4%) i/s -    517.750k in   5.013254s
 
 # Comparison:
-#     Micro::Case::Flow:    61606.3 i/s
-# Micro::Case::Safe::Flow:  60688.3 i/s - same-ish: difference falls within error
-# Interactor::Organizer:    48598.2 i/s - 1.27x  slower
-
-
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++
-# Without Micro::Case::Result.disable_transition_tracking
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-# Warming up --------------------------------------
-# Interactor::Organizer    4.889k i/100ms
-#     Micro::Case::Flow    4.472k i/100ms
-# Micro::Case::Safe::Flow  4.488k i/100ms
-# Calculating -------------------------------------
-# Interactor::Organizer    50.705k (± 3.8%) i/s -    254.228k in   5.021142s
-#     Micro::Case::Flow    45.938k (± 5.2%) i/s -    232.544k in   5.077276s
-# Micro::Case::Safe::Flow  46.412k (± 3.5%) i/s -    233.376k in   5.035084s
-
-# Comparison:
-# Interactor::Organizer:    50705.4 i/s
-# Micro::Case::Safe::Flow:  46411.7 i/s - 1.09x  slower
-#     Micro::Case::Flow:    45938.4 i/s - 1.10x  slower
+# Micro::Case flow using private methods: 103297.4 i/s
+# Micro::Case flow using `then` method:    69644.0 i/s - 1.48x  (± 0.00) slower
+# Micro::Cases.flow([]):                   63946.7 i/s - 1.62x  (± 0.00) slower
+# Micro::Cases::safe_flow([]):             63047.2 i/s - 1.64x  (± 0.00) slower
+# Interactor::Organizer:                   52958.9 i/s - 1.95x  (± 0.00) slower

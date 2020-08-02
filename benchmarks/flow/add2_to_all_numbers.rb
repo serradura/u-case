@@ -37,9 +37,9 @@ module Add2ToAllNumbers
 
       def call!
         if numbers.all? { |value| String(value) =~ /\d+/ }
-          Success(numbers: numbers.map(&:to_i))
+          Success result: { numbers: numbers.map(&:to_i) }
         else
-          Failure(numbers: 'must contain only numeric types')
+          Failure result: { numbers: 'must contain only numeric types' }
         end
       end
     end
@@ -48,16 +48,49 @@ module Add2ToAllNumbers
       attribute :numbers
 
       def call!
-        Success(numbers: numbers.map { |number| number + 2 })
+        Success result: { numbers: numbers.map { |number| number + 2 } }
       end
     end
 
-    Flow = Micro::Case::Flow([
-      ConvertTextToNumbers, Add2
+    Flow = Micro::Cases.flow([
+      ConvertTextToNumbers,
+      Add2
     ])
 
-    SafeFlow = Micro::Case::Safe::Flow([
-      ConvertTextToNumbers, Add2
+    SafeFlow = Micro::Cases.safe_flow([
+      ConvertTextToNumbers,
+      Add2
     ])
+
+    module FlowUsingThen
+      def self.call(params)
+        ConvertTextToNumbers
+          .call(params)
+          .then(Add2)
+      end
+    end
+
+    class FlowUsingPrivateMethods < Micro::Case
+      attribute :numbers
+
+      def call!
+        convert_text_to_numbers
+          .then(-> data {  add_2(data[:numbers]) })
+      end
+
+      private
+
+        def convert_text_to_numbers
+          if numbers.all? { |value| String(value) =~ /\d+/ }
+            Success result: { numbers: numbers.map(&:to_i) }
+          else
+            Failure result: { numbers: 'must contain only numeric types' }
+          end
+        end
+
+        def add_2(numbers)
+          Success result: { numbers: numbers.map { |number| number + 2 } }
+        end
+    end
   end
 end
