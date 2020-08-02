@@ -4,9 +4,11 @@ module Micro
   class Case
     module Error
       class UnexpectedResult < TypeError
-        MESSAGE = '#call! must return an instance of Micro::Case::Result'.freeze
+        MESSAGE = 'must return an instance of Micro::Case::Result'.freeze
 
-        def initialize(klass); super(klass.name + MESSAGE); end
+        def initialize(context)
+          super("#{context} #{MESSAGE}")
+        end
       end
 
       class ResultIsAlreadyDefined < ArgumentError
