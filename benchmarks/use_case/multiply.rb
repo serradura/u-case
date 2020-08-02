@@ -22,7 +22,7 @@ module Multiply
 
     def call!
       if a.is_a?(Numeric) && b.is_a?(Numeric)
-        Success(a * b)
+        Success(result: { number: a * b })
       else
         Failure(:invalid_data)
       end
@@ -34,7 +34,7 @@ module Multiply
 
     def call!
       if a.is_a?(Numeric) && b.is_a?(Numeric)
-        Success(a * b)
+        Success(result: { number: a * b })
       else
         Failure(:invalid_data)
       end
@@ -46,7 +46,7 @@ module Multiply
 
     def call!
       if a.is_a?(Numeric) && b.is_a?(Numeric)
-        Success(a * b)
+        Success(result: { number: a * b })
       else
         Failure(:invalid_data)
       end
@@ -71,9 +71,11 @@ module Multiply
       a = input['a']
       b = input['b']
 
-      return Success(a * b) if a.is_a?(Numeric) && b.is_a?(Numeric)
-
-      Failure(:invalid_data)
+      if a.is_a?(Numeric) && b.is_a?(Numeric)
+        Success(a * b)
+      else
+        Failure(:invalid_data)
+      end
     end
   end
 
@@ -97,9 +99,11 @@ module Multiply
     end
 
     def calculate(a, b)
-      return Success(a * b) if a.is_a?(Numeric) && b.is_a?(Numeric)
-
-      Failure(:invalid_data)
+      if a.is_a?(Numeric) && b.is_a?(Numeric)
+        Success(a * b)
+      else
+        Failure(:invalid_data)
+      end
     end
   end
 
@@ -117,9 +121,9 @@ module Multiply
     end
 
     def calculate(options, a:, b:, **)
-      return unless !a.is_a?(Numeric) && !b.is_a?(Numeric)
-
-      options[:number] = a * b
+      if a.is_a?(Numeric) && b.is_a?(Numeric)
+        options[:number] = a * b
+      end
     end
   end
 end

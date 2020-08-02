@@ -16,14 +16,17 @@ gemfile do
 
   gem 'trailblazer-operation', '~> 0.6.2', require: 'trailblazer/operation'
 
-  gem 'u-case', '~> 2.6.0'
+  gem 'u-case', '~> 3.0.0.rc4'
 end
 
 require 'benchmark/ips'
 
 require_relative 'multiply'
 
-Micro::Case::Result.disable_transition_tracking
+Micro::Case.config do |config|
+  # Use to enable/disable the `Micro::Case::Results#transitions` tracking.
+  config.enable_transitions = false
+end
 
 SYMBOL_KEYS = { a: 2, b: 2 }
 STRING_KEYS = { 'a' => 1, 'b' => 1 }
@@ -73,28 +76,28 @@ Benchmark.ips do |x|
 end
 
 # Warming up --------------------------------------
-#           Interactor     2.897k i/100ms
-# Trailblazer::Operation   1.494k i/100ms
-#          Dry::Monads    13.854k i/100ms
-#     Dry::Transaction   561.000  i/100ms
-#          Micro::Case    10.523k i/100ms
-#  Micro::Case::Strict     7.982k i/100ms
-#    Micro::Case::Safe    10.568k i/100ms
+#           Interactor     3.056k i/100ms
+# Trailblazer::Operation   1.480k i/100ms
+#          Dry::Monads    14.316k i/100ms
+#     Dry::Transaction   576.000  i/100ms
+#          Micro::Case    10.388k i/100ms
+#  Micro::Case::Strict     8.223k i/100ms
+#    Micro::Case::Safe    10.057k i/100ms
 
 # Calculating -------------------------------------
-#           Interactor     29.458k (± 3.4%) i/s -    147.747k in   5.021405s
-# Trailblazer::Operation   14.715k (± 1.8%) i/s -     74.700k in   5.078128s
-#          Dry::Monads    134.801k (± 8.7%) i/s -    678.846k in   5.088739s
-#     Dry::Transaction      5.643k (± 2.1%) i/s -     28.611k in   5.072969s
-#          Micro::Case    105.909k (± 2.4%) i/s -    536.673k in   5.070329s
-#  Micro::Case::Strict     84.234k (± 1.5%) i/s -    423.046k in   5.023447s
-#    Micro::Case::Safe    105.725k (± 1.9%) i/s -    538.968k in   5.099817s
+#           Interactor     30.694k (± 2.3%) i/s -    155.856k in   5.080475s
+# Trailblazer::Operation   14.581k (± 3.9%) i/s -     74.000k in   5.083091s
+#          Dry::Monads    139.038k (± 3.0%) i/s -    701.484k in   5.049921s
+#     Dry::Transaction      5.728k (± 3.6%) i/s -     28.800k in   5.034599s
+#          Micro::Case    100.712k (± 3.4%) i/s -    509.012k in   5.060139s
+#  Micro::Case::Strict     81.513k (± 3.4%) i/s -    411.150k in   5.049962s
+#    Micro::Case::Safe    101.497k (± 3.1%) i/s -    512.907k in   5.058463s
 
 # Comparison:
-#          Dry::Monads:   134801.0 i/s
-#          Micro::Case:   105909.2 i/s - 1.27x  (± 0.00) slower
-#    Micro::Case::Safe:   105725.0 i/s - 1.28x  (± 0.00) slower
-#  Micro::Case::Strict:    84234.4 i/s - 1.60x  (± 0.00) slower
-#           Interactor:    29458.2 i/s - 4.58x  (± 0.00) slower
-# Trailblazer::Operation:    14714.9 i/s - 9.16x  (± 0.00) slower
-#     Dry::Transaction:     5642.6 i/s - 23.89x  (± 0.00) slower
+#          Dry::Monads:   139037.7 i/s
+#    Micro::Case::Safe:   101497.3 i/s - 1.37x  (± 0.00) slower
+#          Micro::Case:   100711.6 i/s - 1.38x  (± 0.00) slower
+#  Micro::Case::Strict:    81512.9 i/s - 1.71x  (± 0.00) slower
+#           Interactor:    30694.2 i/s - 4.53x  (± 0.00) slower
+# Trailblazer::Operation:  14580.8 i/s - 9.54x  (± 0.00) slower
+#     Dry::Transaction:    5728.0 i/s - 24.27x  (± 0.00) slower
