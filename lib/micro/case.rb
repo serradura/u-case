@@ -201,8 +201,6 @@ module Micro
   end
 
   def self.case_or_flow?(arg)
-    return true if arg.is_a?(Class) && arg < Case
-    return true if arg.is_a?(Case) || arg.is_a?(Cases::Flow)
-    false
+    case?(arg) || arg.is_a?(Cases::Flow)
   end
 end
