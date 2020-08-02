@@ -31,7 +31,7 @@ module Micro
 
         return result if result.is_a?(Result)
 
-        raise Error::UnexpectedResult.new(self.class)
+        raise Error::UnexpectedResult.new("#{self.class.name}#call!")
       end
 
       def failure_by_validation_error(object)

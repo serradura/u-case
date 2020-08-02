@@ -11,7 +11,7 @@ class Micro::Case::Result::StepsTest < Minitest::Test
     end
   end
 
-  class DoSomeSumUsingThen1 < Micro::Case
+  class DoSomeSumUsingThen < Micro::Case
     attributes :a, :b
 
     def call!
@@ -39,23 +39,23 @@ class Micro::Case::Result::StepsTest < Minitest::Test
   end
 
   def test_the_then_method_with_lambdas
-    resulta = DoSomeSumUsingThen1.call(a: 1, b: 2)
+    resulta = DoSomeSumUsingThen.call(a: 1, b: 2)
 
     assert_success_result(resulta, value: { sum: 6.5 })
 
     [
       {
-        use_case: { class: DoSomeSumUsingThen1, attributes: { a: 1, b: 2 } },
+        use_case: { class: DoSomeSumUsingThen, attributes: { a: 1, b: 2 } },
         success: { type: :valid, result: { valid: true } },
         accessible_attributes: [:a, :b]
       },
       {
-        use_case: { class: DoSomeSumUsingThen1, attributes: { a: 1, b: 2 } },
+        use_case: { class: DoSomeSumUsingThen, attributes: { a: 1, b: 2 } },
         success: { type: :first_sum, result: { sum: 3 } },
         accessible_attributes: [:a, :b]
       },
       {
-        use_case: { class: DoSomeSumUsingThen1, attributes: { a: 1, b: 2 } },
+        use_case: { class: DoSomeSumUsingThen, attributes: { a: 1, b: 2 } },
         success: { type: :second_sum, result: { sum: 6 } },
         accessible_attributes: [:a, :b]
       },
@@ -70,13 +70,13 @@ class Micro::Case::Result::StepsTest < Minitest::Test
 
     # ---
 
-    resultb = DoSomeSumUsingThen1.call(a: 1, b: '2')
+    resultb = DoSomeSumUsingThen.call(a: 1, b: '2')
 
     assert_failure_result(resultb, value: { error: true })
 
     [
       {
-        use_case: { class: DoSomeSumUsingThen1, attributes: { a: 1, b: '2' } },
+        use_case: { class: DoSomeSumUsingThen, attributes: { a: 1, b: '2' } },
         failure: { type: :error, result: { error: true } },
         accessible_attributes: [:a, :b]
       }
@@ -85,7 +85,34 @@ class Micro::Case::Result::StepsTest < Minitest::Test
     end
   end
 
-  class DoSomeSumUsingPipe1 < Micro::Case
+  class MultiplyByTwoUsingThen < Micro::Case
+    attributes :number
+
+    def call!
+      validate_number
+        .then(-> { number.to_f })
+        .then(-> data { multiply_by_two(data[:number]) })
+    end
+
+    private
+
+    def validate_number
+      Kind.of?(Numeric, number) ? Success(:valid) : Failure()
+    end
+
+    def multiply_by_two(number)
+      Success(result: { number: number * 2 })
+    end
+  end
+
+  def test_the_then_method_error_when_a_lambda_doesnt_return_a_result
+    assert_raises_with_message(
+      Micro::Case::Error::UnexpectedResult,
+      /Micro::Case::Result#then\(-> {}\) must return an instance of Micro::Case::Result/
+    ) { MultiplyByTwoUsingThen.call(number: 2) }
+  end
+
+  class DoSomeSumUsingPipe < Micro::Case
     attributes :a, :b
 
     def call!
@@ -110,24 +137,24 @@ class Micro::Case::Result::StepsTest < Minitest::Test
       end
   end
 
-  def test_the_then_method_with_pipes
-    resulta = DoSomeSumUsingPipe1.call(a: 1, b: 2)
+  def test_the_pipe_method_with_lambdas
+    resulta = DoSomeSumUsingPipe.call(a: 1, b: 2)
 
     assert_success_result(resulta, value: { sum: 7.5 })
 
     [
       {
-        use_case: { class: DoSomeSumUsingPipe1, attributes: { a: 1, b: 2 } },
+        use_case: { class: DoSomeSumUsingPipe, attributes: { a: 1, b: 2 } },
         success: { type: :valid, result: { valid: true } },
         accessible_attributes: [:a, :b]
       },
       {
-        use_case: { class: DoSomeSumUsingPipe1, attributes: { a: 1, b: 2 } },
+        use_case: { class: DoSomeSumUsingPipe, attributes: { a: 1, b: 2 } },
         success: { type: :first_sum, result: { sum: 3 } },
         accessible_attributes: [:a, :b]
       },
       {
-        use_case: { class: DoSomeSumUsingPipe1, attributes: { a: 1, b: 2 } },
+        use_case: { class: DoSomeSumUsingPipe, attributes: { a: 1, b: 2 } },
         success: { type: :second_sum, result: { sum: 7 } },
         accessible_attributes: [:a, :b]
       },
@@ -142,18 +169,45 @@ class Micro::Case::Result::StepsTest < Minitest::Test
 
     # ---
 
-    resultb = DoSomeSumUsingPipe1.call(a: 1, b: '2')
+    resultb = DoSomeSumUsingPipe.call(a: 1, b: '2')
 
     assert_failure_result(resultb, value: { error: true })
 
     [
       {
-        use_case: { class: DoSomeSumUsingPipe1, attributes: { a: 1, b: '2' } },
+        use_case: { class: DoSomeSumUsingPipe, attributes: { a: 1, b: '2' } },
         failure: { type: :error, result: { error: true } },
         accessible_attributes: [:a, :b]
       }
     ].each_with_index do |transition, index|
       assert_equal(transition, resultb.transitions[index])
     end
+  end
+
+  class MultiplyByTwoUsingPipe < Micro::Case
+    attributes :number
+
+    def call!
+      validate_number \
+        | -> { number.to_f } \
+        | -> data { multiply_by_two(data[:number]) }
+    end
+
+    private
+
+    def validate_number
+      Kind.of?(Numeric, number) ? Success(:valid) : Failure()
+    end
+
+    def multiply_by_two(number)
+      Success(result: { number: number * 2 })
+    end
+  end
+
+  def test_the_pipe_method_error_when_a_lambda_doesnt_return_a_result
+    assert_raises_with_message(
+      Micro::Case::Error::UnexpectedResult,
+      /Micro::Case::Result#| -> {} must return an instance of Micro::Case::Result/
+    ) { MultiplyByTwoUsingPipe.call(number: 2) }
   end
 end

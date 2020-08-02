@@ -79,7 +79,9 @@ module Micro
         else
           return yield_self if !use_case && can_yield_self
 
-          return failure? ? self : __call_proc(use_case) if use_case.is_a?(Proc)
+          if use_case.is_a?(Proc)
+            return failure? ? self : __call_proc(use_case, expected: 'then(-> {})'.freeze)
+          end
 
           # TODO: Test the then method with a Micro::Cases.{flow,safe_flow}() instance.
           raise Error::InvalidInvocationOfTheThenMethod unless ::Micro.case_or_flow?(use_case)
@@ -95,7 +97,7 @@ module Micro
       def |(arg)
         return self if failure?
 
-        return __call_proc(arg) if arg.is_a?(Proc)
+        return __call_proc(arg, expected: '| -> {}'.freeze) if arg.is_a?(Proc)
 
         raise Error::InvalidInvocationOfTheThenMethod unless ::Micro.case_or_flow?(arg)
 
@@ -138,8 +140,12 @@ module Micro
 
       private
 
-        def __call_proc(arg)
-          arg.arity.zero? ? arg.call : arg.call(data.clone)
+        def __call_proc(arg, expected:)
+          result = arg.arity.zero? ? arg.call : arg.call(data.clone)
+
+          return result if result.is_a?(Result)
+
+          raise Error::UnexpectedResult.new("#{Result.name}##{expected}")
         end
 
         def __success_type?(expected_type)
