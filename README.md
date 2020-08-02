@@ -22,7 +22,7 @@ The main project goals are:
 
 Version   | Documentation
 --------- | -------------
-3.0.0.rc3 | https://github.com/serradura/u-case/blob/master/README.md
+3.0.0.rc4 | https://github.com/serradura/u-case/blob/master/README.md
 2.6.0     | https://github.com/serradura/u-case/blob/v2.x/README.md
 1.1.0     | https://github.com/serradura/u-case/blob/v1.x/README.md
 
