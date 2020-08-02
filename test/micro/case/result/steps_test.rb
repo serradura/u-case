@@ -2,10 +2,12 @@ require 'test_helper'
 
 class Micro::Case::Result::StepsTest < Minitest::Test
   class ThirdSum < Micro::Case
-    attribute :second_sum
+    attribute :sum
 
     def call!
-      Success result: { third_sum: second_sum + 0.5 }
+      Success :third_sum, result: {
+        sum: sum + 0.5
+      }
     end
   end
 
@@ -22,26 +24,65 @@ class Micro::Case::Result::StepsTest < Minitest::Test
     private
 
       def validate_attributes
-        Kind.of?(Numeric, a, b) ? Success() : Failure()
+        Kind.of?(Numeric, a, b) ? Success(:valid) : Failure()
       end
 
       def sum_a_and_b
-        Success result: { first_sum: a + b }
+        Success :first_sum, result: { sum: a + b }
       end
 
       def add(data, number:)
-        Success result: { second_sum: data[:first_sum] + number }
+        Success :second_sum, result: {
+          sum: data[:sum] + number
+        }
       end
   end
 
   def test_the_then_method_with_lambdas
     resulta = DoSomeSumUsingThen1.call(a: 1, b: 2)
 
-    assert_success_result(resulta, value: { third_sum: 6.5 })
+    assert_success_result(resulta, value: { sum: 6.5 })
+
+    [
+      {
+        use_case: { class: DoSomeSumUsingThen1, attributes: { a: 1, b: 2 } },
+        success: { type: :valid, result: { valid: true } },
+        accessible_attributes: [:a, :b]
+      },
+      {
+        use_case: { class: DoSomeSumUsingThen1, attributes: { a: 1, b: 2 } },
+        success: { type: :first_sum, result: { sum: 3 } },
+        accessible_attributes: [:a, :b]
+      },
+      {
+        use_case: { class: DoSomeSumUsingThen1, attributes: { a: 1, b: 2 } },
+        success: { type: :second_sum, result: { sum: 6 } },
+        accessible_attributes: [:a, :b]
+      },
+      {
+        use_case: { class: ThirdSum, attributes: { sum: 6 } },
+        success: { type: :third_sum, result: { sum: 6.5 } },
+        accessible_attributes: [:a, :b, :sum]
+      }
+    ].each_with_index do |transition, index|
+      assert_equal(transition, resulta.transitions[index])
+    end
+
+    # ---
 
     resultb = DoSomeSumUsingThen1.call(a: 1, b: '2')
 
     assert_failure_result(resultb, value: { error: true })
+
+    [
+      {
+        use_case: { class: DoSomeSumUsingThen1, attributes: { a: 1, b: '2' } },
+        failure: { type: :error, result: { error: true } },
+        accessible_attributes: [:a, :b]
+      }
+    ].each_with_index do |transition, index|
+      assert_equal(transition, resultb.transitions[index])
+    end
   end
 
   class DoSomeSumUsingPipe1 < Micro::Case
@@ -57,25 +98,62 @@ class Micro::Case::Result::StepsTest < Minitest::Test
     private
 
       def validate_attributes
-        Kind.of?(Numeric, a, b) ? Success() : Failure()
+        Kind.of?(Numeric, a, b) ? Success(:valid) : Failure()
       end
 
       def sum_a_and_b
-        Success result: { first_sum: a + b }
+        Success :first_sum, result: { sum: a + b }
       end
 
       def add(data, number:)
-        Success result: { second_sum: data[:first_sum] + number }
+        Success :second_sum, result: { sum: data[:sum] + number }
       end
   end
 
-  def test_the_then_method_with_lambdas
+  def test_the_then_method_with_pipes
     resulta = DoSomeSumUsingPipe1.call(a: 1, b: 2)
 
-    assert_success_result(resulta, value: { third_sum: 7.5 })
+    assert_success_result(resulta, value: { sum: 7.5 })
+
+    [
+      {
+        use_case: { class: DoSomeSumUsingPipe1, attributes: { a: 1, b: 2 } },
+        success: { type: :valid, result: { valid: true } },
+        accessible_attributes: [:a, :b]
+      },
+      {
+        use_case: { class: DoSomeSumUsingPipe1, attributes: { a: 1, b: 2 } },
+        success: { type: :first_sum, result: { sum: 3 } },
+        accessible_attributes: [:a, :b]
+      },
+      {
+        use_case: { class: DoSomeSumUsingPipe1, attributes: { a: 1, b: 2 } },
+        success: { type: :second_sum, result: { sum: 7 } },
+        accessible_attributes: [:a, :b]
+      },
+      {
+        use_case: { class: ThirdSum, attributes: { sum: 7 } },
+        success: { type: :third_sum, result: { sum: 7.5 } },
+        accessible_attributes: [:a, :b, :sum]
+      }
+    ].each_with_index do |transition, index|
+      assert_equal(transition, resulta.transitions[index])
+    end
+
+    # ---
 
     resultb = DoSomeSumUsingPipe1.call(a: 1, b: '2')
 
     assert_failure_result(resultb, value: { error: true })
+
+    [
+      {
+        use_case: { class: DoSomeSumUsingPipe1, attributes: { a: 1, b: '2' } },
+        failure: { type: :error, result: { error: true } },
+        accessible_attributes: [:a, :b]
+      }
+    ].each_with_index do |transition, index|
+      assert_equal(transition, resultb.transitions[index])
+    end
   end
 end
