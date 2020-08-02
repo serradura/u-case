@@ -11,7 +11,7 @@ module Micro
 
       attr_reader :type, :data, :use_case
 
-      alias_method :value, :data
+      alias value data
 
       def initialize
         @__transitions__ = []
@@ -39,7 +39,7 @@ module Micro
       end
 
       def on_success(expected_type = nil)
-        return self unless success_type?(expected_type)
+        return self unless __success_type?(expected_type)
 
         hook_data = expected_type.nil? ? self : data
 
@@ -49,7 +49,7 @@ module Micro
       end
 
       def on_failure(expected_type = nil)
-        return self unless failure_type?(expected_type)
+        return self unless __failure_type?(expected_type)
 
         hook_data = expected_type.nil? ? self : data
 
@@ -59,7 +59,7 @@ module Micro
       end
 
       def on_exception(expected_exception = nil)
-        return self unless failure_type?(:exception)
+        return self unless __failure_type?(:exception)
 
         if !expected_exception || (Kind.is(Exception, expected_exception) && data.fetch(:exception).is_a?(expected_exception))
           yield(data, @use_case)
@@ -68,25 +68,40 @@ module Micro
         self
       end
 
-      def then(arg = nil, attributes = nil, &block)
+      def then(use_case = nil, attributes = nil, &block)
         can_yield_self = respond_to?(:yield_self)
 
         if block
-          raise Error::InvalidInvocationOfTheThenMethod if arg
+          raise Error::InvalidInvocationOfTheThenMethod if use_case
           raise NotImplementedError if !can_yield_self
 
           yield_self(&block)
         else
-          return yield_self if !arg && can_yield_self
+          return yield_self if !use_case && can_yield_self
 
-          raise Error::InvalidInvocationOfTheThenMethod if !is_a_use_case?(arg)
+          if use_case.is_a?(Proc)
+            return failure? ? self : __call_proc(use_case, expected: 'then(-> {})'.freeze)
+          end
+
+          # TODO: Test the then method with a Micro::Cases.{flow,safe_flow}() instance.
+          raise Error::InvalidInvocationOfTheThenMethod unless ::Micro.case_or_flow?(use_case)
 
           return self if failure?
 
           input = attributes.is_a?(Hash) ? self.data.merge(attributes) : self.data
 
-          arg.__call_and_set_transition__(self, input)
+          use_case.__call_and_set_transition__(self, input)
         end
+      end
+
+      def |(arg)
+        return self if failure?
+
+        return __call_proc(arg, expected: '| -> {}'.freeze) if arg.is_a?(Proc)
+
+        raise Error::InvalidInvocationOfTheThenMethod unless ::Micro.case_or_flow?(arg)
+
+        failure? ? self : arg.__call_and_set_transition__(self, data)
       end
 
       def transitions
@@ -102,7 +117,7 @@ module Micro
 
       def __set__(is_success, data, type, use_case)
         raise Error::InvalidResultType unless type.is_a?(Symbol)
-        raise Error::InvalidUseCase if !is_a_use_case?(use_case)
+        raise Error::InvalidUseCase unless ::Micro.case?(use_case)
 
         @success, @type, @use_case = is_success, type, use_case
 
@@ -110,7 +125,7 @@ module Micro
 
         raise Micro::Case::Error::InvalidResult.new(is_success, type, use_case) unless @data
 
-        __set_transition__ unless @@transition_tracking_disabled
+        __set_transition unless @@transition_tracking_disabled
 
         self
       end
@@ -118,39 +133,39 @@ module Micro
       def __set_transitions_accessible_attributes__(attributes_data)
         return attributes_data if @@transition_tracking_disabled
 
-        __set_transitions_accessible_attributes__!(attributes_data)
+        attributes = Utils.symbolize_hash_keys(attributes_data)
+
+        __update_transitions_accessible_attributes(attributes)
       end
 
       private
 
-        def success_type?(expected_type)
+        def __call_proc(arg, expected:)
+          result = arg.arity.zero? ? arg.call : arg.call(data.clone)
+
+          return result if result.is_a?(Result)
+
+          raise Error::UnexpectedResult.new("#{Result.name}##{expected}")
+        end
+
+        def __success_type?(expected_type)
           success? && (expected_type.nil? || expected_type == type)
         end
 
-        def failure_type?(expected_type)
+        def __failure_type?(expected_type)
           failure? && (expected_type.nil? || expected_type == type)
         end
 
-        def is_a_use_case?(arg)
-          (arg.is_a?(Class) && arg < ::Micro::Case) || arg.is_a?(::Micro::Case)
-        end
-
-        def __set_transitions_accessible_attributes__!(attributes_data)
-          attributes = Utils.symbolize_hash_keys(attributes_data)
-
-          __update_transitions_accessible_attributes__(attributes)
-        end
-
-        def __update_transitions_accessible_attributes__(attributes)
+        def __update_transitions_accessible_attributes(attributes)
           @__transitions_accessible_attributes__.merge!(attributes)
           @__transitions_accessible_attributes__
         end
 
-        def __set_transition__
+        def __set_transition
           use_case_class = @use_case.class
           use_case_attributes = Utils.symbolize_hash_keys(@use_case.attributes)
 
-          __update_transitions_accessible_attributes__(use_case_attributes)
+          __update_transitions_accessible_attributes(use_case_attributes)
 
           result = @success ? :success : :failure
 

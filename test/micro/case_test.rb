@@ -31,16 +31,6 @@ class Micro::CaseTest < Minitest::Test
     end
   end
 
-  def test_the_instance_call_method
-    result = Multiply.new(a: 2, b: 2).call
-
-    assert_success_result(result, value: { number: 4 })
-
-    result = Multiply.new(a: 1, b: '1').call
-
-    assert_failure_result(result, value: { attribute_values: [1, '1'] }, type: :invalid_data)
-  end
-
   def test_the_class_call_method
     result = Double.call(number: 3)
 
@@ -64,10 +54,8 @@ class Micro::CaseTest < Minitest::Test
 
   def test_the_template_method
     assert_raises(NotImplementedError) { Micro::Case.call }
-    assert_raises(NotImplementedError) { Micro::Case.new({}).call }
 
     assert_raises(NotImplementedError) { Foo.call }
-    assert_raises(NotImplementedError) { Foo.new({}).call }
   end
 
   class LoremIpsum < Micro::Case
@@ -83,11 +71,6 @@ class Micro::CaseTest < Minitest::Test
       Micro::Case::Error::UnexpectedResult,
       /LoremIpsum#call! must return an instance of Micro::Case::Result/
     ) { LoremIpsum.call(text: 'lorem ipsum') }
-
-    assert_raises_with_message(
-      Micro::Case::Error::UnexpectedResult,
-      /LoremIpsum#call! must return an instance of Micro::Case::Result/
-    ) { LoremIpsum.new(text: 'ipsum indolor').call }
   end
 
   def test_that_sets_a_result_object_avoiding_the_use_case_to_create_one
@@ -96,7 +79,7 @@ class Micro::CaseTest < Minitest::Test
     use_case = Multiply.new(a: 3, b: 2)
     use_case.__set_result__(result_instance)
 
-    result = use_case.call
+    result = use_case.__call__
 
     assert_same(result_instance, result)
   end
@@ -112,7 +95,7 @@ class Micro::CaseTest < Minitest::Test
 
   def test_when_already_exists_a_result_and_tries_to_set_a_new_one
     use_case = Multiply.new(a: 3, b: 2)
-    use_case.call
+    use_case.__call__
 
     assert_raises_with_message(ArgumentError, 'result is already defined') do
       use_case.__set_result__(Micro::Case::Result.new)

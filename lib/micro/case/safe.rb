@@ -7,8 +7,8 @@ module Micro
         Cases::Safe::Flow
       end
 
-      def call
-        __call
+      def __call__
+        __call!
       rescue => exception
         raise exception if Error.by_wrong_usage?(exception)
 
