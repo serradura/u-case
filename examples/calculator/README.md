@@ -14,7 +14,7 @@ If zsh is your shell, use: [`unsetopt nomatch`](https://thoughtbot.com/blog/how-
 
 ### Usage
 
-![gif](https://github.com/serradura/u-case/blob/master/examples/calculator/assets/usage.gif?raw=true)
+![gif](https://github.com/serradura/u-case/blob/main/examples/calculator/assets/usage.gif?raw=true)
 
 #### Listing the available rake tasks
 ```sh
