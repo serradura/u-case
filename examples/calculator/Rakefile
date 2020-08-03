@@ -23,7 +23,7 @@ class PerformTask < Micro::Case
     operation
       .call(args: args)
       .on_success { |result| print_operation(**result.data) }
-      .on_failure(:exception) { |result| puts "ERROR: #{result[:exception].message}" }
+      .on_exception { |result| puts "ERROR: #{result[:exception].message}" }
       .on_failure(:not_a_number) { puts "ERROR: The arguments must contain only numeric values" }
       .on_failure(:arguments_with_space_chars) do |result|
         a, b = result[:attributes]
