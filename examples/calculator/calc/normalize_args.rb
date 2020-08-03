@@ -5,9 +5,13 @@ module Calc
     def call!
       a, b = normalize(args[:a]), normalize(args[:b])
 
-      return Success(a: a, b: b) if a !~ /\s/ && b !~ /\s/
-
-      Failure(:arguments_with_space_chars) { [a, b].map(&:inspect) }
+      if a !~ /\s/ && b !~ /\s/
+        Success result: { a: a, b: b }
+      else
+        Failure :arguments_with_space_chars, result: {
+          attributes: [a, b].map(&:inspect)
+        }
+      end
     end
 
     private def normalize(value)

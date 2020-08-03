@@ -1,7 +1,7 @@
 class Operation < Micro::Case
   attributes :a, :b
 
-  private def result_of(operation_result)
+  private def operation_info(operation_result)
     attributes(:a, :operator, :b)
       .merge(result: operation_result)
   end
@@ -10,7 +10,7 @@ class Operation < Micro::Case
     attribute :operator, '+'
 
     def call!
-      Success(result_of(a + b))
+      Success result: operation_info(a + b)
     end
   end
 
@@ -18,7 +18,7 @@ class Operation < Micro::Case
     attribute :operator, '-'
 
     def call!
-      Success(result_of(a - b))
+      Success result: operation_info(a - b)
     end
   end
 
@@ -26,7 +26,7 @@ class Operation < Micro::Case
     attribute :operator, 'x'
 
     def call!
-      Success(result_of(a * b))
+      Success result: operation_info(a * b)
     end
   end
 
@@ -34,7 +34,7 @@ class Operation < Micro::Case
     attribute :operator, '/'
 
     def call!
-      Success(result_of(a / b))
+      Success result: operation_info(a / b)
     end
   end
 end

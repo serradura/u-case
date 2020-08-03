@@ -5,7 +5,7 @@ This example uses [rake](http://rubygems.org/gems/rake) to expose a CLI calculat
 ## Installation instructions
 ```sh
 gem install rake
-gem install u-case -v 2.6.0
+gem install u-case -v 3.0.0.rc4
 ```
 
 *Note:*
@@ -28,33 +28,36 @@ rake -T
 
 #### Calculating integer numbers
 ```sh
-rake calc:add[3,2]
+bundle exec rake calc:add[3,2]
 # 3 + 2 = 5
 
-rake calc:subtract[3,2]
+bundle exec rake calc:subtract[3,2]
 # 3 - 2 = 1
 
-rake calc:multiply[3,2]
+bundle exec rake calc:multiply[3,2]
 # 3 x 2 = 6
 
-rake calc:divide[3,2]
+bundle exec rake calc:divide[3,2]
 # 3 / 2 = 1
 ```
 
 #### Calculating float numbers
 ```sh
-rake calc:divide[3.0,2.0]
+bundle exec rake calc:divide[3.0,2.0]
 # 3.0 / 2.0 = 1.5
 
-rake calc:divide[-3.0,2.0]
+bundle exec rake calc:divide[-3.0,2.0]
 # -3.0 / 2.0 = -1.5
 ```
 
 #### Calculation errors
 ```sh
-rake calc:add[1,a]
+bundle exec rake calc:divide[4,0]
+# ERROR: divided by 0
+
+bundle exec rake calc:add[1,a]
 # ERROR: The arguments must contain only numeric values
 
-rake calc:add[-\ 1,2]
+bundle exec rake calc:add[-\ 1,2]
 # ERROR: Arguments can't have spaces: a: "- 1", b: "2"
 ```

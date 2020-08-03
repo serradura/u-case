@@ -5,7 +5,7 @@ class TransformIntoNumbers < Micro::Case
     number_a, number_b = number(a), number(b)
 
     if number_a && number_b
-      Success(a: number(a), b: number(b))
+      Success result: { a: number(a), b: number(b) }
     else
       Failure(:not_a_number)
     end

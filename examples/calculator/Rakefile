@@ -6,13 +6,13 @@ require_relative 'calc/transform_into_numbers'
 
 module Calc
   TransformArgsIntoNumbers =
-    Micro::Case::Safe::Flow([NormalizeArgs, TransformIntoNumbers])
+    Micro::Cases.safe_flow([NormalizeArgs, TransformIntoNumbers])
 
   module With
-    Add = Micro::Case::Safe::Flow([TransformArgsIntoNumbers, Operation::Add])
-    Divide = Micro::Case::Safe::Flow([TransformArgsIntoNumbers, Operation::Divide])
-    Subtract = Micro::Case::Safe::Flow([TransformArgsIntoNumbers, Operation::Subtract])
-    Multiply = Micro::Case::Safe::Flow([TransformArgsIntoNumbers, Operation::Multiply])
+    Add = Micro::Cases.safe_flow([TransformArgsIntoNumbers, Operation::Add])
+    Divide = Micro::Cases.safe_flow([TransformArgsIntoNumbers, Operation::Divide])
+    Subtract = Micro::Cases.safe_flow([TransformArgsIntoNumbers, Operation::Subtract])
+    Multiply = Micro::Cases.safe_flow([TransformArgsIntoNumbers, Operation::Multiply])
   end
 end
 
@@ -22,10 +22,12 @@ class PerformTask < Micro::Case
   def call!
     operation
       .call(args: args)
-      .on_success { |value| print_operation(value) }
-      .on_failure(:exception) { |err| puts "ERROR: #{err.message}" }
+      .on_success { |result| print_operation(**result.data) }
+      .on_failure(:exception) { |result| puts "ERROR: #{result[:exception].message}" }
       .on_failure(:not_a_number) { puts "ERROR: The arguments must contain only numeric values" }
-      .on_failure(:arguments_with_space_chars) do |(a, b)|
+      .on_failure(:arguments_with_space_chars) do |result|
+        a, b = result[:attributes]
+
         puts "ERROR: Arguments can't have spaces: a: #{a}, b: #{b}"
       end
   end

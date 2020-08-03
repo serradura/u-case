@@ -3,16 +3,16 @@ require 'bundler/inline'
 gemfile do
   source 'https://rubygems.org'
 
-  gem 'u-case', '~> 2.6.0'
+  gem 'u-case', '~> 3.0.0.rc4'
 end
 
 class DivideV1 < Micro::Case
   attributes :a, :b
 
   def call!
-    return Failure('numbers must be greater than 0') if a < 0 || b < 0
+    return Success result: { division: a / b } if a > 0 && b > 0
 
-    Success(a / b)
+    Failure result: { message: 'numbers must be greater than 0' }
   rescue => e
     Failure(e)
   end
@@ -22,9 +22,9 @@ class DivideV2 < Micro::Case::Safe
   attributes :a, :b
 
   def call!
-    return Failure('numbers must be greater than 0') if a < 0 || b < 0
+    return Success result: { division: a / b } if a > 0 && b > 0
 
-    Success(a / b)
+    Failure result: { message: 'numbers must be greater than 0' }
   end
 end
 
@@ -38,7 +38,7 @@ puts "\n-- Success scenario --\n\n"
 
 result = DivideV1.call(a: 4, b: 2)
 
-puts result.value if result.success?
+p result.data if result.success?
 
 #----------------------------------#
 puts "\n-- Failure scenarios --\n\n"
@@ -46,13 +46,13 @@ puts "\n-- Failure scenarios --\n\n"
 
 result = DivideV1.call(a: 4, b: 0)
 
-p result.value if result.failure?
+p result.data if result.failure?
 
 puts ''
 
 result = DivideV1.call(a: -4, b: 2)
 
-p result.value if result.failure?
+p result.data if result.failure?
 
 #
 # ---

@@ -3,10 +3,17 @@ require 'bundler/inline'
 gemfile do
   source 'https://rubygems.org'
 
-  # NOTE: I used an older version of the Activemodel only to show the compatibility with its older versions.
-  gem 'activemodel', '~> 3.2', '>= 3.2.22.5'
+  gem 'activemodel', '~> 6.0'
 
-  gem 'u-case', '~> 2.6.0', require: 'u-case/with_activemodel_validation'
+  gem 'u-case', '~> 3.0.0.rc4'
+end
+
+Micro::Case.config do |config|
+  # Use ActiveModel to auto-validate your use cases' attributes.
+  config.enable_activemodel_validation = true
+
+  # Use to enable/disable the `Micro::Case::Results#transitions` tracking.
+  config.enable_transitions = false
 end
 
 module Users
@@ -28,11 +35,10 @@ module Users
       attributes :name, :email
 
       def call!
-        Success(name: normalized_name, email: String(email).downcase.strip)
-      end
+        normalized_name = String(name).strip.gsub(/\s+/, ' ')
+        normalized_email = String(email).downcase.strip
 
-      private def normalized_name
-        String(name).strip.gsub(/\s+/, ' ')
+        Success result: { name: normalized_name, email: normalized_email }
       end
     end
 
@@ -43,7 +49,7 @@ module Users
       validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }
 
       def call!
-        Success(attributes(:name, :email))
+        Success result: attributes(:name, :email)
       end
     end
 
@@ -53,7 +59,7 @@ module Users
       validates :name, :email, kind: String
 
       def call!
-        Success(user: Entity.new(user_data))
+        Success result: { user: Entity.new(user_data) }
       end
 
       private def user_data
@@ -67,9 +73,11 @@ module Users
       validates :user, kind: Users::Entity
 
       def call!
-        return Success(user_id: user.id, crm_id: sync_with_crm) if user.persisted?
-
-        Failure(:crm_error) { 'User can\'t be sent to the CRM' }
+        if user.persisted?
+          Success result: { user_id: user.id, crm_id: sync_with_crm }
+        else
+          Failure :crm_error, result: { message: 'User can\'t be sent to the CRM' }
+        end
       end
 
       private def sync_with_crm
@@ -78,7 +86,7 @@ module Users
       end
     end
 
-    Process = Micro::Case::Flow([
+    Process = Micro::Cases.flow([
       ProcessParams,
       ValidateParams,
       Persist,
@@ -103,7 +111,7 @@ print ' After: '
 
 Users::Creation::ProcessParams
   .call(params)
-  .on_success { |value| p value }
+  .on_success { |result| p result.data }
 
 #---------------------------------#
 puts "\n-- Success scenario --\n\n"
@@ -111,7 +119,9 @@ puts "\n-- Success scenario --\n\n"
 
 Users::Creation::Process
   .call(params)
-  .on_success do |user_id:, crm_id:|
+  .on_success do |result|
+    user_id, crm_id = result.values_at(:user_id, crm_id)
+
     puts " CRM ID: #{crm_id}"
     puts "USER ID: #{user_id}"
   end
@@ -122,7 +132,7 @@ puts "\n-- Failure scenario --\n\n"
 
 Users::Creation::Process
   .call(name: '', email: '')
-  .on_failure { |(value, _type)| p value[:errors].full_messages }
+  .on_failure { |(data, _type)| p data[:errors].full_messages }
   .on_failure do |_result, use_case|
     puts "#{use_case.class.name} was the use case responsible for the failure"
   end
