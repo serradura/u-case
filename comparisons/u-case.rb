@@ -8,9 +8,9 @@ class CreateResponse < Micro::Case
       survey: survey
     )
 
-    return Success { attributes(:responder, :survey) } if survey_response.save
+    return Success result: attributes(:responder, :survey) if survey_response.save
 
-    Failure(:survey_response_errors) { survey_response.errors }
+    Failure :survey_response_errors, result: survey_response.errors
   end
 end
 
@@ -21,9 +21,9 @@ class AddRewardPoints < Micro::Case
     reward_account = responder.reward_account
     reward_account.balance += survey.reward_points
 
-    return Success { attributes(:responder, :survey) } if reward_account.save
+    return Success, result: attributes if reward_account.save
 
-    Failure(:reward_account_errors) { reward_account.errors }
+    Failure :reward_account_errors, result: reward_account.errors
   end
 end
 
@@ -36,9 +36,11 @@ class SendNotifications < Micro::Case
     SurveyMailer.delay.notify_responder(responder.id)
     SurveyMailer.delay.notify_sender(sender.id)
 
-    return Success { attributes(:survey) } if sender.add_survey_response_notification
-
-    Failure(:sender_errors) { sender.errors }
+    if sender.add_survey_response_notification
+      Success, result: attributes(:survey)
+    else
+      Failure :sender_errors, result: sender.errors
+    end
   end
 end
 
@@ -50,7 +52,7 @@ end
 
 # or
 
-ReplyToSurvey = Micro::Case::Flow([
+ReplyToSurvey = Micro::Cases.flow([
   CreateResponse,
   AddRewardPoints,
   SendNotifications

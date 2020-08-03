@@ -1167,7 +1167,7 @@ You can see below, which are all of the available configurations with their defa
 ```ruby
 Micro::Case.config do |config|
   # Use ActiveModel to auto-validate your use cases' attributes.
-  config.enable_activemodel_validations = false
+  config.enable_activemodel_validation = false
 
   # Use to enable/disable the `Micro::Case::Results#transitions` tracking.
   config.enable_transitions = true
