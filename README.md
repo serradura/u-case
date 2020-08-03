@@ -4,6 +4,8 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/5c3c8ad1b0b943f88efd/maintainability)](https://codeclimate.com/github/serradura/u-case/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/5c3c8ad1b0b943f88efd/test_coverage)](https://codeclimate.com/github/serradura/u-case/test_coverage)
 
+<img src="https://raw.githubusercontent.com/serradura/u-case/main/assets/logo_1.jpg" height="150" alt="u-case">
+
 μ-case (Micro::Case) <!-- omit in toc -->
 ====================
 
