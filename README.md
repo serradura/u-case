@@ -26,7 +26,7 @@ Version   | Documentation
 1.1.0     | https://github.com/serradura/u-case/blob/v1.x/README.md
 
 ## Table of Contents <!-- omit in toc -->
-- [Required Ruby version](#required-ruby-version)
+- [Compatibility](#compatibility)
 - [Dependencies](#dependencies)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -73,9 +73,15 @@ Version   | Documentation
 - [License](#license)
 - [Code of Conduct](#code-of-conduct)
 
-## Required Ruby version
+## Compatibility
 
-> \>= 2.2.0
+| u-case         | branch  | ruby     |  activemodel  |
+| -------------- | ------- | -------- | ------------- |
+| 3.0.0.rc4      | main    | >= 2.2.0 | >= 3.2, < 6.1 |
+| 2.6.0          | v2.x    | >= 2.2.0 | >= 3.2, < 6.1 |
+| 1.1.0          | v1.x    | >= 2.2.0 | >= 3.2, < 6.1 |
+
+> Note: The activemodel is an optional dependency, this module [can be enabled]((#u-casewith_activemodel_validation---how-to-validate-use-case-attributes)) to validate the use cases' attributes.
 
 ## Dependencies
 
@@ -83,7 +89,7 @@ Version   | Documentation
 
     A simple type system (at runtime) for Ruby.
 
-    Used to validate method inputs using its [`activemodel validation`](https://github.com/serradura/kind#kindvalidator-activemodelvalidations) module is auto required by [`u-case/with_activemodel_validation`](#u-casewith_activemodel_validation---how-to-validate-use-case-attributes) mode, and expose `Kind::Of::Micro::Case`, `Kind::Of::Micro::Case::Result` type checkers.
+    It is used to validate some internal u-case's methods input. This gem also exposes an  [`ActiveModel validator`](https://github.com/serradura/kind#kindvalidator-activemodelvalidations) when requiring the [`u-case/with_activemodel_validation`](#u-casewith_activemodel_validation---how-to-validate-use-case-attributes) module, or when the [`Micro::Case.config`](#microcaseconfig) was used to enable it. Lastly, two type checkers are available through it: [`Kind::Of::Micro::Case`, `Kind::Of::Micro::Case::Result`](https://github.com/serradura/kind#registering-new-custom-type-checker).
 2. [`u-attributes`](https://github.com/serradura/u-attributes) gem.
 
     This gem allows defining read-only attributes, that is, your objects will have only getters to access their attributes data.
@@ -94,7 +100,7 @@ Version   | Documentation
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'u-case'
+gem 'u-case', '~> 3.0.0.rc4'
 ```
 
 And then execute:
@@ -103,7 +109,7 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install u-case
+    $ gem install u-case --pre
 
 ## Usage
 
