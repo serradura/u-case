@@ -10,9 +10,9 @@ Create simple and powerful use cases as objects.
 
 The main project goals are:
 1. Easy to use and easy to learn (input **>>** process **>>** output).
-2. Promote referential transparency (transforming instead of modifying) and data integrity.
-3. No callbacks (e.g: before, after, around).
-4. Solve complex business logic, by allowing the composition of use cases.
+2. Promote immutability (transforming data instead of modifying it) and data integrity.
+3. No callbacks (ex: before, after, around) to avoid code indirections that could compromise the state and understanding of application flows.
+4. Solve complex business logic, by allowing the composition of use cases (flow creation).
 5. Be fast and optimized (Check out the [benchmarks](#benchmarks) section).
 
 > Note: Check out the repo https://github.com/serradura/from-fat-controllers-to-use-cases to see a Rails application that uses this gem to handle its business logic.
