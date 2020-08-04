@@ -4,7 +4,7 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/5c3c8ad1b0b943f88efd/maintainability)](https://codeclimate.com/github/serradura/u-case/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/5c3c8ad1b0b943f88efd/test_coverage)](https://codeclimate.com/github/serradura/u-case/test_coverage)
 
-<img src="./assets/ucase_logo_v1.png" height="200" alt="u-case">
+<img src="./assets/ucase_logo_v1.png" alt="u-case - Create simple and powerful use cases as objects.">
 
 Create simple and powerful use cases as objects.
 
