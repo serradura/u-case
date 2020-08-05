@@ -2,6 +2,7 @@
 
 require 'micro/cases/flow'
 require 'micro/cases/safe/flow'
+require 'micro/cases/map'
 
 module Micro
   module Cases
@@ -11,6 +12,10 @@ module Micro
 
     def self.safe_flow(args)
       Safe::Flow.build(args)
+    end
+
+    def self.map(args)
+      Map.build(args)
     end
   end
 end
