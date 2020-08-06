@@ -63,13 +63,13 @@ class Micro::Case::ResultTest < Minitest::Test
 
     # ---
 
-    assert_equal(true, result.key?(:a))
-    assert_equal(false, result.key?(:c))
+    assert(result.key?(:a))
+    refute(result.key?(:c))
 
     # ---
 
-    assert_equal(true, result.value?(2))
-    assert_equal(false, result.value?(10))
+    assert(result.value?(2))
+    refute(result.value?(10))
 
     # ---
     
