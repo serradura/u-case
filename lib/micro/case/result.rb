@@ -39,7 +39,7 @@ module Micro
       end
 
       def slice(*keys)
-        Utils.slice_hash(data, *keys)
+        Utils.slice_hash(data, keys)
       end
 
       def success?
