@@ -14,7 +14,7 @@ module Micro
           end
         end
       end
-      def self.slice_hash(hash, *keys)
+      def self.slice_hash(hash, keys)
         if Kind::Of::Hash(hash).respond_to?(:slice)
           hash.slice(*keys)
         else
