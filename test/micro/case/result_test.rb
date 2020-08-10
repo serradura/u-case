@@ -60,6 +60,21 @@ class Micro::Case::ResultTest < Minitest::Test
 
     assert_equal([1], result.values_at(:a))
     assert_equal([2, 1], result.values_at(:b, :a))
+
+    # ---
+
+    assert(result.key?(:a))
+    refute(result.key?(:c))
+
+    # ---
+
+    assert(result.value?(2))
+    refute(result.value?(10))
+
+    # ---
+    
+    assert_equal({ a: 1, b: 2 }, result.slice(:a, :b, :c))
+    assert_equal({}, result.slice(:c))
   end
 
   def test_failure_result
