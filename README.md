@@ -167,9 +167,9 @@ A `Micro::Case::Result` stores the use cases output data. These are their main m
 - `#type` a Symbol which gives meaning for the result, this is useful to declare different types of failures or success.
 - `#data` the result data itself.
 - `#[]` and `#values_at` are shortcuts to access the `#data` values.
-- `#key?` returns `true` if the key is present `#data`.
+- `#key?` returns `true` if the key is present in `#data`.
 - `#value?` returns `true` if the given value is present in `#data`.
-- `#slice` returns a subhash of `#data` with only the given keys and their values.
+- `#slice` returns a new hash that includes only the given keys. If the given keys doesn't exist, a empty hash is returned.
 - `#on_success` or `#on_failure` are hook methods that help you to define the application flow.
 - `#then` this method will allow applying a new use case if the current result was a success. The idea of this feature is to allow the creation of dynamic flows.
 - `#transitions` returns an array with all of transformations wich a result [has during a flow](#how-to-understand-what-is-happening-during-a-flow-execution).
