@@ -30,6 +30,18 @@ module Micro
         data.values_at(*keys)
       end
 
+      def key?(key)
+        data.key?(key)
+      end
+
+      def value?(value)
+        data.value?(value)
+      end
+
+      def slice(*keys)
+        Utils.slice_hash(data, keys)
+      end
+
       def success?
         @success
       end
