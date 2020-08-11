@@ -29,14 +29,18 @@ module Micro
         @next_use_cases = use_cases[1..-1]
       end
 
-      def call(arg = {})
-        memo = arg.is_a?(Hash) ? arg.dup : {}
+      def call!(input:, result:)
+        memo = input.is_a?(Hash) ? input.dup : Kind::Empty::HASH
 
-        first_result = __first_use_case_result(arg)
+        first_result = @first_use_case.__call_and_set_transition__(result, input)
 
         return first_result if @next_use_cases.empty?
 
         __next_use_cases_result(first_result, memo)
+      end
+
+      def call(input = Kind::Empty::HASH)
+        call!(input: input, result: Case::Result.new)
       end
 
       alias __call__ call
@@ -46,31 +50,6 @@ module Micro
       end
 
       private
-
-        def __is_a_result?(arg)
-          arg.is_a?(Case::Result)
-        end
-
-        def __call_arg(arg)
-          output = arg.__call__
-
-          __is_a_result?(output) ? output.value : output
-        end
-
-        def __first_use_case_input(arg)
-          return __call_arg(arg) if ::Micro.case_or_flow?(arg)
-          return arg.value if __is_a_result?(arg)
-
-          arg
-        end
-
-        def __first_use_case_result(arg)
-          input = __first_use_case_input(arg)
-
-          result = Case::Result.new
-
-          @first_use_case.__call_and_set_transition__(result, input)
-        end
 
         def __next_use_case_result(use_case, result, input)
           use_case.__new__(result, input).__call__
