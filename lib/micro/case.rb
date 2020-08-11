@@ -22,6 +22,21 @@ module Micro
       new(options).__call__
     end
 
+    def self.then(use_case = nil, &block)
+      can_yield_self = respond_to?(:yield_self)
+
+      if block
+        raise Error::InvalidInvocationOfTheThenMethod if use_case
+        raise NotImplementedError if !can_yield_self
+
+        yield_self(&block)
+      else
+        return yield_self if !use_case && can_yield_self
+
+        self.call.then(use_case)
+      end
+    end
+
     def self.to_proc
       Proc.new { |arg| call(arg) }
     end
