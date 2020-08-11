@@ -18,7 +18,7 @@ module Micro
 
     include Micro::Attributes.without(:strict_initialize)
 
-    def self.call(options = {})
+    def self.call(options = Kind::Empty::HASH)
       new(options).__call__
     end
 
@@ -196,11 +196,7 @@ module Micro
       private_constant :MapFailureType
   end
 
-  def self.case?(arg)
-    (arg.is_a?(Class) && arg < Case) || arg.is_a?(Case)
-  end
-
   def self.case_or_flow?(arg)
-    case?(arg) || arg.is_a?(Cases::Flow)
+    (arg.is_a?(Class) && arg < Case) || arg.is_a?(Cases::Flow)
   end
 end

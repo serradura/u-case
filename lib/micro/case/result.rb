@@ -95,14 +95,17 @@ module Micro
             return failure? ? self : __call_proc(use_case, expected: 'then(-> {})'.freeze)
           end
 
-          # TODO: Test the then method with a Micro::Cases.{flow,safe_flow}() instance.
           raise Error::InvalidInvocationOfTheThenMethod unless ::Micro.case_or_flow?(use_case)
 
           return self if failure?
 
           input = attributes.is_a?(Hash) ? self.data.merge(attributes) : self.data
 
-          use_case.__call_and_set_transition__(self, input)
+          if use_case.is_a?(::Micro::Cases::Flow)
+            use_case.call!(input: input, result: self)
+          else
+            use_case.__call_and_set_transition__(self, input)
+          end
         end
       end
 
@@ -129,7 +132,7 @@ module Micro
 
       def __set__(is_success, data, type, use_case)
         raise Error::InvalidResultType unless type.is_a?(Symbol)
-        raise Error::InvalidUseCase unless ::Micro.case?(use_case)
+        raise Error::InvalidUseCase unless use_case.is_a?(::Micro::Case)
 
         @success, @type, @use_case = is_success, type, use_case
 

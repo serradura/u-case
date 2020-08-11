@@ -9,6 +9,10 @@ module Jobs
     def sleeping?
       state == 'sleeping'
     end
+
+    def running?
+      state == 'running'
+    end
   end
 
   module State
