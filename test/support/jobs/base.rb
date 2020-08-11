@@ -53,7 +53,7 @@ module Jobs
     end
   end
 
-  class Build < Micro::Case::Safe
+  class Build < Micro::Case
     flow self, SetID
 
     def call!
