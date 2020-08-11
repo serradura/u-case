@@ -15,21 +15,7 @@ module Jobs
     end
   end
 
-  module State
-    class Sleeping < Micro::Case
-      def call!
-        job = Entity.new(id: nil, state: 'sleeping')
-
-        Success result: { job: job }
-      end
-    end
-
-    Default = Sleeping
-  end
-
   class SetID < Micro::Case::Strict
-    ACCEPTABLE_UUID = %r{\A(\{)?([a-fA-F0-9]{4}-?){8}(?(1)\}|)\z}
-
     attributes :job
 
     def call!
@@ -67,10 +53,15 @@ module Jobs
     end
   end
 
-  Build = Micro::Cases.flow([
-    State::Default,
-    SetID
-  ])
+  class Build < Micro::Case::Safe
+    flow self, SetID
+
+    def call!
+      job = Entity.new(id: nil, state: 'sleeping')
+
+      Success result: { job: job }
+    end
+  end
 
   Run = Micro::Cases.flow([
     ValidateID,

@@ -10,23 +10,23 @@ module Safe
       def sleeping?
         state == 'sleeping'
       end
+
+      def running?
+        state == 'running'
+      end
     end
 
     module State
-      class Sleeping < Micro::Case::Safe
+      class FetchSleeping < Micro::Case::Safe
         def call!
           job = Entity.new(id: nil, state: 'sleeping')
 
           Success result: { job: job }
         end
       end
-
-      Default = Sleeping
     end
 
     class SetID < Micro::Case::Strict::Safe
-      ACCEPTABLE_UUID = %r{\A(\{)?([a-fA-F0-9]{4}-?){8}(?(1)\}|)\z}
-
       attributes :job
 
       def call!
@@ -65,7 +65,7 @@ module Safe
     end
 
     Build = Micro::Cases.safe_flow([
-      State::Default,
+      State::FetchSleeping,
       SetID
     ])
 
