@@ -1,6 +1,6 @@
 ![Ruby](https://img.shields.io/badge/ruby-2.2+-ruby.svg?colorA=99004d&colorB=cc0066)
 [![Gem](https://img.shields.io/gem/v/u-case.svg?style=flat-square)](https://rubygems.org/gems/u-case)
-[![Build Status](https://travis-ci.com/serradura/u-case.svg?branch=master)](https://travis-ci.com/serradura/u-case)
+[![Build Status](https://travis-ci.com/serradura/u-case.svg?branch=main)](https://travis-ci.com/serradura/u-case)
 [![Maintainability](https://api.codeclimate.com/v1/badges/5c3c8ad1b0b943f88efd/maintainability)](https://codeclimate.com/github/serradura/u-case/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/5c3c8ad1b0b943f88efd/test_coverage)](https://codeclimate.com/github/serradura/u-case/test_coverage)
 
@@ -21,7 +21,7 @@ Principais objetivos deste projeto:
 
 Versão    | Documentação
 --------- | -------------
-3.0.0.rc5 | https://github.com/serradura/u-case/blob/master/README.md
+3.0.0.rc5 | https://github.com/serradura/u-case/blob/main/README.md
 2.6.0     | https://github.com/serradura/u-case/blob/v2.x/README.md
 1.1.0     | https://github.com/serradura/u-case/blob/v1.x/README.md
 
@@ -1219,7 +1219,7 @@ end
 ```
 </details>
 
-https://github.com/serradura/u-case/blob/master/benchmarks/use_case/with_success_result.rb
+https://github.com/serradura/u-case/blob/main/benchmarks/use_case/with_success_result.rb
 
 #### Failure results
 
@@ -1264,13 +1264,13 @@ https://github.com/serradura/u-case/blob/master/benchmarks/use_case/with_success
 ```
 </details>
 
-https://github.com/serradura/u-case/blob/master/benchmarks/use_case/with_failure_result.rb
+https://github.com/serradura/u-case/blob/main/benchmarks/use_case/with_failure_result.rb
 
 ---
 
 ### `Micro::Cases::Flow` (v3.0.0)
 
-| Gem / Abstração      | [Resultados de sucesso](https://github.com/serradura/u-case/blob/master/benchmarks/flow/with_success_result.rb#L40) | [Resultados de falha](https://github.com/serradura/u-case/blob/master/benchmarks/flow/with_failure_result.rb#L40) |
+| Gem / Abstração      | [Resultados de sucesso](https://github.com/serradura/u-case/blob/main/benchmarks/flow/with_success_result.rb#L40) | [Resultados de falha](https://github.com/serradura/u-case/blob/main/benchmarks/flow/with_failure_result.rb#L40) |
 | ------------------------------------------- | ----------------: | ----------------: |
 | Micro::Case internal flow (private methods) | _**O mais rápido**_ | _**O mais rápido**_ |
 | Micro::Case `then` method                   |      1.48x slower |         0x slower |
@@ -1334,14 +1334,14 @@ https://github.com/serradura/u-case/blob/master/benchmarks/use_case/with_failure
 ```
 </details>
 
-https://github.com/serradura/u-case/tree/master/benchmarks/flow
+https://github.com/serradura/u-case/tree/main/benchmarks/flow
 
 ### Comparações
 
 Confira as implementações do mesmo caso de uso com diferentes gems/abstrações.
 
-* [interactor](https://github.com/serradura/u-case/blob/master/comparisons/interactor.rb)
-* [u-case](https://github.com/serradura/u-case/blob/master/comparisons/u-case.rb)
+* [interactor](https://github.com/serradura/u-case/blob/main/comparisons/interactor.rb)
+* [u-case](https://github.com/serradura/u-case/blob/main/comparisons/u-case.rb)
 
 [⬆️ Voltar para o índice](#índice-)
 
@@ -1357,17 +1357,17 @@ Confira as implementações do mesmo caso de uso com diferentes gems/abstraçõe
 
 > Rake tasks para demonstrar como lidar com os dados do usuário e como usar diferentes tipos de falha para controlar o fluxo do programa.
 >
-> Link: https://github.com/serradura/u-case/tree/master/examples/calculator
+> Link: https://github.com/serradura/u-case/tree/main/examples/calculator
 
 ### 3️⃣ Criação de usuários
 
 > Um exemplo de fluxo de caso de uso que define etapas para higienizar, validar e persistir seus dados de entrada.
 >
-> Link: https://github.com/serradura/u-case/blob/master/examples/users_creation.rb
+> Link: https://github.com/serradura/u-case/blob/main/examples/users_creation.rb
 
 ### 4️⃣ Interceptando exceções dentro dos casos de uso
 
-> Link: https://github.com/serradura/u-case/blob/master/examples/rescuing_exceptions.rb
+> Link: https://github.com/serradura/u-case/blob/main/examples/rescuing_exceptions.rb
 
 [⬆️ Voltar para o índice](#índice-)
 
@@ -1387,4 +1387,4 @@ A gem está disponível como código aberto nos termos da [licença MIT](https:/
 
 ## Código de conduta
 
-Espera-se que todos que interagem com o codebase do projeto `Micro::Case`, issue trackers, chat rooms and mailing lists sigam o [código de conduta](https://github.com/serradura/u-case/blob/master/CODE_OF_CONDUCT.md).
+Espera-se que todos que interagem com o codebase do projeto `Micro::Case`, issue trackers, chat rooms and mailing lists sigam o [código de conduta](https://github.com/serradura/u-case/blob/main/CODE_OF_CONDUCT.md).
