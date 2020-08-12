@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class Micro::Case::Result::StepsWithMethodsTest < Minitest::Test
+class Micro::Case::InternalStepsWithMethodsTest < Minitest::Test
   class ThirdSum < Micro::Case
     attribute :sum
 

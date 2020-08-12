@@ -157,7 +157,7 @@ module Micro
         def __call_proc(arg, expected)
           result = arg.arity.zero? ? arg.call : arg.call(data.clone)
 
-          return result if result.is_a?(Result)
+          return self if result === self
 
           raise Error::UnexpectedResult.new("#{Result.name}##{expected}")
         end
@@ -167,10 +167,10 @@ module Micro
             if arg.arity.zero?
               arg.call
             else
-              arg.call(attributes.is_a?(Hash) ? self.data.merge(attributes) : self.data)
+              arg.call(attributes.is_a?(Hash) ? data.merge(attributes) : data)
             end
 
-          return result if result.is_a?(Result)
+          return self if result === self
 
           raise Error::UnexpectedResult.new("#{use_case.class.name}#method(:#{arg.name})")
         end
