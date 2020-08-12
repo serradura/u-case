@@ -7,15 +7,16 @@ module Micro
     class Result
       Kind::Types.add(self)
 
-      @@transition_tracking_disabled = false
+      @@transition_tracking_enabled = true
 
       attr_reader :type, :data, :use_case
 
       alias value data
 
       def initialize
-        @__transitions__ = []
-        @__transitions_accessible_attributes__ = {}
+        @__transitions = []
+        @__transitions_accumulated_data = {}
+        @__transitions_accessible_attributes = {}
       end
 
       def to_ary
@@ -102,7 +103,7 @@ module Micro
           if use_case.is_a?(::Micro::Cases::Flow)
             use_case.call!(input: input, result: self)
           else
-            use_case.__call_and_set_transition__(self, input)
+            use_case.__new__(self, input).__call__
           end
         end
       end
@@ -115,11 +116,11 @@ module Micro
 
         raise Error::InvalidInvocationOfTheThenMethod unless ::Micro.case_or_flow?(arg)
 
-        failure? ? self : arg.__call_and_set_transition__(self, data)
+        failure? ? self : arg.__new__(self, data).__call__
       end
 
       def transitions
-        @__transitions__.clone
+        @__transitions.clone
       end
 
       FetchData = -> (data) do
@@ -139,40 +140,50 @@ module Micro
 
         raise Micro::Case::Error::InvalidResult.new(is_success, type, use_case) unless @data
 
-        __set_transition unless @@transition_tracking_disabled
+        if @@transition_tracking_enabled
+          @__transitions_accumulated_data.merge!(@data)
+
+          __set_transition
+        end
 
         self
       end
 
-      def __set_transitions_accessible_attributes__(attributes_data)
-        return attributes_data if @@transition_tracking_disabled
+      def __set_transitions_accessible_attributes__(arg)
+        return arg unless @@transition_tracking_enabled
 
-        attributes = Utils.symbolize_hash_keys(attributes_data)
+        if arg.is_a?(Hash)
+          attributes = Utils.symbolize_hash_keys(arg)
 
-        __update_transitions_accessible_attributes(attributes)
+          __update_transitions_accessible_attributes(attributes)
+        end
       end
 
       private
 
-        def __call_proc(arg, expected)
-          result = arg.arity.zero? ? arg.call : arg.call(data.clone)
+        def __call_with_accumulated_data(fn, opt = nil)
+          input =
+            __update_transitions_accessible_attributes(
+              opt ? opt.merge(@__transitions_accumulated_data) : @__transitions_accumulated_data
+            )
+
+          fn.arity.zero? ? fn.call : fn.call(input)
+        end
+
+        def __call_proc(fn, expected)
+          result = __call_with_accumulated_data(fn)
 
           return self if result === self
 
           raise Error::UnexpectedResult.new("#{Result.name}##{expected}")
         end
 
-        def __call_method(arg, attributes = nil)
-          result =
-            if arg.arity.zero?
-              arg.call
-            else
-              arg.call(attributes.is_a?(Hash) ? data.merge(attributes) : data)
-            end
+        def __call_method(methd, attributes = nil)
+          result = __call_with_accumulated_data(methd, attributes)
 
           return self if result === self
 
-          raise Error::UnexpectedResult.new("#{use_case.class.name}#method(:#{arg.name})")
+          raise Error::UnexpectedResult.new("#{use_case.class.name}#method(:#{methd.name})")
         end
 
         def __success_type?(expected_type)
@@ -184,8 +195,8 @@ module Micro
         end
 
         def __update_transitions_accessible_attributes(attributes)
-          @__transitions_accessible_attributes__.merge!(attributes)
-          @__transitions_accessible_attributes__
+          @__transitions_accessible_attributes.merge!(attributes)
+          @__transitions_accessible_attributes
         end
 
         def __set_transition
@@ -196,10 +207,10 @@ module Micro
 
           result = @success ? :success : :failure
 
-          @__transitions__ << {
+          @__transitions << {
             use_case: { class: use_case_class, attributes: use_case_attributes },
             result => { type: @type, result: data },
-            accessible_attributes: @__transitions_accessible_attributes__.keys
+            accessible_attributes: @__transitions_accessible_attributes.keys
           }
         end
 

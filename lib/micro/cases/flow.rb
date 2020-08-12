@@ -30,13 +30,11 @@ module Micro
       end
 
       def call!(input:, result:)
-        memo = input.is_a?(Hash) ? input.dup : Kind::Empty::HASH
-
-        first_result = @first_use_case.__call_and_set_transition__(result, input)
+        first_result = __next_use_case_result(@first_use_case, result, input)
 
         return first_result if @next_use_cases.empty?
 
-        __next_use_cases_result(first_result, memo)
+        __next_use_cases_result(first_result)
       end
 
       def call(input = Kind::Empty::HASH)
@@ -70,15 +68,11 @@ module Micro
           use_case.__new__(result, input).__call__
         end
 
-        def __next_use_cases_result(first_result, memo)
+        def __next_use_cases_result(first_result)
           @next_use_cases.reduce(first_result) do |result, use_case|
             break result if result.failure?
 
-            memo.merge!(result.value)
-
-            result.__set_transitions_accessible_attributes__(memo)
-
-            __next_use_case_result(use_case, result, memo)
+            __next_use_case_result(use_case, result, result.data)
           end
         end
     end
