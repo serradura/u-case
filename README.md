@@ -15,7 +15,7 @@ The main project goals are:
 4. Solve complex business logic, by allowing the composition of use cases (flow creation).
 5. Be fast and optimized (Check out the [benchmarks](#benchmarks) section).
 
-> Note: Check out the repo https://github.com/serradura/from-fat-controllers-to-use-cases to see a Rails application that uses this gem to handle its business logic.
+> **Note:** Check out the repo https://github.com/serradura/from-fat-controllers-to-use-cases to see a Rails application that uses this gem to handle its business logic.
 
 ## Documentation <!-- omit in toc -->
 
@@ -24,6 +24,8 @@ Version   | Documentation
 3.0.0.rc4 | https://github.com/serradura/u-case/blob/master/README.md
 2.6.0     | https://github.com/serradura/u-case/blob/v2.x/README.md
 1.1.0     | https://github.com/serradura/u-case/blob/v1.x/README.md
+
+> **Note:** Você entende português? 🇧🇷🇵🇹 Verifique o [README traduzido em pt-BR](https://github.com/serradura/u-case/blob/main/README.pt-BR.md).
 
 ## Table of Contents <!-- omit in toc -->
 - [Compatibility](#compatibility)

@@ -15,7 +15,7 @@ Principais objetivos deste projeto:
 4. Resolver regras de negócio complexas, ao permitir uma composição de casos de uso (criação de fluxos).
 5. Ser rápido e otimizado (verifique a [seção de benchmarks](#benchmarks)).
 
-> Nota: Verifique o repo https://github.com/serradura/from-fat-controllers-to-use-cases para ver uma aplicação Ruby on Rails que utiliza está gem para resolver as regras de negócio.
+> **Nota:** Verifique o repo https://github.com/serradura/from-fat-controllers-to-use-cases para ver uma aplicação Ruby on Rails que utiliza está gem para resolver as regras de negócio.
 
 ## Documentação <!-- omit in toc -->
 
