@@ -1,6 +1,6 @@
 ![Ruby](https://img.shields.io/badge/ruby-2.2+-ruby.svg?colorA=99004d&colorB=cc0066)
 [![Gem](https://img.shields.io/gem/v/u-case.svg?style=flat-square)](https://rubygems.org/gems/u-case)
-[![Build Status](https://travis-ci.com/serradura/u-case.svg?branch=master)](https://travis-ci.com/serradura/u-case)
+[![Build Status](https://travis-ci.com/serradura/u-case.svg?branch=main)](https://travis-ci.com/serradura/u-case)
 [![Maintainability](https://api.codeclimate.com/v1/badges/5c3c8ad1b0b943f88efd/maintainability)](https://codeclimate.com/github/serradura/u-case/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/5c3c8ad1b0b943f88efd/test_coverage)](https://codeclimate.com/github/serradura/u-case/test_coverage)
 
@@ -21,7 +21,7 @@ The main project goals are:
 
 Version   | Documentation
 --------- | -------------
-3.0.0.rc5 | https://github.com/serradura/u-case/blob/master/README.md
+3.0.0.rc5 | https://github.com/serradura/u-case/blob/main/README.md
 2.6.0     | https://github.com/serradura/u-case/blob/v2.x/README.md
 1.1.0     | https://github.com/serradura/u-case/blob/v1.x/README.md
 
@@ -1215,7 +1215,7 @@ end
 ```
 </details>
 
-https://github.com/serradura/u-case/blob/master/benchmarks/use_case/with_success_result.rb
+https://github.com/serradura/u-case/blob/main/benchmarks/use_case/with_success_result.rb
 
 #### Failure results
 
@@ -1260,13 +1260,13 @@ https://github.com/serradura/u-case/blob/master/benchmarks/use_case/with_success
 ```
 </details>
 
-https://github.com/serradura/u-case/blob/master/benchmarks/use_case/with_failure_result.rb
+https://github.com/serradura/u-case/blob/main/benchmarks/use_case/with_failure_result.rb
 
 ---
 
 ### `Micro::Cases::Flow` (v3.0.0)
 
-| Gems / Abstraction      | [Success results](https://github.com/serradura/u-case/blob/master/benchmarks/flow/with_success_result.rb#L40) | [Failure results](https://github.com/serradura/u-case/blob/master/benchmarks/flow/with_failure_result.rb#L40) |
+| Gems / Abstraction      | [Success results](https://github.com/serradura/u-case/blob/main/benchmarks/flow/with_success_result.rb#L40) | [Failure results](https://github.com/serradura/u-case/blob/main/benchmarks/flow/with_failure_result.rb#L40) |
 | ------------------------------------------- | ----------------: | ----------------: |
 | Micro::Case internal flow (private methods) | _**The Fastest**_ | _**The Fastest**_ |
 | Micro::Case `then` method                   |      1.48x slower |         0x slower |
@@ -1330,14 +1330,14 @@ https://github.com/serradura/u-case/blob/master/benchmarks/use_case/with_failure
 ```
 </details>
 
-https://github.com/serradura/u-case/tree/master/benchmarks/flow
+https://github.com/serradura/u-case/tree/main/benchmarks/flow
 
 ### Comparisons
 
 Check it out implementations of the same use case with different gems/abstractions.
 
-* [interactor](https://github.com/serradura/u-case/blob/master/comparisons/interactor.rb)
-* [u-case](https://github.com/serradura/u-case/blob/master/comparisons/u-case.rb)
+* [interactor](https://github.com/serradura/u-case/blob/main/comparisons/interactor.rb)
+* [u-case](https://github.com/serradura/u-case/blob/main/comparisons/u-case.rb)
 
 [⬆️ Back to Top](#table-of-contents-)
 
@@ -1353,17 +1353,17 @@ Check it out implementations of the same use case with different gems/abstractio
 
 > Rake tasks to demonstrate how to handle user data, and how to use different failure types to control the program flow.
 >
-> Link: https://github.com/serradura/u-case/tree/master/examples/calculator
+> Link: https://github.com/serradura/u-case/tree/main/examples/calculator
 
 ### 3️⃣ Users creation
 
 > An example of a use case flow that defines steps to sanitize, validate, and persist its input data.
 >
-> Link: https://github.com/serradura/u-case/blob/master/examples/users_creation.rb
+> Link: https://github.com/serradura/u-case/blob/main/examples/users_creation.rb
 
 ### 4️⃣ Rescuing exceptions inside of the use cases
 
-> Link: https://github.com/serradura/u-case/blob/master/examples/rescuing_exceptions.rb
+> Link: https://github.com/serradura/u-case/blob/main/examples/rescuing_exceptions.rb
 
 [⬆️ Back to Top](#table-of-contents-)
 
@@ -1383,4 +1383,4 @@ The gem is available as open source under the terms of the [MIT License](https:/
 
 ## Code of Conduct
 
-Everyone interacting in the Micro::Case project’s codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/serradura/u-case/blob/master/CODE_OF_CONDUCT.md).
+Everyone interacting in the Micro::Case project’s codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/serradura/u-case/blob/main/CODE_OF_CONDUCT.md).
