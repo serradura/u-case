@@ -48,7 +48,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
           assert_success_result(result, value: { text: '8' })
 
           assert_equal(
-            [ConvertTextToNumber, Double::Flow_Step, ConvertNumberToText],
+            [ConvertTextToNumber, Double::Self, ConvertNumberToText],
             Double.use_cases
           )
 

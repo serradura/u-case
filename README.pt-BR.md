@@ -4,59 +4,58 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/5c3c8ad1b0b943f88efd/maintainability)](https://codeclimate.com/github/serradura/u-case/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/5c3c8ad1b0b943f88efd/test_coverage)](https://codeclimate.com/github/serradura/u-case/test_coverage)
 
-<img src="./assets/ucase_logo_v1.png" alt="u-case - Create simple and powerful use cases as Ruby objects.">
+<img src="./assets/ucase_logo_v1.png" alt="u-case - Crie simples e poderosos casos de uso como objetos em Ruby.">
 
-Create simple and powerful use cases as Ruby objects.
+Crie simples e poderosos casos de uso como objetos em Ruby.
 
-The main project goals are:
-1. Easy to use and easy to learn (input **>>** process **>>** output).
-2. Promote immutability (transforming data instead of modifying it) and data integrity.
-3. No callbacks (ex: before, after, around) to avoid code indirections that could compromise the state and understanding of application flows.
-4. Solve complex business logic, by allowing the composition of use cases (flow creation).
-5. Be fast and optimized (Check out the [benchmarks](#benchmarks) section).
+Principais objetivos deste projeto:
+1. Fácil de usar e aprender ( entrada **>>** processamento **>>** saída ).
+2. Promover imutabilidade (transformar dados ao invés de modificar) e integridade de dados.
+3. Nada de callbacks (ex: before, after, around) para evitar indireções no código que possam comprometer o estado e entendimento dos fluxos da aplicação.
+4. Resolver regras de negócio complexas, ao permitir uma composição de casos de uso (criação de fluxos).
+5. Ser rápido e otimizado (verifique a [seção de benchmarks](#benchmarks)).
 
-> **Note:** Check out the repo https://github.com/serradura/from-fat-controllers-to-use-cases to see a Rails application that uses this gem to handle its business logic.
+> **Nota:** Verifique o repo https://github.com/serradura/from-fat-controllers-to-use-cases para ver uma aplicação Ruby on Rails que utiliza está gem para resolver as regras de negócio.
 
-## Documentation <!-- omit in toc -->
+## Documentação <!-- omit in toc -->
 
-Version   | Documentation
+Versão    | Documentação
 --------- | -------------
 3.0.0.rc4 | https://github.com/serradura/u-case/blob/master/README.md
 2.6.0     | https://github.com/serradura/u-case/blob/v2.x/README.md
 1.1.0     | https://github.com/serradura/u-case/blob/v1.x/README.md
 
-> **Note:** Você entende português? 🇧🇷🇵🇹 Verifique o [README traduzido em pt-BR](https://github.com/serradura/u-case/blob/main/README.pt-BR.md).
-
-## Table of Contents <!-- omit in toc -->
-- [Compatibility](#compatibility)
-- [Dependencies](#dependencies)
-- [Installation](#installation)
-- [Usage](#usage)
-  - [`Micro::Case` - How to define a use case?](#microcase---how-to-define-a-use-case)
-  - [`Micro::Case::Result` - What is a use case result?](#microcaseresult---what-is-a-use-case-result)
-    - [What are the default result types?](#what-are-the-default-result-types)
-    - [How to define custom result types?](#how-to-define-custom-result-types)
-    - [Is it possible to define a custom type without a result data?](#is-it-possible-to-define-a-custom-type-without-a-result-data)
-    - [How to use the result hooks?](#how-to-use-the-result-hooks)
-    - [Why the hook usage without a defined type exposes the result itself?](#why-the-hook-usage-without-a-defined-type-exposes-the-result-itself)
-      - [Using decomposition to access the result data and type](#using-decomposition-to-access-the-result-data-and-type)
-    - [What happens if a result hook was declared multiple times?](#what-happens-if-a-result-hook-was-declared-multiple-times)
-    - [How to use the `Micro::Case::Result#then` method?](#how-to-use-the-microcaseresultthen-method)
-      - [What does happens when a `Micro::Case::Result#then` receives a block?](#what-does-happens-when-a-microcaseresultthen-receives-a-block)
-      - [How to make attributes data injection using this feature?](#how-to-make-attributes-data-injection-using-this-feature)
-  - [`Micro::Cases::Flow` - How to compose use cases?](#microcasesflow---how-to-compose-use-cases)
-    - [Is it possible to compose a flow with other flows?](#is-it-possible-to-compose-a-flow-with-other-flows)
-    - [Is it possible a flow accumulates its input and merges each success result to use as the argument of the next use cases?](#is-it-possible-a-flow-accumulates-its-input-and-merges-each-success-result-to-use-as-the-argument-of-the-next-use-cases)
-    - [How to understand what is happening during a flow execution?](#how-to-understand-what-is-happening-during-a-flow-execution)
+## Índice <!-- omit in toc -->
+- [Compatibilidade](#compatibilidade)
+- [Dependências](#dependências)
+- [Instalação](#instalação)
+- [Uso](#uso)
+  - [`Micro::Case` - Como definir um caso de uso?](#microcase---como-definir-um-caso-de-uso)
+  - [`Micro::Case::Result` - O que é o resultado de um caso de uso?](#microcaseresult---o-que-é-o-resultado-de-um-caso-de-uso)
+    - [O que são os tipos de resultados?](#o-que-são-os-tipos-de-resultados)
+    - [Como difinir tipos customizados de resultados?](#como-difinir-tipos-customizados-de-resultados)
+    - [É possíve definir um tipo sem definit os dados do resultado?](#é-possíve-definir-um-tipo-sem-definit-os-dados-do-resultado)
+    - [Como utilizar os hooks dos resultados?](#como-utilizar-os-hooks-dos-resultados)
+    - [Por que o hook sem um tipo definido expõe o próprio resultado?](#por-que-o-hook-sem-um-tipo-definido-expõe-o-próprio-resultado)
+      - [Usando decomposição para acessar os dados e tipo do resultado](#usando-decomposição-para-acessar-os-dados-e-tipo-do-resultado)
+    - [O que acontece se um hook de resultado for declarado múltiplas vezes?](#o-que-acontece-se-um-hook-de-resultado-for-declarado-múltiplas-vezes)
+    - [Como usar o método `Micro::Case::Result#then`?](#como-usar-o-método-microcaseresultthen)
+      - [O que acontece quando um `Micro::Case::Result#then` recebe um bloco?](#o-que-acontece-quando-um-microcaseresultthen-recebe-um-bloco)
+      - [Como fazer injeção de dependência usando este recurso?](#como-fazer-injeção-de-dependência-usando-este-recurso)
+  - [`Micro::Cases::Flow` - Como compor casos de uso?](#microcasesflow---como-compor-casos-de-uso)
+    - [É possível compor um fluxo com outros fluxos?](#é-possível-compor-um-fluxo-com-outros-fluxos)
+    - [É possível que um fluxo acumule sua entrada e mescle cada resultado de sucesso para usar como argumento dos próximos casos de uso?](#é-possível-que-um-fluxo-acumule-sua-entrada-e-mescle-cada-resultado-de-sucesso-para-usar-como-argumento-dos-próximos-casos-de-uso)
+    - [Como entender o que aconteceu durante a execução de um flow?](#como-entender-o-que-aconteceu-durante-a-execução-de-um-flow)
       - [`Micro::Case::Result#transitions` schema](#microcaseresulttransitions-schema)
-      - [Is it possible disable the `Micro::Case::Result#transitions`?](#is-it-possible-disable-the-microcaseresulttransitions)
-    - [Is it possible to declare a flow that includes the use case itself as a step?](#is-it-possible-to-declare-a-flow-that-includes-the-use-case-itself-as-a-step)
-  - [`Micro::Case::Strict` - What is a strict use case?](#microcasestrict---what-is-a-strict-use-case)
-  - [`Micro::Case::Safe` - Is there some feature to auto handle exceptions inside of a use case or flow?](#microcasesafe---is-there-some-feature-to-auto-handle-exceptions-inside-of-a-use-case-or-flow)
-    - [`Micro::Cases::Safe::Flow`](#microcasessafeflow)
+      - [É possível desabilitar o `Micro::Case::Result#transitions`?](#é-possível-desabilitar-o-microcaseresulttransitions)
+    - [É possível declarar um fluxo que inclui o próprio caso de uso?](#é-possível-declarar-um-fluxo-que-inclui-o-próprio-caso-de-uso)
+  - [`Micro::Case::Strict` - O que é um caso de uso estrito?](#microcasestrict---o-que-é-um-caso-de-uso-estrito)
+  - [`Micro::Case::Safe` - Existe algum recurso para lidar automaticamente com exceções dentro de um caso de uso ou fluxo?](#microcasesafe---existe-algum-recurso-para-lidar-automaticamente-com-exceções-dentro-de-um-caso-de-uso-ou-fluxo)
     - [`Micro::Case::Result#on_exception`](#microcaseresulton_exception)
-  - [`u-case/with_activemodel_validation` - How to validate the use case attributes?](#u-casewith_activemodel_validation---how-to-validate-the-use-case-attributes)
-    - [If I enabled the auto validation, is it possible to disable it only in specific use cases?](#if-i-enabled-the-auto-validation-is-it-possible-to-disable-it-only-in-specific-use-cases)
+    - [`Micro::Cases::Safe::Flow`](#microcasessafeflow)
+    - [`Micro::Case::Result#on_exception`](#microcaseresulton_exception-1)
+  - [`u-case/with_activemodel_validation` - Como validar os atributos do caso de uso?](#u-casewith_activemodel_validation---como-validar-os-atributos-do-caso-de-uso)
+    - [Se eu habilitei a validação automática, é possível desabilitá-la apenas em casos de uso específicos?](#se-eu-habilitei-a-validação-automática-é-possível-desabilitá-la-apenas-em-casos-de-uso-específicos)
     - [`Kind::Validator`](#kindvalidator)
 - [`Micro::Case.config`](#microcaseconfig)
 - [Benchmarks](#benchmarks)
@@ -64,18 +63,18 @@ Version   | Documentation
     - [Success results](#success-results)
     - [Failure results](#failure-results)
   - [`Micro::Cases::Flow` (v3.0.0)](#microcasesflow-v300)
-  - [Comparisons](#comparisons)
-- [Examples](#examples)
+  - [Comparações](#comparações)
+- [Exemplos](#exemplos)
   - [1️⃣ Rails App (API)](#1️⃣-rails-app-api)
   - [2️⃣ CLI calculator](#2️⃣-cli-calculator)
-  - [3️⃣ Users creation](#3️⃣-users-creation)
-  - [4️⃣ Rescuing exceptions inside of the use cases](#4️⃣-rescuing-exceptions-inside-of-the-use-cases)
-- [Development](#development)
-- [Contributing](#contributing)
-- [License](#license)
-- [Code of Conduct](#code-of-conduct)
+  - [3️⃣ Criação de usuários](#3️⃣-criação-de-usuários)
+  - [4️⃣ Interceptando exceções dentro dos casos de uso](#4️⃣-interceptando-exceções-dentro-dos-casos-de-uso)
+- [Desenvolvimento](#desenvolvimento)
+- [Contribuindo](#contribuindo)
+- [Licença](#licença)
+- [Código de conduta](#código-de-conduta)
 
-## Compatibility
+## Compatibilidade
 
 | u-case         | branch  | ruby     |  activemodel  |
 | -------------- | ------- | -------- | ------------- |
@@ -83,49 +82,49 @@ Version   | Documentation
 | 2.6.0          | v2.x    | >= 2.2.0 | >= 3.2, < 6.1 |
 | 1.1.0          | v1.x    | >= 2.2.0 | >= 3.2, < 6.1 |
 
-> Note: The activemodel is an optional dependency, this module [can be enabled](#u-casewith_activemodel_validation---how-to-validate-use-case-attributes) to validate the use cases' attributes.
+> Nota: O activemodel é uma dependência opcional, esse módulo que [pode ser habilitado](#u-casewith_activemodel_validation---como-validar-os-atributos-do-caso-de-uso) para validar os atributos dos casos de uso.
 
-## Dependencies
+## Dependências
 
-1. [`kind`](https://github.com/serradura/kind) gem.
+1. Gem [`kind`](https://github.com/serradura/kind).
 
-    A simple type system (at runtime) for Ruby.
+    Sistema de tipos simples (em runtime) para Ruby.
 
-    It is used to validate some internal u-case's methods input. This gem also exposes an  [`ActiveModel validator`](https://github.com/serradura/kind#kindvalidator-activemodelvalidations) when requiring the [`u-case/with_activemodel_validation`](#u-casewith_activemodel_validation---how-to-validate-use-case-attributes) module, or when the [`Micro::Case.config`](#microcaseconfig) was used to enable it. Lastly, two type checkers are available through it: [`Kind::Of::Micro::Case`, `Kind::Of::Micro::Case::Result`](https://github.com/serradura/kind#registering-new-custom-type-checker).
+    É usado para validar os inputs de alguns métodos do u-case, além de expor um validador de tipos através do [`activemodel validation`](https://github.com/serradura/kind#kindvalidator-activemodelvalidations) ([veja como habilitar]((#u-casewith_activemodel_validation---how-to-validate-use-case-attributes))). Por fim, ele também expõe dois verificadores de tipo: [`Kind::Of::Micro::Case`, `Kind::Of::Micro::Case::Result`](https://github.com/serradura/kind#registering-new-custom-type-checker).
 2. [`u-attributes`](https://github.com/serradura/u-attributes) gem.
 
-    This gem allows defining read-only attributes, that is, your objects will have only getters to access their attributes data.
-    It is used to define the use case attributes.
+    Essa gem permite definir atributos de leitura (read-only), ou seja, os seus objetos só terão getters para acessar os dados dos seus atributos.
+    Ela é usada para definir os atributos dos casos de uso.
 
-## Installation
+## Instalação
 
-Add this line to your application's Gemfile:
+Adicione essa linha ao Gemfile da sua aplicação:
 
 ```ruby
 gem 'u-case', '~> 3.0.0.rc4'
 ```
 
-And then execute:
+E então execute:
 
     $ bundle
 
-Or install it yourself as:
+Ou instale manualmente:
 
     $ gem install u-case --pre
 
-## Usage
+## Uso
 
-### `Micro::Case` - How to define a use case?
+### `Micro::Case` - Como definir um caso de uso?
 
 ```ruby
 class Multiply < Micro::Case
-  # 1. Define its input as attributes
+  # 1. Defina o input como atributos
   attributes :a, :b
 
-  # 2. Define the method `call!` with its business logic
+  # 2. Defina o método `call!` com a regra de negócio
   def call!
 
-    # 3. Wrap the use case output using the `Success(result: *)` or `Failure(result: *)` methods
+    # 3. Envolva o resultado do caso de uso com os métodos `Success(result: *)` ou `Failure(result: *)`
     if a.is_a?(Numeric) && b.is_a?(Numeric)
       Success result: { number: a * b }
     else
@@ -134,56 +133,56 @@ class Multiply < Micro::Case
   end
 end
 
-#========================#
-# Performing an use case #
-#========================#
+#===========================#
+# Executando um caso de uso #
+#===========================#
 
-# Success result
+# Resultado de sucesso
 
 result = Multiply.call(a: 2, b: 2)
 
 result.success? # true
 result.data     # { number: 4 }
 
-# Failure result
+# Resultado de falha
 
 bad_result = Multiply.call(a: 2, b: '2')
 
 bad_result.failure? # true
 bad_result.data     # { message: "`a` and `b` attributes must be numeric" }
 
-# Note:
+# Nota:
 # ----
-# The result of a Micro::Case.call is an instance of Micro::Case::Result
+# O resultado de um Micro::Case.call é uma instância de Micro::Case::Result
 ```
 
-[⬆️ Back to Top](#table-of-contents-)
+[⬆️ Voltar para o índice](#índice-)
 
-### `Micro::Case::Result` - What is a use case result?
+### `Micro::Case::Result` - O que é o resultado de um caso de uso?
 
-A `Micro::Case::Result` stores the use cases output data. These are their main methods:
-- `#success?` returns true if is a successful result.
-- `#failure?` returns true if is an unsuccessful result.
-- `#use_case` returns the use case responsible for it. This feature is handy to handle a flow failure (this topic will be covered ahead).
-- `#type` a Symbol which gives meaning for the result, this is useful to declare different types of failures or success.
-- `#data` the result data itself.
-- `#[]` and `#values_at` are shortcuts to access the `#data` values.
-- `#key?` returns `true` if the key is present in `#data`.
-- `#value?` returns `true` if the given value is present in `#data`.
-- `#slice` returns a new hash that includes only the given keys. If the given keys don't exist, an empty hash is returned.
-- `#on_success` or `#on_failure` are hook methods that help you to define the application flow.
-- `#then` this method will allow applying a new use case if the current result was a success. The idea of this feature is to allow the creation of dynamic flows.
-- `#transitions` returns an array with all of transformations wich a result [has during a flow](#how-to-understand-what-is-happening-during-a-flow-execution).
+Um `Micro::Case::Result` armazena os dados de output de um caso de uso. Esses são seus métodos:
+- `#success?` retorna true se for um resultado de sucesso.
+- `#failure?` retorna true se for um resultado de falha.
+- `#use_case` retorna o caso de uso reponsável pelo resultado. Essa funcionalidade é útil para lidar com falhas em flows (esse tópico será abordado mais a frente).
+- `#type` retorna um Symbol que dá significado ao resultado, isso é útil para declarar diferentes tipos de falha e sucesso.
+- `#data` os dados do resultado (um Hash).
+- `#[]` e `#values_at` são atalhos para acessar as propriedades do `#data`.
+- `#key?` retorna `true` se a chave estiver present no `#data`.
+- `#value?` retorna `true` se o valor estiver present no `#data`.
+- `#slice` retorna um novo hash que inclui apenas as chaves fornecidas. Se as chaves fornecidas não existirem, um hash vazio será retornado.
+- `#on_success` or `#on_failure` são métodos de hooks que te auxiliam a definir o fluxo da aplicação.
+- `#then` este método permite aplicar novos casos de uso ao resultado atual se ele for sucesso. A idia dessa feature é a criação de fluxos dinâmicos.
+- `#transitions` retorna um array com todoas as transformações que um resultado [teve durante um flow](#como-entender-o-que-aconteceu-durante-a-execução-de-um-flow).
 
-> **Note:** for backward compatibility, you could use the `#value` method as an alias of `#data` method.
+> **Nota:** por conta de retrocompatibilidade, você pode usar o método `#value` como um alias para o método `#data`.
 
-[⬆️ Back to Top](#table-of-contents-)
+[⬆️ Voltar para o índice](#índice-)
 
-#### What are the default result types?
+#### O que são os tipos de resultados?
 
-Every result has a type, and these are their default values:
-- `:ok` when success
-- `:error` or `:exception` when failures
+Todo resultado tem um tipo (type), e estão são os valores padrões:
+- `:ok` quando sucesso
+- `:error` or `:exception` quando falhas
 
 ```ruby
 class Divide < Micro::Case
@@ -204,7 +203,7 @@ class Divide < Micro::Case
   end
 end
 
-# Success result
+# Resultado de sucesso
 
 result = Divide.call(a: 2, b: 2)
 
@@ -213,7 +212,7 @@ result.data     # { number: 1 }
 result.success? # true
 result.use_case # #<Divide:0x0000 @__attributes={"a"=>2, "b"=>2}, @a=2, @b=2, @__result=...>
 
-# Failure result (type == :error)
+# Resultado de falha (type == :error)
 
 bad_result = Divide.call(a: 2, b: '2')
 
@@ -222,7 +221,7 @@ bad_result.data     # { invalid_attributes: { "b"=>"2" } }
 bad_result.failure? # true
 bad_result.use_case # #<Divide:0x0000 @__attributes={"a"=>2, "b"=>"2"}, @a=2, @b="2", @__result=...>
 
-# Failure result (type == :exception)
+# Resultado de falha (type == :exception)
 
 err_result = Divide.call(a: 2, b: 0)
 
@@ -231,17 +230,17 @@ err_result.data     # { exception: <ZeroDivisionError: divided by 0> }
 err_result.failure? # true
 err_result.use_case # #<Divide:0x0000 @__attributes={"a"=>2, "b"=>0}, @a=2, @b=0, @__result=#<Micro::Case::Result:0x0000 @use_case=#<Divide:0x0000 ...>, @type=:exception, @value=#<ZeroDivisionError: divided by 0>, @success=false>
 
-# Note:
+# Nota:
 # ----
-# Any Exception instance which is wrapped by
-# the Failure(result: *) method will receive `:exception` instead of the `:error` type.
+# Toda instância de Exception será envolvida pelo método
+# Failure(result: *) que receberá o tipo `:exception` ao invés de `:error`.
 ```
 
-[⬆️ Back to Top](#table-of-contents-)
+[⬆️ Voltar para o índice](#índice-)
 
-#### How to define custom result types?
+#### Como difinir tipos customizados de resultados?
 
-Answer: Use a symbol as the argument of `Success()`, `Failure()` methods and declare the `result:` keyword to set the result data.
+Resposta: Use um Symbol com argumento dos métodos `Success()`, `Failure()` e declare o `result:` keyword para definir os dados do resultado.
 
 ```ruby
 class Multiply < Micro::Case
@@ -258,7 +257,7 @@ class Multiply < Micro::Case
   end
 end
 
-# Success result
+# Resultado de sucesso
 
 result = Multiply.call(a: 3, b: 2)
 
@@ -266,7 +265,7 @@ result.type     # :ok
 result.data     # { number: 6 }
 result.success? # true
 
-# Failure result
+# Resultado de falha
 
 bad_result = Multiply.call(a: 3, b: '2')
 
@@ -275,11 +274,11 @@ bad_result.data     # { attributes: {"b"=>"2"} }
 bad_result.failure? # true
 ```
 
-[⬆️ Back to Top](#table-of-contents-)
+[⬆️ Voltar para o índice](#índice-)
 
-#### Is it possible to define a custom type without a result data?
+#### É possíve definir um tipo sem definit os dados do resultado?
 
-Answer: Yes, it is possible. But this will have special behavior because the result data will be a hash with the given type as the key and `true` as its value.
+Resposta: Sim, é possível. Mas isso terá um comportamento especial por conta dos dados do resultado ser um hash com o tipo definido como chave e `true` como o valor.
 
 ```ruby
 class Multiply < Micro::Case
@@ -301,19 +300,20 @@ result.data                # { :invalid_data => true }
 result.type                # :invalid_data
 result.use_case.attributes # {"a"=>2, "b"=>"2"}
 
-# Note:
+# Nota:
 # ----
-# This feature is handy to handle failures in a flow
-# (this topic will be covered ahead).
+# Essa funcionalidade será muito útil para lidar com resultados de falha de um Flow
+# (este tópico será coberto em breve).
 ```
 
-[⬆️ Back to Top](#table-of-contents-)
+[⬆️ Voltar para o índice](#índice-)
 
-#### How to use the result hooks?
+#### Como utilizar os hooks dos resultados?
 
-As [mentioned earlier](#microcaseresult---what-is-a-use-case-result), the `Micro::Case::Result` has two methods to improve the application flow control. They are: `#on_success`, `on_failure`.
+Como [mencionando anteriormente](#microcaseresult---o-que-é-o-resultado-de-um-caso-de-uso), o `Micro::Case::Result` tem dois métodoso para melhorar o controle do fluxo da aplicação. São eles:
+`#on_success`, `on_failure`.
 
-The examples below show how to use them:
+Os exemplos abaixo demonstram eles em uso:
 
 ```ruby
 class Double < Micro::Case
@@ -328,7 +328,7 @@ class Double < Micro::Case
 end
 
 #================================#
-# Printing the output if success #
+# Imprimindo o output se sucesso #
 #================================#
 
 Double
@@ -337,12 +337,12 @@ Double
   .on_failure(:invalid) { |result| raise TypeError, result[:msg] }
   .on_failure(:lte_zero) { |result| raise ArgumentError, result[:msg] }
 
-# The output will be:
+# O output será:
 #   6
 
-#=============================#
-# Raising an error if failure #
-#=============================#
+#===================================#
+# Lançando um erro em caso de falha #
+#===================================#
 
 Double
   .call(number: -1)
@@ -351,19 +351,19 @@ Double
   .on_failure(:invalid) { |result| raise TypeError, result[:msg] }
   .on_failure(:lte_zero) { |result| raise ArgumentError, result[:msg] }
 
-# The outputs will be:
+# O output será:
 #
-# 1. It will print the message: Double was the use case responsible for the failure
-# 2. It will raise the exception: ArgumentError (the number must be greater than 0)
+# 1. Imprimirá a mensagem: Double was the use case responsible for the failure
+# 2. Lançará a exception: ArgumentError (the number must be greater than 0)
 
-# Note:
+# Nota:
 # ----
-# The use case responsible for the result will always be accessible as the second hook argument
+# O caso de uso responsável estará sempre acessível como o segundo argumento do hook
 ```
 
-#### Why the hook usage without a defined type exposes the result itself?
+#### Por que o hook sem um tipo definido expõe o próprio resultado?
 
-Answer: To allow you to define how to handle the program flow using some conditional statement like an `if` or `case when`.
+Resposta: Para permitir que você defina o controle de fluxo da aplicação usando alguma estrutura condicional como um `if` ou `case when`.
 
 ```ruby
 class Double < Micro::Case
@@ -387,20 +387,20 @@ Double
     end
   end
 
-# The output will be an exception:
+# O output será uma exception:
 #
 # ArgumentError (number `-1` must be greater than 0)
 ```
 
-> **Note:** The same that was did in the previous examples could be done with `#on_success` hook!
+> **Nota:** O mesmo que foi feito no exemplo anterior poderá ser feito com o hook `#on_success`!
 
-##### Using decomposition to access the result data and type
+##### Usando decomposição para acessar os dados e tipo do resultado
 
-The syntax to decompose an Array can be used in assignments and in method/block arguments.
-If you doesn't know it, check out the [Ruby doc](https://ruby-doc.org/core-2.2.0/doc/syntax/assignment_rdoc.html#label-Array+Decomposition).
+A sintaxe para decompor um Array pode ser usada na declaração de variáveis e nos argumentos de métodos/blocos.
+Se você não sabia disso, confira a [documentação do Ruby](https://ruby-doc.org/core-2.2.0/doc/syntax/assignment_rdoc.html#label-Array+Decomposition).
 
 ```ruby
-# The object exposed in the hook without a type is a Micro::Case::Result and it can be decomposed. e.g:
+# O objeto exposto em hook sem um tipo é um Micro::Case::Result e ele pode ser decomposto. Exemplo:
 
 Double
   .call(number: -2)
@@ -412,18 +412,18 @@ Double
     end
   end
 
-# The output will be the exception:
+# O output será a exception:
 #
 # ArgumentError (the number `-2` must be greater than 0)
 ```
 
-> **Note:** The same that was did in the previous examples could be done with `#on_success` hook!
+> **Nota:** O que mesmo pode ser feito com o `#on_success` hook!
 
-[⬆️ Back to Top](#table-of-contents-)
+[⬆️ Voltar para o índice](#índice-)
 
-#### What happens if a result hook was declared multiple times?
+#### O que acontece se um hook de resultado for declarado múltiplas vezes?
 
-Answer: The hook always will be triggered if it matches the result type.
+Resposta: Se o tipo do resultado for identificado o hook será sempre executado.
 
 ```ruby
 class Double < Micro::Case
@@ -455,9 +455,9 @@ accum # 24
 result[:number] * 4 == accum # true
 ```
 
-#### How to use the `Micro::Case::Result#then` method?
+#### Como usar o método `Micro::Case::Result#then`?
 
-This method allows you to create dynamic flows, so, with it, you can add new use cases or flows to continue the result transformation. e.g:
+Este método permite você criar fluxos dinâmicos, então, com ele, você pode adicionar novos casos de uso ou fluxos para continuar a transformação de um resultado. por exemplo:
 
 ```ruby
 class ForbidNegativeNumber < Micro::Case
@@ -497,13 +497,13 @@ result2.data     # {'number' => 4}
 result2.success? # true
 ```
 
-> **Note:** this method changes the [`Micro::Case::Result#transitions`](#how-to-understand-what-is-happening-during-a-flow-execution).
+> **Nota:** este método altera o [`Micro::Case::Result#transitions`](#como-entender-o-que-aconteceu-durante-a-execução-de-um-flow).
 
-[⬆️ Back to Top](#table-of-contents-)
+[⬆️ Voltar para o índice](#índice-)
 
-##### What does happens when a `Micro::Case::Result#then` receives a block?
+##### O que acontece quando um `Micro::Case::Result#then` recebe um bloco?
 
-It will yields self (a `Micro::Case::Result` instance) to the block, and will return the output of the block instead of itself. e.g:
+Ele passará o próprio resultado (uma instância do `Micro::Case::Result`) como argumento do bloco, e retornará o output do bloco ao invés dele mesmo. e.g:
 
 ```ruby
 class Add < Micro::Case
@@ -537,11 +537,11 @@ failure_result =
 puts failure_result # 0
 ```
 
-[⬆️ Back to Top](#table-of-contents-)
+[⬆️ Voltar para o índice](#índice-)
 
-##### How to make attributes data injection using this feature?
+##### Como fazer injeção de dependência usando este recurso?
 
-Pass a Hash as the second argument of the `Micro::Case::Result#then` method.
+Passe um `Hash` como segundo argumento do método `Micro::Case::Result#then`.
 
 ```ruby
 Todo::FindAllForUser
@@ -551,11 +551,11 @@ Todo::FindAllForUser
   .on_success { |result| render_json(200, data: result[:todos]) }
 ```
 
-[⬆️ Back to Top](#table-of-contents-)
+[⬆️ Voltar para o índice](#índice-)
 
-### `Micro::Cases::Flow` - How to compose use cases?
+### `Micro::Cases::Flow` - Como compor casos de uso?
 
-We call as **flow** a composition of use cases. The main idea of this feature is to use/reuse use cases as steps of a new use case. e.g.
+Chamamos de **fluxo** uma composição de casos de uso. A ideia principal desse recurso é usar/reutilizar casos de uso como etapas de um novo caso de uso. Exemplo:
 
 ```ruby
 module Steps
@@ -596,9 +596,9 @@ module Steps
   end
 end
 
-#-------------------------------------------#
-# Creating a flow using Micro::Cases.flow() #
-#-------------------------------------------#
+#-----------------------------------------#
+# Criando um flow com Micro::Cases.flow() #
+#-----------------------------------------#
 
 Add2ToAllNumbers = Micro::Cases.flow([
   Steps::ConvertTextToNumbers,
@@ -610,9 +610,9 @@ result = Add2ToAllNumbers.call(numbers: %w[1 1 2 2 3 4])
 result.success? # true
 result.data    # {:numbers => [3, 3, 4, 4, 5, 6]}
 
-#-------------------------------#
-# Creating a flow using classes #
-#-------------------------------#
+#--------------------------------#
+# Criando um flow usando classes #
+#--------------------------------#
 
 class DoubleAllNumbers < Micro::Case
   flow Steps::ConvertTextToNumbers,
@@ -624,7 +624,7 @@ DoubleAllNumbers.
   on_failure { |result| puts result[:message] } # "numbers must contain only numeric types"
 ```
 
-When happening a failure, the use case responsible will be accessible in the result.
+Ao ocorrer uma falha, o caso de uso responsável ficará acessível no resultado. Exemplo:
 
 ```ruby
 result = DoubleAllNumbers.call(numbers: %w[1 1 b 2 3 4])
@@ -637,11 +637,11 @@ result.on_failure do |_message, use_case|
 end
 ```
 
-[⬆️ Back to Top](#table-of-contents-)
+[⬆️ Voltar para o índice](#índice-)
 
-#### Is it possible to compose a flow with other flows?
+#### É possível compor um fluxo com outros fluxos?
 
-Answer: Yes, it is possible.
+Resposta: Sim, é possível.
 
 ```ruby
 module Steps
@@ -709,13 +709,13 @@ DoubleAllNumbersAndSquareAndAdd2
   .on_success { |result| p result[:numbers] } # [6, 6, 18, 18, 38, 66]
 ```
 
-> **Note:** You can blend any [approach](#microcasesflow---how-to-compose-use-cases) to create use case flows - [examples](https://github.com/serradura/u-case/blob/714c6b658fc6aa02617e6833ddee09eddc760f2a/test/micro/cases/flow/blend_test.rb#L5-L35).
+> **Nota:** Você pode mesclar qualquer [approach](#é-possível-compor-um-fluxo-com-outros-fluxos) para criar flows - [exemplos](https://github.com/serradura/u-case/blob/714c6b658fc6aa02617e6833ddee09eddc760f2a/test/micro/cases/flow/blend_test.rb#L5-L35).
 
-[⬆️ Back to Top](#table-of-contents-)
+[⬆️ Voltar para o índice](#índice-)
 
-#### Is it possible a flow accumulates its input and merges each success result to use as the argument of the next use cases?
+#### É possível que um fluxo acumule sua entrada e mescle cada resultado de sucesso para usar como argumento dos próximos casos de uso?
 
-Answer: Yes, it is possible! Look at the example below to understand how the data accumulation works inside of a flow execution.
+Resposta: Sim, é possível! Veja o exemplo abaixo para entender como funciona o acumulp de dados dentro da execução de um fluxo.
 
 ```ruby
 module Users
@@ -759,7 +759,7 @@ Users::Authenticate
   .on_failure(:user_not_found) { render status: 404 }
 ```
 
-First, let's see the attributes used by each use case:
+Primeiro, vamos ver os atributos usados por cada caso de uso:
 
 ```ruby
 class Users::FindByEmail < Micro::Case
@@ -771,22 +771,22 @@ class Users::ValidatePassword < Micro::Case
 end
 ```
 
-As you can see the `Users::ValidatePassword` expects a user as its input. So, how does it receives the user?
-Answer: It receives the user from the `Users::FindByEmail` success result!
+Como você pode ver, `Users::ValidatePassword` espera um usuário como sua entrada. Então, como ele recebe o usuário?
+R: Ele recebe o usuário do resultado de sucesso `Users::FindByEmail`!
 
-And this is the power of use cases composition because the output of one step will compose the input of the next use case in the flow!
+E este é o poder da composição de casos de uso porque o output de uma etapa irá compor a entrada do próximo caso de uso no fluxo!
 
-> input **>>** process **>>** output
+> input **>>** processamento **>>** output
 
-> **Note:** Check out these test examples [Micro::Cases::Flow](https://github.com/serradura/u-case/blob/c96a3650469da40dc9f83ff678204055b7015d01/test/micro/cases/flow/result_transitions_test.rb) and [Micro::Cases::Safe::Flow](https://github.com/serradura/u-case/blob/c96a3650469da40dc9f83ff678204055b7015d01/test/micro/cases/safe/flow/result_transitions_test.rb) to see different use cases having access to the data in a flow.
+> **Nota:** Verifique esses exemplos de teste [Micro::Cases::Flow](https://github.com/serradura/u-case/blob/c96a3650469da40dc9f83ff678204055b7015d01/test/micro/cases/flow/result_transitions_test.rb) e [Micro::Cases::Safe::Flow](https://github.com/serradura/u-case/blob/c96a3650469da40dc9f83ff678204055b7015d01/test/micro/cases/safe/flow/result_transitions_test.rb) para ver diferentes casos de uso tendo acesso aos dados de um fluxo.
 
-[⬆️ Back to Top](#table-of-contents-)
+[⬆️ Voltar para o índice](#índice-)
 
-#### How to understand what is happening during a flow execution?
+#### Como entender o que aconteceu durante a execução de um flow?
 
 Use `Micro::Case::Result#transitions`!
 
-Let's use the [previous section example](#is-it-possible-a-flow-accumulates-its-input-and-merges-each-success-result-to-use-as-the-argument-of-the-next-use-cases) to ilustrate how to use this feature.
+Vamos usar os [exemplos da seção anterior](#is-it-possible-a-flow-accumulates-its-input-and-merges-each-success-result-to-use-as-the-argument-of-the-next-use-cases) para ilustrar como utilizar essa feature.
 
 ```ruby
 user_authenticated =
@@ -826,40 +826,41 @@ user_authenticated.transitions
 ]
 ```
 
-The example above shows the output generated by the `Micro::Case::Result#transitions`.
-With it is possible to analyze the use cases' execution order and what were the given `inputs` (`[:attributes]`) and `outputs` (`[:success][:result]`) in the entire execution.
+O exemplo acima mostra a saída gerada pelas `Micro::Case::Result#transitions`.
+Com ele é possível analisar a ordem de execução dos casos de uso e quais foram os `inputs` fornecidos (`[:attributes]`) e `outputs` (`[:success][:result]`) em toda a execução.
 
-And look up the `accessible_attributes` property, it shows whats attributes are accessible in that flow step. For example, in the last step, you can see that the `accessible_attributes` increased because of the [data flow accumulation](#is-it-possible-a-flow-accumulates-its-input-and-merges-each-success-result-to-use-as-the-argument-of-the-next-use-cases).
+E observe a propriedade `accessible_attributes`, ela mostra quais atributos são acessíveis nessa etapa do fluxo. Por exemplo, na última etapa, você pode ver que os atributos `accessible_attributes` aumentaram devido ao [acúmulo de fluxo de dados](#é-possível-que-um-fluxo-acumule-sua-entrada-e-mescle-cada-resultado-de-sucesso-para-usar-como-argumento-dos-próximos-casos-de-uso).
 
-> **Note:** The [`Micro::Case::Result#then`](#how-to-use-the-microcaseresultthen-method) increments the `Micro::Case::Result#transitions`.
+> **Nota:** O [`Micro::Case::Result#then`](#how-to-use-the-microcaseresultthen-method) incrementa o `Micro::Case::Result#transitions`.
 
 ##### `Micro::Case::Result#transitions` schema
 ```ruby
 [
   {
     use_case: {
-      class:      <Micro::Case>,# Use case which was executed
-      attributes: <Hash>        # (Input) The use case's attributes
+      class:      <Micro::Case>,# Caso de uso que será executado
+      attributes: <Hash>        # (Input) Os atributos do caso de uso
     },
     [success:, failure:] => {   # (Output)
-      type:  <Symbol>,          # Result type. Defaults:
-                                # Success = :ok, Failure = :error/:exception
-      result: <Hash>            # The data returned by the use case result
+      type:  <Symbol>,          # Tipo do resultado. Padrões:
+                                # Success = :ok, Failure = :error or :exception
+      result: <Hash>            # Os dados retornados pelo resultado do use case
     },
-    accessible_attributes: <Array>, # Properties that can be accessed by the use case's attributes,
-                                    # it starts with Hash used to invoke it and that will be incremented
-                                    # with the result values of each use case in the flow.
+    accessible_attributes: <Array>, # Propriedades que podem ser acessadas pelos atributos do caso de uso,
+                                    # começando com Hash usado para invocá-lo e que são incrementados
+                                    # com os valores de resultado de cada caso de uso do fluxo.
   }
 ]
+
 ```
 
-##### Is it possible disable the `Micro::Case::Result#transitions`?
+##### É possível desabilitar o `Micro::Case::Result#transitions`?
 
-Answer: Yes, it is! You can use the `Micro::Case.config` to do this. [Link to](#microcaseconfig) this section.
+Resposta: Sim! Você pode usar o `Micro::Case.config` para fazer isso. [Link para](#microcaseconfig) essa seção.
 
-#### Is it possible to declare a flow that includes the use case itself as a step?
+#### É possível declarar um fluxo que inclui o próprio caso de uso?
 
-Answer: Yes, it is! You can use `self` or the `self.call!` macro. e.g:
+Resposta: Sim! Você pode usar a macro `self` ou `self.call!`. Exemplo:
 
 ```ruby
 class ConvertTextToNumber < Micro::Case
@@ -896,13 +897,13 @@ result.success? # true
 result[:number] # "8"
 ```
 
-> **Note:** This feature can be used with the Micro::Case::Safe. Checkout this test to see an example: https://github.com/serradura/u-case/blob/714c6b658fc6aa02617e6833ddee09eddc760f2a/test/micro/case/safe/with_inner_flow_test.rb
+> **Note:** Essa funcionalidade pode ser usada com Micro::Case::Safe. Verifique esse teste para ver um example: https://github.com/serradura/u-case/blob/714c6b658fc6aa02617e6833ddee09eddc760f2a/test/micro/case/safe/with_inner_flow_test.rb
 
-[⬆️ Back to Top](#table-of-contents-)
+[⬆️ Voltar para o índice](#índice-)
 
-### `Micro::Case::Strict` - What is a strict use case?
+### `Micro::Case::Strict` - O que é um caso de uso estrito?
 
-Answer: it is a kind of use case that will require all the keywords (attributes) on its initialization.
+Resposta: é um tipo de caso de uso que exigirá todas as palavras-chave (atributos) em sua inicialização.
 
 ```ruby
 class Double < Micro::Case::Strict
@@ -915,15 +916,15 @@ end
 
 Double.call({})
 
-# The output will be:
+# O output será:
 # ArgumentError (missing keyword: :numbers)
 ```
 
-[⬆️ Back to Top](#table-of-contents-)
+[⬆️ Voltar para o índice](#índice-)
 
-### `Micro::Case::Safe` - Is there some feature to auto handle exceptions inside of a use case or flow?
+### `Micro::Case::Safe` - Existe algum recurso para lidar automaticamente com exceções dentro de um caso de uso ou fluxo?
 
-Yes, there is one! Like `Micro::Case::Strict` the `Micro::Case::Safe` is another kind of use case. It has the ability to auto intercept any exception as a failure result. e.g:
+Sim, assim como `Micro::Case::Strict`, o `Micro::Case::Safe` é outro tipo de caso de uso. Ele tem a capacidade de interceptar automaticamente qualquer exceção como um resultado de falha. Exemplo:
 
 ```ruby
 require 'logger'
@@ -952,7 +953,9 @@ result.on_failure(:exception) do |result|
 end
 ```
 
-If you need to handle a specific error, I recommend the usage of a case statement. e,g:
+#### `Micro::Case::Result#on_exception`
+
+Se você precisar lidar com um erro específico, recomendo o uso de uma instrução case. por exemplo:
 
 ```ruby
 result.on_failure(:exception) do |data, use_case|
@@ -963,13 +966,14 @@ result.on_failure(:exception) do |data, use_case|
 end
 ```
 
-> **Note:** It is possible to rescue an exception even when is a safe use case. Examples: https://github.com/serradura/u-case/blob/714c6b658fc6aa02617e6833ddee09eddc760f2a/test/micro/case/safe_test.rb#L90-L118
+> **Note:** É possível resgatar uma exceção mesmo quando é um caso de uso seguro. Exemplos: https://github.com/serradura/u-case/blob/714c6b658fc6aa02617e6833ddee09eddc760f2a/test/micro/case/safe_test.rb#L90-L118
 
-[⬆️ Back to Top](#table-of-contents-)
+
+[⬆️ Voltar para o índice](#índice-)
 
 #### `Micro::Cases::Safe::Flow`
 
-As the safe use cases, safe flows can intercept an exception in any of its steps. These are the ways to define one:
+Como casos de uso seguros, os fluxos seguros podem interceptar uma exceção em qualquer uma de suas etapas. Estas são as maneiras de definir um:
 
 ```ruby
 module Users
@@ -982,7 +986,7 @@ module Users
 end
 ```
 
-Defining within classes:
+Definindo dentro das classes:
 
 ```ruby
 module Users
@@ -995,17 +999,17 @@ module Users
 end
 ```
 
-[⬆️ Back to Top](#table-of-contents-)
+[⬆️ Voltar para o índice](#índice-)
 
 #### `Micro::Case::Result#on_exception`
 
-In functional programming errors/exceptions are handled as regular data, the idea is to transform the output even when it happens an unexpected behavior. For many, [exceptions are very similar to the GOTO statement](https://softwareengineering.stackexchange.com/questions/189222/are-exceptions-as-control-flow-considered-a-serious-antipattern-if-so-why), jumping the application flow to paths which could be difficult to figure out how things work in a system.
+Na programação funcional os erros/exceções são tratados como dados comuns, a ideia é transformar a saída mesmo quando ocorre um comportamento inesperado. Para muitos, [as exceções são muito semelhantes à instrução GOTO](https://softwareengineering.stackexchange.com/questions/189222/are-exceptions-as-control-flow-considered-a-serious-antipattern-if-so-why), pulando o fluxo do programa para caminhos que podem ser difíceis de descobrir como as coisas funcionam em um sistema.
 
-To address this the `Micro::Case::Result` has a special hook `#on_exception` to helping you to handle the control flow in the case of exceptions.
+Para resolver isso, o `Micro::Case::Result` tem um hook especial `#on_exception` para ajudá-lo a lidar com o fluxo de controle no caso de exceções.
 
-> **Note**: this feature will work better if you use it with a `Micro::Case::Safe` flow or use case.
+> **Note**: essa funcionalidade funcionará melhor se for usada com um flow ou caso de uso `Micro::Case::Safe`.
 
-**How does it work?**
+**Como ele funciona?**
 
 ```ruby
 class Divide < Micro::Case::Safe
@@ -1041,17 +1045,17 @@ Divide.
 # Oh no, something went wrong!
 ```
 
-As you can see, this hook has the same behavior of `result.on_failure(:exception)`, but, the idea here is to have a better communication in the code, making an explicit reference when some failure happened because of an exception.
+Como você pode ver, este hook tem o mesmo comportamento de `result.on_failure(:exception)`, mas, a ideia aqui é ter uma melhor comunicação no código, fazendo uma referência explícita quando alguma falha acontecer por causa de uma exceção.
 
-[⬆️ Back to Top](#table-of-contents-)
+[⬆️ Voltar para o índice](#índice-)
 
-### `u-case/with_activemodel_validation` - How to validate the use case attributes?
+### `u-case/with_activemodel_validation` - Como validar os atributos do caso de uso?
 
-**Requirement:**
+**Requisitos:**
 
-To do this your application must have the [activemodel >= 3.2, < 6.1.0](https://rubygems.org/gems/activemodel) as a dependency.
+Para fazer isso a sua aplicação deverá ter o [activemodel >= 3.2, < 6.1.0](https://rubygems.org/gems/activemodel) como dependência.
 
-By default, if your application has ActiveModel as a dependency, any kind of use case can make use of it to validate its attributes.
+Por padrão, se a sua aplicação tiver o ActiveModel como uma dependência, qualquer tipo de caso de uso pode fazer uso dele para validar seus atributos.
 
 ```ruby
 class Multiply < Micro::Case
@@ -1067,17 +1071,17 @@ class Multiply < Micro::Case
 end
 ```
 
-But if do you want an automatic way to fail your use cases on validation errors, you could do:
+Mas se você deseja uma maneira automática de falhar seus casos de uso em erros de validação, você poderá fazer:
 
-1. **require 'u-case/with_activemodel_validation'** in the Gemfile
+1. **require 'u-case/with_activemodel_validation'** no Gemfile
 
   ```ruby
   gem 'u-case', require: 'u-case/with_activemodel_validation'
   ```
 
-2. Use the `Micro::Case.config` to enable it. [Link to](#microcaseconfig) this section.
+2. Usar o `Micro::Case.config` para habilitar ele. [Link para](#microcaseconfig) essa seção.
 
-Using this approach, you can rewrite the previous example with less code. e.g:
+Usando essa abordagem, você pode reescrever o exemplo anterior com menos código. Exemplo:
 
 ```ruby
 require 'u-case/with_activemodel_validation'
@@ -1093,11 +1097,11 @@ class Multiply < Micro::Case
 end
 ```
 
-> **Note:** After requiring the validation mode, the `Micro::Case::Strict` and `Micro::Case::Safe` classes will inherit this new behavior.
+> **Nota:** Após habilitar o modo de validação, as classes `Micro::Case::Strict` e `Micro::Case::Safe` irão herdar este novo comportamento.
 
-#### If I enabled the auto validation, is it possible to disable it only in specific use cases?
+#### Se eu habilitei a validação automática, é possível desabilitá-la apenas em casos de uso específicos?
 
-Answer: Yes, it is possible. To do this, you will need to use the `disable_auto_validation` macro. e.g:
+Resposta: Sim, é possível. Para fazer isso, você só precisará usar a macro `disable_auto_validation`. Exemplo:
 
 ```ruby
 require 'u-case/with_activemodel_validation'
@@ -1116,17 +1120,17 @@ end
 
 Multiply.call(a: 2, b: 'a')
 
-# The output will be:
+# O output será:
 # TypeError (String can't be coerced into Integer)
 ```
 
-[⬆️ Back to Top](#table-of-contents-)
+[⬆️ Voltar para o índice](#índice-)
 
 #### `Kind::Validator`
 
-The [kind gem](https://github.com/serradura/kind) has a module to enable the validation of data type through [`ActiveModel validations`](https://guides.rubyonrails.org/active_model_basics.html#validations). So, when you require the `'u-case/with_activemodel_validation'`, this module will also require the [`Kind::Validator`](https://github.com/serradura/kind#kindvalidator-activemodelvalidations).
+A [gem kind](https://github.com/serradura/kind) possui um módulo para habilitar a validação do tipo de dados através do [`ActiveModel validations`](https://guides.rubyonrails.org/active_model_basics.html#validations). Então, quando você fizer o require do `'u-case/with_activemodel_validation'`, este módulo também irá fazer o require do [`Kind::Validator`](https://github.com/serradura/kind#kindvalidator-activemodelvalidations).
 
-The example below shows how to validate the attributes types.
+O exemplo abaixo mostra como validar os tipos de atributos.
 
 ```ruby
 class Todo::List::AddItem < Micro::Case
@@ -1147,26 +1151,26 @@ class Todo::List::AddItem < Micro::Case
 end
 ```
 
-[⬆️ Back to Top](#table-of-contents-)
+[⬆️ Voltar para o índice](#índice-)
 
 ## `Micro::Case.config`
 
-The idea of this resource is to allow the configuration of some `u-case` features/modules.
-I recommend you use it only once in your codebase. e.g. In a Rails initializer.
+A ideia deste recurso é permitir a configuração de algumas funcionalidades/módulos do `u-case`.
+Eu recomendo que você use apenas uma vez em sua base de código. Exemplo: Em um inicializador do Rails.
 
-You can see below, which are the available configurations with their default values:
+Você pode ver abaixo todas as configurações disponíveis com seus valores padrão:
 
 ```ruby
 Micro::Case.config do |config|
-  # Use ActiveModel to auto-validate your use cases' attributes.
+  # Use ActiveModel para auto-validar os atributos dos seus casos de uso.
   config.enable_activemodel_validation = false
 
-  # Use to enable/disable the `Micro::Case::Results#transitions`.
+  # Use para habilitar/desabilitar o `Micro::Case::Results#transitions`.
   config.enable_transitions = true
 end
 ```
 
-[⬆️ Back to Top](#table-of-contents-)
+[⬆️ Voltar para o índice](#índice-)
 
 ## Benchmarks
 
@@ -1174,9 +1178,9 @@ end
 
 #### Success results
 
-| Gem / Abstraction      | Iterations per second |       Comparison  |
+| Gem / Abstração        | Iterações por segundo |        Comparação |
 | -----------------      | --------------------: | ----------------: |
-| Dry::Monads            |              139037.7 | _**The Fastest**_ |
+| Dry::Monads            |              139037.7 | _**O mais rápido**_ |
 | **Micro::Case**        |              101497.3 |     1.37x slower  |
 | Interactor             |               30694.2 |     4.53x slower  |
 | Trailblazer::Operation |               14580.8 |     9.54x slower  |
@@ -1219,16 +1223,16 @@ https://github.com/serradura/u-case/blob/master/benchmarks/use_case/with_success
 
 #### Failure results
 
-| Gem / Abstraction      | Iterations per second |       Comparison  |
+| Gem / Abstração        | Iterações por segundo |        Comparação |
 | -----------------      | --------------------: | ----------------: |
-| **Micro::Case**        |               94619.6 | _**The Fastest**_ |
+| **Micro::Case**        |               94619.6 | _**O mais rápido**_ |
 | Dry::Monads            |               70250.6 |     1.35x slower  |
 | Trailblazer::Operation |               14786.1 |     6.40x slower  |
 | Interactor             |               13770.0 |     6.87x slower  |
 | Dry::Transaction       |                4994.4 |    18.95x slower  |
 
 <details>
-  <summary>Show the full <a href="https://github.com/evanphx/benchmark-ips">benchmark/ips</a> results.</summary>
+  <summary>Mostrar o resultado completo do <a href="https://github.com/evanphx/benchmark-ips">benchmark/ips</a>.</summary>
 
 ```ruby
 # Warming up --------------------------------------
@@ -1266,18 +1270,18 @@ https://github.com/serradura/u-case/blob/master/benchmarks/use_case/with_failure
 
 ### `Micro::Cases::Flow` (v3.0.0)
 
-| Gems / Abstraction      | [Success results](https://github.com/serradura/u-case/blob/master/benchmarks/flow/with_success_result.rb#L40) | [Failure results](https://github.com/serradura/u-case/blob/master/benchmarks/flow/with_failure_result.rb#L40) |
+| Gem / Abstração      | [Resultados de sucesso](https://github.com/serradura/u-case/blob/master/benchmarks/flow/with_success_result.rb#L40) | [Resultados de falha](https://github.com/serradura/u-case/blob/master/benchmarks/flow/with_failure_result.rb#L40) |
 | ------------------------------------------- | ----------------: | ----------------: |
-| Micro::Case internal flow (private methods) | _**The Fastest**_ | _**The Fastest**_ |
+| Micro::Case internal flow (private methods) | _**O mais rápido**_ | _**O mais rápido**_ |
 | Micro::Case `then` method                   |      1.48x slower |         0x slower |
 | Micro::Cases.flow                           |      1.62x slower |      1.16x slower |
 | Micro::Cases.safe_flow                      |      1.64x slower |      1.16x slower |
 | Interactor::Organizer                       |      1.95x slower |      6.17x slower |
 
-\* The `Dry::Monads`, `Dry::Transaction`, `Trailblazer::Operation` gems are out of this analysis because all of them doesn't have this kind of feature.
+\* As gems `Dry::Monads`, `Dry::Transaction`, `Trailblazer::Operation` estão fora desta análise por não terem esse tipo de funcionalidade.
 
 <details>
-  <summary><strong>Success results</strong> - Show the full benchmark/ips results.</summary>
+  <summary><strong>Resultados de sucesso</strong> - Mostrar o resultado completo do benchmark/ips.</summary>
 
 ```ruby
 # Warming up --------------------------------------
@@ -1304,7 +1308,7 @@ https://github.com/serradura/u-case/blob/master/benchmarks/use_case/with_failure
 </details>
 
 <details>
-  <summary><strong>Failure results</strong> - Show the full benchmark/ips results.</summary>
+  <summary><strong>Resultados de falha</strong> - Mostrar o resultado completo do benchmark/ips.</summary>
 
 ```ruby
 # Warming up --------------------------------------
@@ -1332,55 +1336,55 @@ https://github.com/serradura/u-case/blob/master/benchmarks/use_case/with_failure
 
 https://github.com/serradura/u-case/tree/master/benchmarks/flow
 
-### Comparisons
+### Comparações
 
-Check it out implementations of the same use case with different gems/abstractions.
+Confira as implementações do mesmo caso de uso com diferentes gems/abstrações.
 
 * [interactor](https://github.com/serradura/u-case/blob/master/comparisons/interactor.rb)
 * [u-case](https://github.com/serradura/u-case/blob/master/comparisons/u-case.rb)
 
-[⬆️ Back to Top](#table-of-contents-)
+[⬆️ Voltar para o índice](#índice-)
 
-## Examples
+## Exemplos
 
 ### 1️⃣ Rails App (API)
 
-> This project shows different kinds of architecture (one per commit), and in the last one, how to use the `Micro::Case` gem to handle the application business logic.
+> Este projeto mostra diferentes tipos de arquitetura (uma por commit), e na última, como usar a gem `Micro::Case` para lidar com a lógica de negócios da aplicação.
 >
 > Link: https://github.com/serradura/from-fat-controllers-to-use-cases
 
 ### 2️⃣ CLI calculator
 
-> Rake tasks to demonstrate how to handle user data, and how to use different failure types to control the program flow.
+> Rake tasks para demonstrar como lidar com os dados do usuário e como usar diferentes tipos de falha para controlar o fluxo do programa.
 >
 > Link: https://github.com/serradura/u-case/tree/master/examples/calculator
 
-### 3️⃣ Users creation
+### 3️⃣ Criação de usuários
 
-> An example of a use case flow that defines steps to sanitize, validate, and persist its input data.
+> Um exemplo de fluxo de caso de uso que define etapas para higienizar, validar e persistir seus dados de entrada.
 >
 > Link: https://github.com/serradura/u-case/blob/master/examples/users_creation.rb
 
-### 4️⃣ Rescuing exceptions inside of the use cases
+### 4️⃣ Interceptando exceções dentro dos casos de uso
 
 > Link: https://github.com/serradura/u-case/blob/master/examples/rescuing_exceptions.rb
 
-[⬆️ Back to Top](#table-of-contents-)
+[⬆️ Voltar para o índice](#índice-)
 
-## Development
+## Desenvolvimento
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `./test.sh` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+Após fazer o checking out do repo, execute `bin/setup` para instalar dependências. Então, execute `./test.sh` para executar os testes. Você pode executar `bin/console` para ter um prompt interativo que permitirá você experimenta-lá.
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+Para instalar esta gem em sua máquina local, execute `bundle exec rake install`. Para lançar uma nova versão, atualize o número da versão em `version.rb` e execute` bundle exec rake release`, que criará uma tag git para a versão, enviará git commits e tags e enviará o arquivo `.gem`para [rubygems.org](https://rubygems.org).
 
-## Contributing
+## Contribuindo
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/serradura/u-case. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
+Reportar bugs e solicitar pull requests são bem-vindos no GitHub em https://github.com/serradura/u-case. Este projeto pretende ser um espaço seguro e acolhedor para colaboração, e espera-se que os colaboradores sigam o código de conduta do [Covenant do Contribuidor](http://contributor-covenant.org).
 
-## License
+## Licença
 
-The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+A gem está disponível como código aberto nos termos da [licença MIT](https://opensource.org/licenses/MIT).
 
-## Code of Conduct
+## Código de conduta
 
-Everyone interacting in the Micro::Case project’s codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/serradura/u-case/blob/master/CODE_OF_CONDUCT.md).
+Espera-se que todos que interagem com o codebase do projeto `Micro::Case`, issue trackers, chat rooms and mailing lists sigam o [código de conduta](https://github.com/serradura/u-case/blob/master/CODE_OF_CONDUCT.md).
