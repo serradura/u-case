@@ -19,7 +19,7 @@ class Micro::Cases::FlowTest < Minitest::Test
     {
       0 => {
         use_case: -> use_case do
-          assert_equal(Jobs::Build::Flow_Step, use_case[:class])
+          assert_equal(Jobs::Build::Self, use_case[:class])
 
           assert_equal({}, use_case[:attributes])
         end,
@@ -119,7 +119,7 @@ class Micro::Cases::FlowTest < Minitest::Test
     {
       0 => {
         use_case: -> use_case do
-          assert_equal(Jobs::Build::Flow_Step, use_case[:class])
+          assert_equal(Jobs::Build::Self, use_case[:class])
 
           assert_equal({}, use_case[:attributes])
         end,
