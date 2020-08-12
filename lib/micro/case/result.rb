@@ -90,10 +90,8 @@ module Micro
           yield_self(&block)
         else
           return yield_self if !use_case && can_yield_self
-
-          if use_case.is_a?(Proc)
-            return failure? ? self : __call_proc(use_case, expected: 'then(-> {})'.freeze)
-          end
+          return failure? ? self : __call_proc(use_case, 'then(-> {})'.freeze) if use_case.is_a?(Proc)
+          return failure? ? self : __call_method(use_case, attributes) if use_case.is_a?(Method)
 
           raise Error::InvalidInvocationOfTheThenMethod unless ::Micro.case_or_flow?(use_case)
 
@@ -112,7 +110,8 @@ module Micro
       def |(arg)
         return self if failure?
 
-        return __call_proc(arg, expected: '| -> {}'.freeze) if arg.is_a?(Proc)
+        return __call_proc(arg, '| -> {}'.freeze) if arg.is_a?(Proc)
+        return __call_method(arg) if arg.is_a?(Method)
 
         raise Error::InvalidInvocationOfTheThenMethod unless ::Micro.case_or_flow?(arg)
 
@@ -155,12 +154,25 @@ module Micro
 
       private
 
-        def __call_proc(arg, expected:)
+        def __call_proc(arg, expected)
           result = arg.arity.zero? ? arg.call : arg.call(data.clone)
 
           return result if result.is_a?(Result)
 
           raise Error::UnexpectedResult.new("#{Result.name}##{expected}")
+        end
+
+        def __call_method(arg, attributes = nil)
+          result =
+            if arg.arity.zero?
+              arg.call
+            else
+              arg.call(attributes.is_a?(Hash) ? self.data.merge(attributes) : self.data)
+            end
+
+          return result if result.is_a?(Result)
+
+          raise Error::UnexpectedResult.new("#{use_case.class.name}#method(:#{arg.name})")
         end
 
         def __success_type?(expected_type)
