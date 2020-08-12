@@ -100,7 +100,7 @@ module Micro
       @__flow = __flow_builder__.build(args)
     end
 
-    FLOW_STEP = 'Flow_Step'.freeze
+    FLOW_STEP = 'Self'.freeze
 
     private_constant :FLOW_STEP
 
