@@ -140,11 +140,9 @@ module Micro
 
         raise Micro::Case::Error::InvalidResult.new(is_success, type, use_case) unless @data
 
-        if @@transition_tracking_enabled
-          @__transitions_accumulated_data.merge!(@data)
+        @__transitions_accumulated_data.merge!(@data)
 
-          __set_transition
-        end
+        __set_transition if @@transition_tracking_enabled
 
         self
       end

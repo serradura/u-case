@@ -72,7 +72,7 @@ class Micro::Case::ResultTest < Minitest::Test
     refute(result.value?(10))
 
     # ---
-    
+
     assert_equal({ a: 1, b: 2 }, result.slice(:a, :b, :c))
     assert_equal({}, result.slice(:c))
   end
@@ -233,6 +233,29 @@ class Micro::Case::ResultTest < Minitest::Test
     end
   end
 
+  class Add2ToAllNumbers < Micro::Case
+    attribute :numbers
+
+    def call!
+      convert_text_to_numbers
+        .then(method(:add_2))
+    end
+
+    private
+
+      def convert_text_to_numbers
+        if numbers.all? { |value| String(value) =~ /\d+/ }
+          Success result: { numbers: numbers.map(&:to_i) }
+        else
+          Failure result: { numbers: 'must contain only numeric types' }
+        end
+      end
+
+      def add_2(data)
+        Success result: { numbers: data[:numbers].map { |number| number + 2 } }
+      end
+  end
+
   def test_the_disable_transition_tracking_config
     Micro::Case.config do |config|
       config.enable_transitions = false
@@ -241,6 +264,16 @@ class Micro::Case::ResultTest < Minitest::Test
     result = success_result(value: { number: 1 }, type: :ok)
 
     assert_predicate(result.transitions, :empty?)
+
+    # ---
+
+    result1 = Add2ToAllNumbers.call(numbers: %w[1 1 2 2 3 4])
+
+    assert_success_result(result1, value: { numbers: [3, 3, 4, 4, 5, 6] })
+
+    result2 = Add2ToAllNumbers.call(numbers: %w[1 1 2 2 c 4])
+
+    assert_failure_result(result2, value: { numbers: 'must contain only numeric types' })
 
     Micro::Case.config do |config|
       config.enable_transitions = true
