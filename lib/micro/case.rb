@@ -70,16 +70,11 @@ module Micro
     end
 
     def self.__new__(result, arg)
-      instance = new(arg)
+      input = result.__set_transitions_accessible_attributes__(arg)
+
+      instance = new(input)
       instance.__set_result__(result)
       instance
-    end
-
-    def self.__call_and_set_transition__(result, arg)
-      input =
-        arg.is_a?(Hash) ? result.__set_transitions_accessible_attributes__(arg) : arg
-
-      __new__(result, input).__call__
     end
 
     def self.__flow_builder__
