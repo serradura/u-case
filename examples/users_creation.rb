@@ -5,7 +5,7 @@ gemfile do
 
   gem 'activemodel', '~> 6.0'
 
-  gem 'u-case', '~> 3.0.0.rc4'
+  gem 'u-case', '~> 3.0.0.rc7'
 end
 
 Micro::Case.config do |config|

@@ -75,7 +75,30 @@ module Add2ToAllNumbers
 
       def call!
         convert_text_to_numbers
-          .then(-> data {  add_2(data[:numbers]) })
+          .then(method(:add_2))
+      end
+
+      private
+
+        def convert_text_to_numbers
+          if numbers.all? { |value| String(value) =~ /\d+/ }
+            Success result: { numbers: numbers.map(&:to_i) }
+          else
+            Failure result: { numbers: 'must contain only numeric types' }
+          end
+        end
+
+        def add_2(data)
+          Success result: { numbers: data[:numbers].map { |number| number + 2 } }
+        end
+    end
+
+    class FlowUsingPrivateMethodsThroughLambdas < Micro::Case
+      attribute :numbers
+
+      def call!
+        convert_text_to_numbers
+          .then(-> data { add_2(data[:numbers]) })
       end
 
       private
