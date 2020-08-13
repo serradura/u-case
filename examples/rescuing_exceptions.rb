@@ -3,7 +3,7 @@ require 'bundler/inline'
 gemfile do
   source 'https://rubygems.org'
 
-  gem 'u-case', '~> 3.0.0.rc4'
+  gem 'u-case', '~> 3.0.0.rc7'
 end
 
 class DivideV1 < Micro::Case
