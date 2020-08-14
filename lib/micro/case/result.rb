@@ -165,19 +165,16 @@ module Micro
 
       private
 
-        def __call_with_accumulated_data(fn, opt = nil)
-          input =
-            __update_transitions_accessible_attributes(
-              opt ? opt.merge(@__transitions_accumulated_data) : @__transitions_accumulated_data
-            )
-
-          return fn.call if fn.arity.zero?
-
-          opt ? fn.call(**input) : fn.call(input)
+        def __fetch_accumulated_data(opt = nil)
+          __update_transitions_accessible_attributes(
+            opt ? opt.merge(@__transitions_accumulated_data) : @__transitions_accumulated_data
+          )
         end
 
         def __call_proc(fn, expected)
-          result = __call_with_accumulated_data(fn)
+          input = __fetch_accumulated_data
+
+          result = fn.arity.zero? ? fn.call : fn.call(input)
 
           return self if result === self
 
@@ -185,7 +182,9 @@ module Micro
         end
 
         def __call_method(methd, attributes = nil)
-          result = __call_with_accumulated_data(methd, attributes)
+          input = __fetch_accumulated_data(attributes)
+
+          result = methd.arity.zero? ? methd.call : methd.call(**input)
 
           return self if result === self
 
