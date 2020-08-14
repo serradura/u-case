@@ -171,7 +171,9 @@ module Micro
               opt ? opt.merge(@__transitions_accumulated_data) : @__transitions_accumulated_data
             )
 
-          fn.arity.zero? ? fn.call : fn.call(input)
+          return fn.call if fn.arity.zero?
+
+          opt ? fn.call(**input) : fn.call(input)
         end
 
         def __call_proc(fn, expected)
