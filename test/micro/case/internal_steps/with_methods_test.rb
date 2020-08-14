@@ -43,29 +43,33 @@ class Micro::Case::InternalStepsWithMethodsTest < Minitest::Test
 
     assert_success_result(resulta, value: { sum: 6.5 })
 
-    [
-      {
-        use_case: { class: DoSomeSumUsingThenWithMethods, attributes: { a: 1, b: 2 } },
-        success: { type: :valid, result: { valid: true } },
-        accessible_attributes: [:a, :b]
-      },
-      {
-        use_case: { class: DoSomeSumUsingThenWithMethods, attributes: { a: 1, b: 2 } },
-        success: { type: :first_sum, result: { sum: 3 } },
-        accessible_attributes: [:a, :b, :valid]
-      },
-      {
-        use_case: { class: DoSomeSumUsingThenWithMethods, attributes: { a: 1, b: 2 } },
-        success: { type: :second_sum, result: { sum: 6 } },
-        accessible_attributes: [:a, :b, :valid, :number, :sum]
-      },
-      {
-        use_case: { class: SumHalf, attributes: { sum: 6 } },
-        success: { type: :third_sum, result: { sum: 6.5 } },
-        accessible_attributes: [:a, :b, :valid, :number, :sum]
-      }
-    ].each_with_index do |transition, index|
-      assert_equal(transition, resulta.transitions[index])
+    if ::Micro::Case::Result.transitions_enabled?
+      [
+        {
+          use_case: { class: DoSomeSumUsingThenWithMethods, attributes: { a: 1, b: 2 } },
+          success: { type: :valid, result: { valid: true } },
+          accessible_attributes: [:a, :b]
+        },
+        {
+          use_case: { class: DoSomeSumUsingThenWithMethods, attributes: { a: 1, b: 2 } },
+          success: { type: :first_sum, result: { sum: 3 } },
+          accessible_attributes: [:a, :b, :valid]
+        },
+        {
+          use_case: { class: DoSomeSumUsingThenWithMethods, attributes: { a: 1, b: 2 } },
+          success: { type: :second_sum, result: { sum: 6 } },
+          accessible_attributes: [:a, :b, :valid, :number, :sum]
+        },
+        {
+          use_case: { class: SumHalf, attributes: { sum: 6 } },
+          success: { type: :third_sum, result: { sum: 6.5 } },
+          accessible_attributes: [:a, :b, :valid, :number, :sum]
+        }
+      ].each_with_index do |transition, index|
+        assert_equal(transition, resulta.transitions[index])
+      end
+    else
+      assert_equal([], resulta.transitions)
     end
 
     # ---
@@ -74,14 +78,18 @@ class Micro::Case::InternalStepsWithMethodsTest < Minitest::Test
 
     assert_failure_result(resultb, value: { error: true })
 
-    [
-      {
-        use_case: { class: DoSomeSumUsingThenWithMethods, attributes: { a: 1, b: '2' } },
-        failure: { type: :error, result: { error: true } },
-        accessible_attributes: [:a, :b]
-      }
-    ].each_with_index do |transition, index|
-      assert_equal(transition, resultb.transitions[index])
+    if ::Micro::Case::Result.transitions_enabled?
+      [
+        {
+          use_case: { class: DoSomeSumUsingThenWithMethods, attributes: { a: 1, b: '2' } },
+          failure: { type: :error, result: { error: true } },
+          accessible_attributes: [:a, :b]
+        }
+      ].each_with_index do |transition, index|
+        assert_equal(transition, resultb.transitions[index])
+      end
+    else
+      assert_equal([], resultb.transitions)
     end
   end
 
@@ -146,29 +154,33 @@ class Micro::Case::InternalStepsWithMethodsTest < Minitest::Test
 
     assert_success_result(resulta, value: { sum: 7.5 })
 
-    [
-      {
-        use_case: { class: DoSomeSumUsingPipeWithMethods, attributes: { a: 1, b: 2, number: 4 } },
-        success: { type: :valid, result: { valid: true } },
-        accessible_attributes: [:a, :b, :number]
-      },
-      {
-        use_case: { class: DoSomeSumUsingPipeWithMethods, attributes: { a: 1, b: 2, number: 4 } },
-        success: { type: :first_sum, result: { sum: 3 } },
-        accessible_attributes: [:a, :b, :number, :valid]
-      },
-      {
-        use_case: { class: DoSomeSumUsingPipeWithMethods, attributes: { a: 1, b: 2, number: 4 } },
-        success: { type: :second_sum, result: { sum: 7 } },
-        accessible_attributes: [:a, :b, :number, :valid, :sum]
-      },
-      {
-        use_case: { class: SumHalf, attributes: { sum: 7 } },
-        success: { type: :third_sum, result: { sum: 7.5 } },
-        accessible_attributes: [:a, :b, :number, :valid, :sum]
-      }
-    ].each_with_index do |transition, index|
-      assert_equal(transition, resulta.transitions[index])
+    if ::Micro::Case::Result.transitions_enabled?
+      [
+        {
+          use_case: { class: DoSomeSumUsingPipeWithMethods, attributes: { a: 1, b: 2, number: 4 } },
+          success: { type: :valid, result: { valid: true } },
+          accessible_attributes: [:a, :b, :number]
+        },
+        {
+          use_case: { class: DoSomeSumUsingPipeWithMethods, attributes: { a: 1, b: 2, number: 4 } },
+          success: { type: :first_sum, result: { sum: 3 } },
+          accessible_attributes: [:a, :b, :number, :valid]
+        },
+        {
+          use_case: { class: DoSomeSumUsingPipeWithMethods, attributes: { a: 1, b: 2, number: 4 } },
+          success: { type: :second_sum, result: { sum: 7 } },
+          accessible_attributes: [:a, :b, :number, :valid, :sum]
+        },
+        {
+          use_case: { class: SumHalf, attributes: { sum: 7 } },
+          success: { type: :third_sum, result: { sum: 7.5 } },
+          accessible_attributes: [:a, :b, :number, :valid, :sum]
+        }
+      ].each_with_index do |transition, index|
+        assert_equal(transition, resulta.transitions[index])
+      end
+    else
+      assert_equal([], resulta.transitions)
     end
 
     # ---
@@ -177,14 +189,18 @@ class Micro::Case::InternalStepsWithMethodsTest < Minitest::Test
 
     assert_failure_result(resultb, value: { error: true })
 
-    [
-      {
-        use_case: { class: DoSomeSumUsingPipeWithMethods, attributes: { a: 1, b: '2', number: 4 } },
-        failure: { type: :error, result: { error: true } },
-        accessible_attributes: [:a, :b, :number]
-      }
-    ].each_with_index do |transition, index|
-      assert_equal(transition, resultb.transitions[index])
+    if ::Micro::Case::Result.transitions_enabled?
+      [
+        {
+          use_case: { class: DoSomeSumUsingPipeWithMethods, attributes: { a: 1, b: '2', number: 4 } },
+          failure: { type: :error, result: { error: true } },
+          accessible_attributes: [:a, :b, :number]
+        }
+      ].each_with_index do |transition, index|
+        assert_equal(transition, resultb.transitions[index])
+      end
+    else
+      assert_equal([], resultb.transitions)
     end
   end
 
@@ -251,37 +267,41 @@ class Micro::Case::InternalStepsWithMethodsTest < Minitest::Test
 
     assert_success_result(result, value: { sum: 10.5 })
 
-    [
-      {
-        use_case: {
-          class: DoSomeCalcUsingThenWithMethods, attributes: { a: 1, b: 2 }
+    if ::Micro::Case::Result.transitions_enabled?
+      [
+        {
+          use_case: {
+            class: DoSomeCalcUsingThenWithMethods, attributes: { a: 1, b: 2 }
+          },
+          success: {type: :c, result: { c: 3 }},
+          accessible_attributes: [:a, :b]
         },
-        success: {type: :c, result: { c: 3 }},
-        accessible_attributes: [:a, :b]
-      },
-      {
-        use_case: {
-          class: DoSomeCalcUsingThenWithMethods, attributes: { a: 1, b: 2 }
+        {
+          use_case: {
+            class: DoSomeCalcUsingThenWithMethods, attributes: { a: 1, b: 2 }
+          },
+          success: { type: :d, result: { d: 4 }},
+          accessible_attributes: [:a, :b, :c]
         },
-        success: { type: :d, result: { d: 4 }},
-        accessible_attributes: [:a, :b, :c]
-      },
-      {
-        use_case: {
-          class: DoSomeCalcUsingThenWithMethods, attributes: { a: 1, b: 2}
+        {
+          use_case: {
+            class: DoSomeCalcUsingThenWithMethods, attributes: { a: 1, b: 2}
+          },
+          success: { type: :sum_a_b_c_d, result: { sum: 10 }},
+          accessible_attributes: [:a, :b, :c, :d]
         },
-        success: { type: :sum_a_b_c_d, result: { sum: 10 }},
-        accessible_attributes: [:a, :b, :c, :d]
-      },
-      {
-        use_case: {
-          class: SumHalf, attributes: { sum: 10 }
-        },
-        success: { type: :third_sum, result: { sum: 10.5 }},
-        accessible_attributes: [:a, :b, :c, :d, :sum]
-      }
-    ].each_with_index do |transition, index|
-      assert_equal(transition, result.transitions[index])
+        {
+          use_case: {
+            class: SumHalf, attributes: { sum: 10 }
+          },
+          success: { type: :third_sum, result: { sum: 10.5 }},
+          accessible_attributes: [:a, :b, :c, :d, :sum]
+        }
+      ].each_with_index do |transition, index|
+        assert_equal(transition, result.transitions[index])
+      end
+    else
+      assert_equal([], result.transitions)
     end
   end
 
@@ -317,37 +337,41 @@ class Micro::Case::InternalStepsWithMethodsTest < Minitest::Test
 
     assert_success_result(result, value: { sum: 11.5 })
 
-    [
-      {
-        use_case: {
-          class: DoSomeCalcUsingPipeWithMethods, attributes: { a: 2, b: 2 }
+    if ::Micro::Case::Result.transitions_enabled?
+      [
+        {
+          use_case: {
+            class: DoSomeCalcUsingPipeWithMethods, attributes: { a: 2, b: 2 }
+          },
+          success: {type: :c, result: { c: 3 }},
+          accessible_attributes: [:a, :b]
         },
-        success: {type: :c, result: { c: 3 }},
-        accessible_attributes: [:a, :b]
-      },
-      {
-        use_case: {
-          class: DoSomeCalcUsingPipeWithMethods, attributes: { a: 2, b: 2 }
+        {
+          use_case: {
+            class: DoSomeCalcUsingPipeWithMethods, attributes: { a: 2, b: 2 }
+          },
+          success: { type: :d, result: { d: 4 }},
+          accessible_attributes: [:a, :b, :c]
         },
-        success: { type: :d, result: { d: 4 }},
-        accessible_attributes: [:a, :b, :c]
-      },
-      {
-        use_case: {
-          class: DoSomeCalcUsingPipeWithMethods, attributes: { a: 2, b: 2}
+        {
+          use_case: {
+            class: DoSomeCalcUsingPipeWithMethods, attributes: { a: 2, b: 2}
+          },
+          success: { type: :sum_a_b_c_d, result: { sum: 11 }},
+          accessible_attributes: [:a, :b, :c, :d]
         },
-        success: { type: :sum_a_b_c_d, result: { sum: 11 }},
-        accessible_attributes: [:a, :b, :c, :d]
-      },
-      {
-        use_case: {
-          class: SumHalf, attributes: { sum: 11 }
-        },
-        success: { type: :third_sum, result: { sum: 11.5 }},
-        accessible_attributes: [:a, :b, :c, :d, :sum]
-      }
-    ].each_with_index do |transition, index|
-      assert_equal(transition, result.transitions[index])
+        {
+          use_case: {
+            class: SumHalf, attributes: { sum: 11 }
+          },
+          success: { type: :third_sum, result: { sum: 11.5 }},
+          accessible_attributes: [:a, :b, :c, :d, :sum]
+        }
+      ].each_with_index do |transition, index|
+        assert_equal(transition, result.transitions[index])
+      end
+    else
+      assert_equal([], result.transitions)
     end
   end
 end

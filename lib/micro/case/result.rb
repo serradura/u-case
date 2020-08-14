@@ -7,7 +7,11 @@ module Micro
     class Result
       Kind::Types.add(self)
 
-      @@transition_tracking_enabled = true
+      @@transitions_enabled = true
+
+      def self.transitions_enabled?
+        @@transitions_enabled
+      end
 
       attr_reader :type, :data, :use_case
 
@@ -142,19 +146,21 @@ module Micro
 
         @__transitions_accumulated_data.merge!(@data)
 
-        __set_transition if @@transition_tracking_enabled
+        use_case_attributes = Utils.symbolize_hash_keys(@use_case.attributes)
+
+        __update_transitions_accessible_attributes(use_case_attributes)
+
+        __set_transition(use_case_attributes) if @@transitions_enabled
 
         self
       end
 
       def __set_transitions_accessible_attributes__(arg)
-        return arg unless @@transition_tracking_enabled
+        return arg unless arg.is_a?(Hash)
 
-        if arg.is_a?(Hash)
-          attributes = Utils.symbolize_hash_keys(arg)
+        attributes = Utils.symbolize_hash_keys(arg)
 
-          __update_transitions_accessible_attributes(attributes)
-        end
+        __update_transitions_accessible_attributes(attributes)
       end
 
       private
@@ -197,11 +203,8 @@ module Micro
           @__transitions_accessible_attributes
         end
 
-        def __set_transition
+        def __set_transition(use_case_attributes)
           use_case_class = @use_case.class
-          use_case_attributes = Utils.symbolize_hash_keys(@use_case.attributes)
-
-          __update_transitions_accessible_attributes(use_case_attributes)
 
           result = @success ? :success : :failure
 

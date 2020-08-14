@@ -17,10 +17,14 @@ $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 
 require 'u-case'
 
-if ENV.fetch('ACTIVEMODEL_VERSION', '6.1.0') < '6.1.0'
-  Micro::Case.config do |config|
-    config.enable_activemodel_validation = true
-  end
+Micro::Case.config do |config|
+  enable_activemodel = ENV.fetch('ACTIVEMODEL_VERSION', '6.1.0') < '6.1.0'
+
+  config.enable_activemodel_validation = enable_activemodel
+
+  enable_transitions = ENV.fetch('ENABLE_TRANSITIONS', 'true') == 'true'
+
+  config.enable_transitions = enable_transitions
 end
 
 require 'minitest/pride'
