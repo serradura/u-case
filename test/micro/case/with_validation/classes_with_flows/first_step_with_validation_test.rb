@@ -40,7 +40,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
         end
 
         def test_the_use_case_result
-          assert_failure_result(Double.call(text: ''), type: :validation_error)
+          assert_failure_result(Double.call(text: ''), type: :invalid_attributes)
 
           # ---
 
@@ -57,7 +57,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
 
           result = Double.call(text: '4.0')
 
-          assert_failure_result(result, type: :validation_error)
+          assert_failure_result(result, type: :invalid_attributes)
 
           assert_equal(['must be a kind of: Integer'], result.value[:errors][:number])
         end

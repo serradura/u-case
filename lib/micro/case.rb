@@ -8,8 +8,8 @@ require 'micro/case/version'
 module Micro
   class Case
     require 'micro/case/utils'
-    require 'micro/case/result'
     require 'micro/case/error'
+    require 'micro/case/result'
     require 'micro/case/safe'
     require 'micro/case/strict'
     require 'micro/case/config'
@@ -22,11 +22,14 @@ module Micro
       new(options).__call__
     end
 
+    INVALID_INVOCATION_OF_THE_THE_METHOD =
+      Error::InvalidInvocationOfTheThenMethod.new(self.name)
+
     def self.then(use_case = nil, &block)
       can_yield_self = respond_to?(:yield_self)
 
       if block
-        raise Error::InvalidInvocationOfTheThenMethod if use_case
+        raise INVALID_INVOCATION_OF_THE_THE_METHOD if use_case
         raise NotImplementedError if !can_yield_self
 
         yield_self(&block)
@@ -70,7 +73,7 @@ module Micro
     end
 
     def self.__new__(result, arg)
-      input = result.__set_transitions_accessible_attributes__(arg)
+      input = result.__set_accessible_attributes__(arg)
 
       new(input).__set_result__(result)
     end
@@ -125,7 +128,7 @@ module Micro
     end
 
     def __call__
-      __call!
+      call
     end
 
     def __set_result__(result)
@@ -139,8 +142,10 @@ module Micro
 
     private
 
-      # This method was reserved for a new feature
       def call
+        return __call_use_case_flow if __call_use_case_flow?
+
+        __call_use_case
       end
 
       def __setup_use_case(input)
@@ -149,12 +154,6 @@ module Micro
         @__input = input
 
         self.attributes = input
-      end
-
-      def __call!
-        return __call_use_case_flow if __call_use_case_flow?
-
-        __call_use_case
       end
 
       def __call_use_case

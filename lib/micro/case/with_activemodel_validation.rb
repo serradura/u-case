@@ -37,7 +37,9 @@ module Micro
       def failure_by_validation_error(object)
         errors = object.respond_to?(:errors) ? object.errors : object
 
-        Failure :validation_error, result: { errors: errors }
+        Failure Micro::Case::Config.instance.activemodel_validation_errors_failure, result: {
+          errors: errors
+        }
       end
   end
 end

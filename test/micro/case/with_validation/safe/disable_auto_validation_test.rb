@@ -29,7 +29,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
       def test_the_disable_auto_validation_macro
         result1 = Add.call(a: 'a', b: 2)
 
-        assert_failure_result(result1, type: :validation_error)
+        assert_failure_result(result1, type: :invalid_attributes)
 
         # ---
 

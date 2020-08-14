@@ -7,7 +7,7 @@ module Todos
     def call!
       todo = Todo.new(user_id: user.id, description: description)
 
-      return Failure(:validation_error) unless todo.save
+      return Failure(:invalid_attributes) unless todo.save
 
       Success result: { todo: todo }
     end

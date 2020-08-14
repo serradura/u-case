@@ -1064,7 +1064,7 @@ class Multiply < Micro::Case
   validates :a, :b, presence: true, numericality: true
 
   def call!
-    return Failure :validation_error, result: { errors: self.errors } if invalid?
+    return Failure :invalid_attributes, result: { errors: self.errors } if invalid?
 
     Success result: { number: a * b }
   end

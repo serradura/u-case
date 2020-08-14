@@ -9,7 +9,7 @@ module Users
 
       user = User.new(attributes(:email, :password))
 
-      return Failure(:validation_error) unless user.save
+      return Failure(:invalid_attributes) unless user.save
 
       Success result: { user: user }
     end
