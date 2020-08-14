@@ -5,7 +5,7 @@ gemfile do
 
   gem 'activemodel', '~> 6.0'
 
-  gem 'u-case', '~> 3.0.0.rc7'
+  gem 'u-case', '~> 3.0.0.rc8'
 end
 
 Micro::Case.config do |config|
@@ -26,73 +26,80 @@ module Users
       !id.nil?
     end
   end
+end
 
-  module Creation
-    require 'uri'
-    require 'securerandom'
+module Users::Creation
+  class NormalizeParams < Micro::Case
+    attributes :name, :email
 
-    class ProcessParams < Micro::Case
-      attributes :name, :email
+    def call!
+      normalized_name = String(name).strip.gsub(/\s+/, ' ')
+      normalized_email = String(email).downcase.strip
 
-      def call!
-        normalized_name = String(name).strip.gsub(/\s+/, ' ')
-        normalized_email = String(email).downcase.strip
-
-        Success result: { name: normalized_name, email: normalized_email }
-      end
+      Success result: { name: normalized_name, email: normalized_email }
     end
-
-    class ValidateParams < Micro::Case
-      attributes :name, :email
-
-      validates :name, presence: true
-      validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }
-
-      def call!
-        Success result: attributes(:name, :email)
-      end
-    end
-
-    class Persist < Micro::Case
-      attributes :name, :email
-
-      validates :name, :email, kind: String
-
-      def call!
-        Success result: { user: Entity.new(user_data) }
-      end
-
-      private def user_data
-        attributes.merge(id: SecureRandom.uuid)
-      end
-    end
-
-    class SyncWithCRM < Micro::Case
-      attribute :user
-
-      validates :user, kind: Users::Entity
-
-      def call!
-        if user.persisted?
-          Success result: { user_id: user.id, crm_id: sync_with_crm }
-        else
-          Failure :crm_error, result: { message: 'User can\'t be sent to the CRM' }
-        end
-      end
-
-      private def sync_with_crm
-        # Do some integration stuff...
-        SecureRandom.uuid
-      end
-    end
-
-    Process = Micro::Cases.flow([
-      ProcessParams,
-      ValidateParams,
-      Persist,
-      SyncWithCRM
-    ])
   end
+end
+
+module Users::Creation
+  require 'uri'
+
+  class ValidateParams < Micro::Case
+    attributes :name, :email
+
+    validates :name, presence: true
+    validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }
+
+    def call!
+      Success result: attributes(:name, :email)
+    end
+  end
+end
+
+require 'securerandom'
+
+module Users::Creation
+  class Persist < Micro::Case
+    attributes :name, :email
+
+    validates :name, :email, kind: String
+
+    def call!
+      user_data = attributes.merge(id: SecureRandom.uuid)
+
+      Success result: { user: Users::Entity.new(user_data) }
+    end
+  end
+end
+
+module Users::Creation
+  class SyncWithCRM < Micro::Case
+    attribute :user
+
+    validates :user, kind: Users::Entity
+
+    def call!
+      if user.persisted?
+        Success result: { user_id: user.id, crm_id: sync_with_crm }
+      else
+        Failure :crm_error, result: { message: "User can't be sent to the CRM" }
+      end
+    end
+
+    private def sync_with_crm
+      # Do some integration stuff...
+      SecureRandom.uuid
+    end
+  end
+end
+
+module Users::Creation
+  Process = Micro::Cases.flow([
+    NormalizeParams,
+    ValidateParams,
+    Persist,
+    SyncWithCRM
+  ])
 end
 
 params = {
@@ -109,7 +116,7 @@ p params
 
 print ' After: '
 
-Users::Creation::ProcessParams
+Users::Creation::NormalizeParams
   .call(params)
   .on_success { |result| p result.data }
 
@@ -120,7 +127,7 @@ puts "\n-- Success scenario --\n\n"
 Users::Creation::Process
   .call(params)
   .on_success do |result|
-    user_id, crm_id = result.values_at(:user_id, crm_id)
+    user_id, crm_id = result.values_at(:user_id, :crm_id)
 
     puts " CRM ID: #{crm_id}"
     puts "USER ID: #{user_id}"
@@ -137,9 +144,7 @@ Users::Creation::Process
     puts "#{use_case.class.name} was the use case responsible for the failure"
   end
 
-
 # :: example of the output: ::
-
 # -- Parameters processing --
 #
 # Before: {"name"=>"  Rodrigo  \n  Serradura ", "email"=>"   RoDRIGo.SERRAdura@gmail.com   "}
