@@ -72,9 +72,7 @@ module Micro
     def self.__new__(result, arg)
       input = result.__set_transitions_accessible_attributes__(arg)
 
-      instance = new(input)
-      instance.__set_result__(result)
-      instance
+      new(input).__set_result__(result)
     end
 
     def self.__flow_builder__
@@ -135,6 +133,8 @@ module Micro
       raise Error::ResultIsAlreadyDefined if defined?(@__result)
 
       @__result = result
+
+      self
     end
 
     private

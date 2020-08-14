@@ -21,7 +21,7 @@ The main project goals are:
 
 Version   | Documentation
 --------- | -------------
-3.0.0.rc7 | https://github.com/serradura/u-case/blob/main/README.md
+3.0.0.rc8 | https://github.com/serradura/u-case/blob/main/README.md
 2.6.0     | https://github.com/serradura/u-case/blob/v2.x/README.md
 1.1.0     | https://github.com/serradura/u-case/blob/v1.x/README.md
 
@@ -66,9 +66,9 @@ Version   | Documentation
   - [`Micro::Cases::Flow` (v3.0.0)](#microcasesflow-v300)
   - [Comparisons](#comparisons)
 - [Examples](#examples)
-  - [1️⃣ Rails App (API)](#1️⃣-rails-app-api)
-  - [2️⃣ CLI calculator](#2️⃣-cli-calculator)
-  - [3️⃣ Users creation](#3️⃣-users-creation)
+  - [1️⃣ Users creation](#1️⃣-users-creation)
+  - [2️⃣ Rails App (API)](#2️⃣-rails-app-api)
+  - [3️⃣ CLI calculator](#3️⃣-cli-calculator)
   - [4️⃣ Rescuing exceptions inside of the use cases](#4️⃣-rescuing-exceptions-inside-of-the-use-cases)
 - [Development](#development)
 - [Contributing](#contributing)
@@ -79,7 +79,7 @@ Version   | Documentation
 
 | u-case         | branch  | ruby     |  activemodel  |
 | -------------- | ------- | -------- | ------------- |
-| 3.0.0.rc7      | main    | >= 2.2.0 | >= 3.2, < 6.1 |
+| 3.0.0.rc8      | main    | >= 2.2.0 | >= 3.2, < 6.1 |
 | 2.6.0          | v2.x    | >= 2.2.0 | >= 3.2, < 6.1 |
 | 1.1.0          | v1.x    | >= 2.2.0 | >= 3.2, < 6.1 |
 
@@ -102,7 +102,7 @@ Version   | Documentation
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'u-case', '~> 3.0.0.rc7'
+gem 'u-case', '~> 3.0.0.rc8'
 ```
 
 And then execute:
@@ -1373,23 +1373,23 @@ Check it out implementations of the same use case with different gems/abstractio
 
 ## Examples
 
-### 1️⃣ Rails App (API)
+### 1️⃣ Users creation
+
+> An example of a flow that defines steps to sanitize, validate, and persist its input data. It has all possible approaches to represent use cases using the `u-case` gem.
+>
+> Link: https://github.com/serradura/u-case/blob/main/examples/users_creation
+
+### 2️⃣ Rails App (API)
 
 > This project shows different kinds of architecture (one per commit), and in the last one, how to use the `Micro::Case` gem to handle the application business logic.
 >
 > Link: https://github.com/serradura/from-fat-controllers-to-use-cases
 
-### 2️⃣ CLI calculator
+### 3️⃣ CLI calculator
 
 > Rake tasks to demonstrate how to handle user data, and how to use different failure types to control the program flow.
 >
 > Link: https://github.com/serradura/u-case/tree/main/examples/calculator
-
-### 3️⃣ Users creation
-
-> An example of a use case flow that defines steps to sanitize, validate, and persist its input data.
->
-> Link: https://github.com/serradura/u-case/blob/main/examples/users_creation.rb
 
 ### 4️⃣ Rescuing exceptions inside of the use cases
 
