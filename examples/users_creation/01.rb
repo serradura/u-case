@@ -44,7 +44,7 @@ module Users::Creation
       validation_errors << "Email is invalid" unless normalized_email.match?(URI::MailTo::EMAIL_REGEXP)
 
       if validation_errors.present?
-        return Failure :validation_error, result: {
+        return Failure :invalid_attributes, result: {
           errors: OpenStruct.new(full_messages: validation_errors)
         }
       end

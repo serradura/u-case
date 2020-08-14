@@ -60,7 +60,7 @@ module Users::Creation
 
         return Success() if validation_errors.blank?
 
-        Failure :validation_error, result: {
+        Failure :invalid_attributes, result: {
           errors: OpenStruct.new(full_messages: validation_errors)
         }
       end
