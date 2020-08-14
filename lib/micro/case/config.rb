@@ -15,7 +15,7 @@ module Micro
 
       def enable_transitions=(value)
         Micro::Case::Result.class_variable_set(
-          :@@transition_tracking_enabled, Kind::Of::Boolean(value)
+          :@@transitions_enabled, Kind::Of::Boolean(value)
         )
       end
     end

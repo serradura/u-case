@@ -21,7 +21,7 @@ Principais objetivos deste projeto:
 
 Versão    | Documentação
 --------- | -------------
-3.0.0.rc7 | https://github.com/serradura/u-case/blob/main/README.md
+3.0.0.rc8 | https://github.com/serradura/u-case/blob/main/README.md
 2.6.0     | https://github.com/serradura/u-case/blob/v2.x/README.md
 1.1.0     | https://github.com/serradura/u-case/blob/v1.x/README.md
 
@@ -65,9 +65,9 @@ Versão    | Documentação
   - [`Micro::Cases::Flow` (v3.0.0)](#microcasesflow-v300)
   - [Comparações](#comparações)
 - [Exemplos](#exemplos)
-  - [1️⃣ Rails App (API)](#1️⃣-rails-app-api)
-  - [2️⃣ CLI calculator](#2️⃣-cli-calculator)
-  - [3️⃣ Criação de usuários](#3️⃣-criação-de-usuários)
+  - [1️⃣ Criação de usuários](#1️⃣-criação-de-usuários)
+  - [2️⃣ Rails App (API)](#2️⃣-rails-app-api)
+  - [3️⃣ CLI calculator](#3️⃣-cli-calculator)
   - [4️⃣ Interceptando exceções dentro dos casos de uso](#4️⃣-interceptando-exceções-dentro-dos-casos-de-uso)
 - [Desenvolvimento](#desenvolvimento)
 - [Contribuindo](#contribuindo)
@@ -78,7 +78,7 @@ Versão    | Documentação
 
 | u-case         | branch  | ruby     |  activemodel  |
 | -------------- | ------- | -------- | ------------- |
-| 3.0.0.rc7      | main    | >= 2.2.0 | >= 3.2, < 6.1 |
+| 3.0.0.rc8      | main    | >= 2.2.0 | >= 3.2, < 6.1 |
 | 2.6.0          | v2.x    | >= 2.2.0 | >= 3.2, < 6.1 |
 | 1.1.0          | v1.x    | >= 2.2.0 | >= 3.2, < 6.1 |
 
@@ -101,7 +101,7 @@ Versão    | Documentação
 Adicione essa linha ao Gemfile da sua aplicação:
 
 ```ruby
-gem 'u-case', '~> 3.0.0.rc7'
+gem 'u-case', '~> 3.0.0.rc8'
 ```
 
 E então execute:
@@ -1377,23 +1377,23 @@ Confira as implementações do mesmo caso de uso com diferentes gems/abstraçõe
 
 ## Exemplos
 
-### 1️⃣ Rails App (API)
+### 1️⃣ Criação de usuários
+
+> Um exemplo de fluxo que define etapas para higienizar, validar e persistir seus dados de entrada. Ele tem todas as abordagens possíveis para representar casos de uso com a gem `u-case`.
+>
+> Link: https://github.com/serradura/u-case/blob/main/examples/users_creation
+
+### 2️⃣ Rails App (API)
 
 > Este projeto mostra diferentes tipos de arquitetura (uma por commit), e na última, como usar a gem `Micro::Case` para lidar com a lógica de negócios da aplicação.
 >
 > Link: https://github.com/serradura/from-fat-controllers-to-use-cases
 
-### 2️⃣ CLI calculator
+### 3️⃣ CLI calculator
 
 > Rake tasks para demonstrar como lidar com os dados do usuário e como usar diferentes tipos de falha para controlar o fluxo do programa.
 >
 > Link: https://github.com/serradura/u-case/tree/main/examples/calculator
-
-### 3️⃣ Criação de usuários
-
-> Um exemplo de fluxo de caso de uso que define etapas para higienizar, validar e persistir seus dados de entrada.
->
-> Link: https://github.com/serradura/u-case/blob/main/examples/users_creation.rb
 
 ### 4️⃣ Interceptando exceções dentro dos casos de uso
 

@@ -46,13 +46,15 @@ class Micro::Case::ResultTest < Minitest::Test
 
     # ---
 
-    assert_equal(result.transitions, [
-      {
-        use_case: { class: Micro::Case, attributes: {} },
-        success: { type: :ok, result: { a: 1, b: 2 } },
-        accessible_attributes: []
-      }
-    ])
+    if ::Micro::Case::Result.transitions_enabled?
+      assert_equal(result.transitions, [
+        {
+          use_case: { class: Micro::Case, attributes: {} },
+          success: { type: :ok, result: { a: 1, b: 2 } },
+          accessible_attributes: []
+        }
+      ])
+    end
 
     # ---
 
@@ -107,13 +109,15 @@ class Micro::Case::ResultTest < Minitest::Test
 
     # ---
 
-    assert_equal(result.transitions, [
-      {
-        use_case: { class: Micro::Case, attributes: {} },
-        failure: { type: :error, result: { a: 0, b: -1 } },
-        accessible_attributes: []
-      }
-    ])
+    if ::Micro::Case::Result.transitions_enabled?
+      assert_equal(result.transitions, [
+        {
+          use_case: { class: Micro::Case, attributes: {} },
+          failure: { type: :error, result: { a: 0, b: -1 } },
+          accessible_attributes: []
+        }
+      ])
+    end
 
     # ---
 
@@ -256,10 +260,8 @@ class Micro::Case::ResultTest < Minitest::Test
       end
   end
 
-  def test_the_disable_transition_tracking_config
-    Micro::Case.config do |config|
-      config.enable_transitions = false
-    end
+  def test_the_result_when_transitions_are_disabled
+    return if ::Micro::Case::Result.transitions_enabled?
 
     result = success_result(value: { number: 1 }, type: :ok)
 
@@ -274,9 +276,5 @@ class Micro::Case::ResultTest < Minitest::Test
     result2 = Add2ToAllNumbers.call(numbers: %w[1 1 2 2 c 4])
 
     assert_failure_result(result2, value: { numbers: 'must contain only numeric types' })
-
-    Micro::Case.config do |config|
-      config.enable_transitions = true
-    end
   end
 end
