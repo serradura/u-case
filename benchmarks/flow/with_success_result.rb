@@ -7,7 +7,7 @@ gemfile do
 
   gem 'interactor', '~> 3.1', '>= 3.1.1'
 
-  gem 'u-case', '~> 3.0.0.rc7'
+  gem 'u-case', '~> 3.0.0.rc8'
 end
 
 require 'benchmark/ips'
