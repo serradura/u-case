@@ -2,4 +2,4 @@ source 'https://rubygems.org'
 
 gem 'rake'
 
-gem 'u-case', '~> 3.0.0.rc9'
+gem 'u-case', '~> 3.0.0'
