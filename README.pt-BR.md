@@ -34,7 +34,7 @@ Versão    | Documentação
   - [`Micro::Case::Result` - O que é o resultado de um caso de uso?](#microcaseresult---o-que-é-o-resultado-de-um-caso-de-uso)
     - [O que são os tipos de resultados?](#o-que-são-os-tipos-de-resultados)
     - [Como difinir tipos customizados de resultados?](#como-difinir-tipos-customizados-de-resultados)
-    - [É possíve definir um tipo sem definit os dados do resultado?](#é-possíve-definir-um-tipo-sem-definit-os-dados-do-resultado)
+    - [É possível definir um tipo sem definir os dados do resultado?](#é-possível-definir-um-tipo-sem-definir-os-dados-do-resultado)
     - [Como utilizar os hooks dos resultados?](#como-utilizar-os-hooks-dos-resultados)
     - [Por que o hook sem um tipo definido expõe o próprio resultado?](#por-que-o-hook-sem-um-tipo-definido-expõe-o-próprio-resultado)
       - [Usando decomposição para acessar os dados e tipo do resultado](#usando-decomposição-para-acessar-os-dados-e-tipo-do-resultado)
@@ -276,7 +276,7 @@ bad_result.failure? # true
 
 [⬆️ Voltar para o índice](#índice-)
 
-#### É possíve definir um tipo sem definit os dados do resultado?
+#### É possível definir um tipo sem definir os dados do resultado?
 
 Resposta: Sim, é possível. Mas isso terá um comportamento especial por conta dos dados do resultado ser um hash com o tipo definido como chave e `true` como o valor.
 
