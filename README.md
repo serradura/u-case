@@ -66,9 +66,9 @@ Version   | Documentation
   - [`Micro::Cases::Flow` (v3.0.0)](#microcasesflow-v300)
   - [Comparisons](#comparisons)
 - [Examples](#examples)
-  - [1️⃣ Rails App (API)](#1️⃣-rails-app-api)
-  - [2️⃣ CLI calculator](#2️⃣-cli-calculator)
-  - [3️⃣ Users creation](#3️⃣-users-creation)
+  - [1️⃣ Users creation](#1️⃣-users-creation)
+  - [2️⃣ Rails App (API)](#2️⃣-rails-app-api)
+  - [3️⃣ CLI calculator](#3️⃣-cli-calculator)
   - [4️⃣ Rescuing exceptions inside of the use cases](#4️⃣-rescuing-exceptions-inside-of-the-use-cases)
 - [Development](#development)
 - [Contributing](#contributing)
@@ -1373,23 +1373,23 @@ Check it out implementations of the same use case with different gems/abstractio
 
 ## Examples
 
-### 1️⃣ Rails App (API)
+### 1️⃣ Users creation
+
+> An example of a flow that defines steps to sanitize, validate, and persist its input data. It has all possible approaches to represent use cases using the `u-case` gem.
+>
+> Link: https://github.com/serradura/u-case/blob/main/examples/users_creation
+
+### 2️⃣ Rails App (API)
 
 > This project shows different kinds of architecture (one per commit), and in the last one, how to use the `Micro::Case` gem to handle the application business logic.
 >
 > Link: https://github.com/serradura/from-fat-controllers-to-use-cases
 
-### 2️⃣ CLI calculator
+### 3️⃣ CLI calculator
 
 > Rake tasks to demonstrate how to handle user data, and how to use different failure types to control the program flow.
 >
 > Link: https://github.com/serradura/u-case/tree/main/examples/calculator
-
-### 3️⃣ Users creation
-
-> An example of a use case flow that defines steps to sanitize, validate, and persist its input data.
->
-> Link: https://github.com/serradura/u-case/blob/main/examples/users_creation.rb
 
 ### 4️⃣ Rescuing exceptions inside of the use cases
 

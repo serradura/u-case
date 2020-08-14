@@ -65,9 +65,9 @@ Versão    | Documentação
   - [`Micro::Cases::Flow` (v3.0.0)](#microcasesflow-v300)
   - [Comparações](#comparações)
 - [Exemplos](#exemplos)
-  - [1️⃣ Rails App (API)](#1️⃣-rails-app-api)
-  - [2️⃣ CLI calculator](#2️⃣-cli-calculator)
-  - [3️⃣ Criação de usuários](#3️⃣-criação-de-usuários)
+  - [1️⃣ Criação de usuários](#1️⃣-criação-de-usuários)
+  - [2️⃣ Rails App (API)](#2️⃣-rails-app-api)
+  - [3️⃣ CLI calculator](#3️⃣-cli-calculator)
   - [4️⃣ Interceptando exceções dentro dos casos de uso](#4️⃣-interceptando-exceções-dentro-dos-casos-de-uso)
 - [Desenvolvimento](#desenvolvimento)
 - [Contribuindo](#contribuindo)
@@ -1377,23 +1377,23 @@ Confira as implementações do mesmo caso de uso com diferentes gems/abstraçõe
 
 ## Exemplos
 
-### 1️⃣ Rails App (API)
+### 1️⃣ Criação de usuários
+
+> Um exemplo de fluxo que define etapas para higienizar, validar e persistir seus dados de entrada. Ele tem todas as abordagens possíveis para representar casos de uso com a gem `u-case`.
+>
+> Link: https://github.com/serradura/u-case/blob/main/examples/users_creation
+
+### 2️⃣ Rails App (API)
 
 > Este projeto mostra diferentes tipos de arquitetura (uma por commit), e na última, como usar a gem `Micro::Case` para lidar com a lógica de negócios da aplicação.
 >
 > Link: https://github.com/serradura/from-fat-controllers-to-use-cases
 
-### 2️⃣ CLI calculator
+### 3️⃣ CLI calculator
 
 > Rake tasks para demonstrar como lidar com os dados do usuário e como usar diferentes tipos de falha para controlar o fluxo do programa.
 >
 > Link: https://github.com/serradura/u-case/tree/main/examples/calculator
-
-### 3️⃣ Criação de usuários
-
-> Um exemplo de fluxo de caso de uso que define etapas para higienizar, validar e persistir seus dados de entrada.
->
-> Link: https://github.com/serradura/u-case/blob/main/examples/users_creation.rb
 
 ### 4️⃣ Interceptando exceções dentro dos casos de uso
 
