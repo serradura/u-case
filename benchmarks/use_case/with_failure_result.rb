@@ -16,7 +16,7 @@ gemfile do
 
   gem 'trailblazer-operation', '~> 0.6.2', require: 'trailblazer/operation'
 
-  gem 'u-case', '~> 3.0.0.rc8'
+  gem 'u-case', '~> 3.0.0.rc9'
 end
 
 require 'benchmark/ips'

@@ -31,10 +31,8 @@ class Micro::Case::InternalStepsWithMethodsTest < Minitest::Test
         Success :first_sum, result: { sum: a + b }
       end
 
-      def add(data)
-        Success :second_sum, result: {
-          sum: data[:sum] + data[:number]
-        }
+      def add(sum:, number:, **)
+        Success :second_sum, result: { sum: sum + number }
       end
   end
 
@@ -144,8 +142,8 @@ class Micro::Case::InternalStepsWithMethodsTest < Minitest::Test
         Success :first_sum, result: { sum: a + b }
       end
 
-      def add(data)
-        Success :second_sum, result: { sum: data[:sum] + number }
+      def add(sum:, **)
+        Success :second_sum, result: { sum: sum + number }
       end
   end
 
@@ -223,8 +221,8 @@ class Micro::Case::InternalStepsWithMethodsTest < Minitest::Test
       { normalized_number: number.to_f }
     end
 
-    def multiply_by_two(data)
-      Success(result: { number: data[:normalized_number] * 2 })
+    def multiply_by_two(normalized_number:, **)
+      Success(result: { number: normalized_number * 2 })
     end
   end
 
@@ -255,9 +253,7 @@ class Micro::Case::InternalStepsWithMethodsTest < Minitest::Test
       Success :d, result: { d: 4 }
     end
 
-    def sum_a_b_c_d(data)
-      c, d = data.fetch(:c), data.fetch(:d)
-
+    def sum_a_b_c_d(c:, d:, **)
       Success :sum_a_b_c_d, result: { sum: a + b + c + d }
     end
   end
