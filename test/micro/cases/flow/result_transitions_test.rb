@@ -64,7 +64,7 @@ class Micro::Cases::Flow::ResultTransitionsTest < Minitest::Test
     result2 =
       UserTodoList::AddItem.call(email:'rodrigo@test.com', password: user_password, description: '')
 
-    assert_failure_result(result2, type: :validation_error)
+    assert_failure_result(result2, type: :invalid_attributes)
     assert_instance_of(Todos::Create, result2.use_case)
 
     assert_equal(1, User.count)

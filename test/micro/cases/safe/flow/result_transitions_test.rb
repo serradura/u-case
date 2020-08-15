@@ -70,7 +70,7 @@ class Micro::Cases::Safe::Flow::ResultTransitionsTest < Minitest::Test
 
         user = User.new(attributes(:name, :password))
 
-        return Failure(:validation_error) unless user.save
+        return Failure(:invalid_attributes) unless user.save
 
         Success result: { user: user }
       end
@@ -112,7 +112,7 @@ class Micro::Cases::Safe::Flow::ResultTransitionsTest < Minitest::Test
       def call!
         todo = Todo.new(user_id: user.id, description: description)
 
-        return Failure(:validation_error) unless todo.save
+        return Failure(:invalid_attributes) unless todo.save
 
         Success result: { todo: todo }
       end
@@ -213,7 +213,7 @@ class Micro::Cases::Safe::Flow::ResultTransitionsTest < Minitest::Test
     result2 =
       UserTodos::Create.call(user_id: user.id, password: user_password, description: '')
 
-    assert_failure_result(result2, type: :validation_error)
+    assert_failure_result(result2, type: :invalid_attributes)
     assert_instance_of(Todos::Create, result2.use_case)
 
     assert_equal(1, User.count)

@@ -21,7 +21,7 @@ The main project goals are:
 
 Version   | Documentation
 --------- | -------------
-3.0.0.rc9 | https://github.com/serradura/u-case/blob/main/README.md
+3.0.0     | https://github.com/serradura/u-case/blob/main/README.md
 2.6.0     | https://github.com/serradura/u-case/blob/v2.x/README.md
 1.1.0     | https://github.com/serradura/u-case/blob/v1.x/README.md
 
@@ -79,7 +79,7 @@ Version   | Documentation
 
 | u-case         | branch  | ruby     |  activemodel  |
 | -------------- | ------- | -------- | ------------- |
-| 3.0.0.rc9      | main    | >= 2.2.0 | >= 3.2, < 6.1 |
+| 3.0.0      | main    | >= 2.2.0 | >= 3.2, < 6.1 |
 | 2.6.0          | v2.x    | >= 2.2.0 | >= 3.2, < 6.1 |
 | 1.1.0          | v1.x    | >= 2.2.0 | >= 3.2, < 6.1 |
 
@@ -102,7 +102,7 @@ Version   | Documentation
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'u-case', '~> 3.0.0.rc9'
+gem 'u-case', '~> 3.0.0'
 ```
 
 And then execute:
@@ -1060,7 +1060,7 @@ class Multiply < Micro::Case
   validates :a, :b, presence: true, numericality: true
 
   def call!
-    return Failure :validation_error, result: { errors: self.errors } if invalid?
+    return Failure :invalid_attributes, result: { errors: self.errors } if invalid?
 
     Success result: { number: a * b }
   end

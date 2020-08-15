@@ -5,7 +5,7 @@ gemfile do
 
   gem 'activemodel', '~> 6.0'
 
-  gem 'u-case', '~> 3.0.0.rc9'
+  gem 'u-case', '~> 3.0.0'
 end
 
 Micro::Case.config do |config|
@@ -72,7 +72,7 @@ module Users::Creation
 
         return Success() if validation_errors.blank?
 
-        Failure :validation_error, result: {
+        Failure :invalid_attributes, result: {
           errors: OpenStruct.new(full_messages: validation_errors)
         }
       end
