@@ -7,6 +7,9 @@ module Micro
     class Result
       Kind::Types.add(self)
 
+      INVALID_INVOCATION_OF_THE_THE_METHOD =
+        Error::InvalidInvocationOfTheThenMethod.new(self.name)
+
       @@transitions_enabled = true
 
       def self.transitions_enabled?
@@ -18,9 +21,9 @@ module Micro
       alias value data
 
       def initialize
-        @__transitions = []
-        @__transitions_accumulated_data = {}
-        @__transitions_accessible_attributes = {}
+        @__transitions = @@transitions_enabled ? [] : Kind::Empty::ARRAY
+        @__accumulated_data = {}
+        @__accessible_attributes = {}
       end
 
       def to_ary
@@ -89,7 +92,7 @@ module Micro
         can_yield_self = respond_to?(:yield_self)
 
         if block
-          raise Error::InvalidInvocationOfTheThenMethod if use_case
+          raise INVALID_INVOCATION_OF_THE_THE_METHOD if use_case
           raise NotImplementedError if !can_yield_self
 
           yield_self(&block)
@@ -98,7 +101,7 @@ module Micro
           return failure? ? self : __call_proc(use_case, 'then(-> {})'.freeze) if use_case.is_a?(Proc)
           return failure? ? self : __call_method(use_case, attributes) if use_case.is_a?(Method)
 
-          raise Error::InvalidInvocationOfTheThenMethod unless ::Micro.case_or_flow?(use_case)
+          raise INVALID_INVOCATION_OF_THE_THE_METHOD unless ::Micro.case_or_flow?(use_case)
 
           return self if failure?
 
@@ -118,7 +121,7 @@ module Micro
         return __call_proc(arg, '| -> {}'.freeze) if arg.is_a?(Proc)
         return __call_method(arg) if arg.is_a?(Method)
 
-        raise Error::InvalidInvocationOfTheThenMethod unless ::Micro.case_or_flow?(arg)
+        raise INVALID_INVOCATION_OF_THE_THE_METHOD unless ::Micro.case_or_flow?(arg)
 
         failure? ? self : arg.__new__(self, data).__call__
       end
@@ -144,30 +147,30 @@ module Micro
 
         raise Micro::Case::Error::InvalidResult.new(is_success, type, use_case) unless @data
 
-        @__transitions_accumulated_data.merge!(@data)
+        @__accumulated_data.merge!(@data)
 
         use_case_attributes = Utils.symbolize_hash_keys(@use_case.attributes)
 
-        __update_transitions_accessible_attributes(use_case_attributes)
+        __update_accessible_attributes(use_case_attributes)
 
-        __set_transition(use_case_attributes) if @@transitions_enabled
+        __set_transition(use_case_attributes) unless @__transitions.frozen?
 
         self
       end
 
-      def __set_transitions_accessible_attributes__(arg)
+      def __set_accessible_attributes__(arg)
         return arg unless arg.is_a?(Hash)
 
         attributes = Utils.symbolize_hash_keys(arg)
 
-        __update_transitions_accessible_attributes(attributes)
+        __update_accessible_attributes(attributes)
       end
 
       private
 
         def __fetch_accumulated_data(opt = nil)
-          __update_transitions_accessible_attributes(
-            opt ? opt.merge(@__transitions_accumulated_data) : @__transitions_accumulated_data
+          __update_accessible_attributes(
+            opt ? opt.merge(@__accumulated_data) : @__accumulated_data
           )
         end
 
@@ -199,9 +202,9 @@ module Micro
           failure? && (expected_type.nil? || expected_type == type)
         end
 
-        def __update_transitions_accessible_attributes(attributes)
-          @__transitions_accessible_attributes.merge!(attributes)
-          @__transitions_accessible_attributes
+        def __update_accessible_attributes(attributes)
+          @__accessible_attributes.merge!(attributes)
+          @__accessible_attributes.dup
         end
 
         def __set_transition(use_case_attributes)
@@ -212,11 +215,11 @@ module Micro
           @__transitions << {
             use_case: { class: use_case_class, attributes: use_case_attributes },
             result => { type: @type, result: data },
-            accessible_attributes: @__transitions_accessible_attributes.keys
+            accessible_attributes: @__accessible_attributes.keys
           }
         end
 
-        private_constant :FetchData
+        private_constant :FetchData, :INVALID_INVOCATION_OF_THE_THE_METHOD
     end
   end
 end

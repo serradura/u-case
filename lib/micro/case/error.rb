@@ -46,7 +46,9 @@ module Micro
       end
 
       class InvalidInvocationOfTheThenMethod < StandardError
-        def initialize; super('Invalid invocation of the Micro::Case::Result#then method'); end
+        def initialize(class_name)
+          super("Invalid invocation of the #{class_name}#then method")
+        end
       end
 
       def self.by_wrong_usage?(exception)

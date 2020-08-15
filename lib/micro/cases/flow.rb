@@ -10,9 +10,7 @@ module Micro
       attr_reader :use_cases
 
       def self.map_use_cases(arg)
-        return arg.use_cases if arg.is_a?(Flow)
-
-        Array(arg)
+        arg.is_a?(Flow) ? arg.use_cases : Array(arg)
       end
 
       def self.build(args)
@@ -24,17 +22,17 @@ module Micro
       end
 
       def initialize(use_cases)
-        @use_cases = use_cases
-        @first_use_case = use_cases[0]
-        @next_use_cases = use_cases[1..-1]
+        @use_cases = use_cases.dup.freeze
+        @next_ones = use_cases.dup
+        @first = @next_ones.shift
       end
 
       def call!(input:, result:)
-        first_result = __next_use_case_result(@first_use_case, result, input)
+        first_result = __case_use_case(@first, result, input)
 
-        return first_result if @next_use_cases.empty?
+        return first_result if @next_ones.empty?
 
-        __next_use_cases_result(first_result)
+        __call_next_use_cases(first_result)
       end
 
       def call(input = Kind::Empty::HASH)
@@ -51,7 +49,7 @@ module Micro
         can_yield_self = respond_to?(:yield_self)
 
         if block
-          raise Error::InvalidInvocationOfTheThenMethod if use_case
+          raise Error::InvalidInvocationOfTheThenMethod.new(self.class.name) if use_case
           raise NotImplementedError if !can_yield_self
 
           yield_self(&block)
@@ -64,15 +62,15 @@ module Micro
 
       private
 
-        def __next_use_case_result(use_case, result, input)
+        def __case_use_case(use_case, result, input)
           use_case.__new__(result, input).__call__
         end
 
-        def __next_use_cases_result(first_result)
-          @next_use_cases.reduce(first_result) do |result, use_case|
+        def __call_next_use_cases(first_result)
+          @next_ones.reduce(first_result) do |result, use_case|
             break result if result.failure?
 
-            __next_use_case_result(use_case, result, result.data)
+            __case_use_case(use_case, result, result.data)
           end
         end
     end

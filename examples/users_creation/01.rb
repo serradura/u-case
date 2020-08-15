@@ -5,7 +5,7 @@ gemfile do
 
   gem 'activemodel', '~> 6.0'
 
-  gem 'u-case', '~> 3.0.0.rc9'
+  gem 'u-case', '~> 3.0.0'
 end
 
 Micro::Case.config do |config|
@@ -44,7 +44,7 @@ module Users::Creation
       validation_errors << "Email is invalid" unless normalized_email.match?(URI::MailTo::EMAIL_REGEXP)
 
       if validation_errors.present?
-        return Failure :validation_error, result: {
+        return Failure :invalid_attributes, result: {
           errors: OpenStruct.new(full_messages: validation_errors)
         }
       end

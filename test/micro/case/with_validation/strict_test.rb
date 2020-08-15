@@ -44,14 +44,14 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
 
         result = Multiply.call(a: 1, b: nil)
 
-        assert_failure_result(result, type: :validation_error)
+        assert_failure_result(result, type: :invalid_attributes)
         assert_equal(["can't be blank", 'is not a number'], result.value[:errors][:b])
 
         # ---
 
         result = Multiply.call(a: 1, b: 'a')
 
-        assert_failure_result(result, type: :validation_error)
+        assert_failure_result(result, type: :invalid_attributes)
         assert_equal(['is not a number'], result.value[:errors][:b])
       end
     end
