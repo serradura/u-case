@@ -697,15 +697,13 @@ SquareAllNumbersAndAdd2 =
 SquareAllNumbersAndDouble =
   Micro::Cases.flow([SquareAllNumbers, DoubleAllNumbers])
 
-DoubleAllNumbersAndSquareAndAdd2 =
-  Micro::Cases.flow([DoubleAllNumbers, SquareAllNumbersAndAdd2])
-
 SquareAllNumbersAndDouble
   .call(numbers: %w[1 1 2 2 3 4])
   .on_success { |result| p result[:numbers] } # [2, 2, 8, 8, 18, 32]
 
-DoubleAllNumbersAndSquareAndAdd2
+DoubleAllNumbers
   .call(numbers: %w[1 1 2 2 3 4])
+  .then(SquareAllNumbersAndAdd2)
   .on_success { |result| p result[:numbers] } # [6, 6, 18, 18, 38, 66]
 ```
 
