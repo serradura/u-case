@@ -142,7 +142,9 @@ module Micro
 
     private
 
-      alias apply method
+      def apply(name)
+        method(name)
+      end
 
       def call
         return __call_use_case_flow if __call_use_case_flow?
