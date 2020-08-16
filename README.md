@@ -1,12 +1,29 @@
-![Ruby](https://img.shields.io/badge/ruby-2.2+-ruby.svg?colorA=99004d&colorB=cc0066)
-[![Gem](https://img.shields.io/gem/v/u-case.svg?style=flat-square)](https://rubygems.org/gems/u-case)
-[![Build Status](https://travis-ci.com/serradura/u-case.svg?branch=main)](https://travis-ci.com/serradura/u-case)
-[![Maintainability](https://api.codeclimate.com/v1/badges/5c3c8ad1b0b943f88efd/maintainability)](https://codeclimate.com/github/serradura/u-case/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/5c3c8ad1b0b943f88efd/test_coverage)](https://codeclimate.com/github/serradura/u-case/test_coverage)
+<p align="center">
+  <img src="./assets/ucase_logo_v1.png" alt="u-case - Create simple and powerful use cases as Ruby objects.">
 
-<img src="./assets/ucase_logo_v1.png" alt="u-case - Create simple and powerful use cases as Ruby objects.">
+  <p align="center"><i>Create simple and powerful use cases as Ruby objects.</i></p>
+  <br>
+</p>
 
-Create simple and powerful use cases as Ruby objects.
+<p align="center">
+  <img src="https://img.shields.io/badge/ruby-2.2+-ruby.svg?colorA=99004d&colorB=cc0066" alt="Ruby">
+
+  <a href="https://rubygems.org/gems/u-case">
+    <img alt="Gem" src="https://img.shields.io/gem/v/u-case.svg?style=flat-square">
+  </a>
+
+  <a href="https://travis-ci.com/serradura/u-case">
+    <img alt="Build Status" src="https://travis-ci.com/serradura/u-case.svg?branch=main">
+  </a>
+
+  <a href="https://codeclimate.com/github/serradura/u-case/maintainability">
+    <img alt="Maintainability" src="https://api.codeclimate.com/v1/badges/5c3c8ad1b0b943f88efd/maintainability">
+  </a>
+
+  <a href="https://codeclimate.com/github/serradura/u-case/test_coverage">
+    <img alt="Test Coverage" src="https://api.codeclimate.com/v1/badges/5c3c8ad1b0b943f88efd/test_coverage">
+  </a>
+</p>
 
 The main project goals are:
 1. Easy to use and easy to learn (input **>>** process **>>** output).
