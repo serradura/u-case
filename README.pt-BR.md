@@ -1,12 +1,29 @@
-![Ruby](https://img.shields.io/badge/ruby-2.2+-ruby.svg?colorA=99004d&colorB=cc0066)
-[![Gem](https://img.shields.io/gem/v/u-case.svg?style=flat-square)](https://rubygems.org/gems/u-case)
-[![Build Status](https://travis-ci.com/serradura/u-case.svg?branch=main)](https://travis-ci.com/serradura/u-case)
-[![Maintainability](https://api.codeclimate.com/v1/badges/5c3c8ad1b0b943f88efd/maintainability)](https://codeclimate.com/github/serradura/u-case/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/5c3c8ad1b0b943f88efd/test_coverage)](https://codeclimate.com/github/serradura/u-case/test_coverage)
+<p align="center">
+  <img src="./assets/ucase_logo_v1.png" alt="u-case - Create simple and powerful use cases as Ruby objects.">
 
-<img src="./assets/ucase_logo_v1.png" alt="u-case - Crie simples e poderosos casos de uso como objetos em Ruby.">
+  <p align="center"><i>Crie simples e poderosos casos de uso como objetos em Ruby.</i></p>
+  <br>
+</p>
 
-Crie simples e poderosos casos de uso como objetos em Ruby.
+<p align="center">
+  <img src="https://img.shields.io/badge/ruby-2.2+-ruby.svg?colorA=99004d&colorB=cc0066" alt="Ruby">
+
+  <a href="https://rubygems.org/gems/u-case">
+    <img alt="Gem" src="https://img.shields.io/gem/v/u-case.svg?style=flat-square">
+  </a>
+
+  <a href="https://travis-ci.com/serradura/u-case">
+    <img alt="Build Status" src="https://travis-ci.com/serradura/u-case.svg?branch=main">
+  </a>
+
+  <a href="https://codeclimate.com/github/serradura/u-case/maintainability">
+    <img alt="Maintainability" src="https://api.codeclimate.com/v1/badges/5c3c8ad1b0b943f88efd/maintainability">
+  </a>
+
+  <a href="https://codeclimate.com/github/serradura/u-case/test_coverage">
+    <img alt="Test Coverage" src="https://api.codeclimate.com/v1/badges/5c3c8ad1b0b943f88efd/test_coverage">
+  </a>
+</p>
 
 Principais objetivos deste projeto:
 1. Fácil de usar e aprender ( entrada **>>** processamento **>>** saída ).
@@ -15,7 +32,7 @@ Principais objetivos deste projeto:
 4. Resolver regras de negócio complexas, ao permitir uma composição de casos de uso (criação de fluxos).
 5. Ser rápido e otimizado (verifique a [seção de benchmarks](#benchmarks)).
 
-> **Nota:** Verifique o repo https://github.com/serradura/from-fat-controllers-to-use-cases para ver uma aplicação Ruby on Rails que utiliza está gem para resolver as regras de negócio.
+> **Nota:** Verifique o repo https://github.com/serradura/from-fat-controllers-to-use-cases para ver uma aplicação Ruby on Rails que utiliza esta gem para resolver as regras de negócio.
 
 ## Documentação <!-- omit in toc -->
 
@@ -33,7 +50,7 @@ Versão    | Documentação
   - [`Micro::Case` - Como definir um caso de uso?](#microcase---como-definir-um-caso-de-uso)
   - [`Micro::Case::Result` - O que é o resultado de um caso de uso?](#microcaseresult---o-que-é-o-resultado-de-um-caso-de-uso)
     - [O que são os tipos de resultados?](#o-que-são-os-tipos-de-resultados)
-    - [Como difinir tipos customizados de resultados?](#como-difinir-tipos-customizados-de-resultados)
+    - [Como definir tipos customizados de resultados?](#como-definir-tipos-customizados-de-resultados)
     - [É possível definir um tipo sem definir os dados do resultado?](#é-possível-definir-um-tipo-sem-definir-os-dados-do-resultado)
     - [Como utilizar os hooks dos resultados?](#como-utilizar-os-hooks-dos-resultados)
     - [Por que o hook sem um tipo definido expõe o próprio resultado?](#por-que-o-hook-sem-um-tipo-definido-expõe-o-próprio-resultado)
@@ -161,18 +178,18 @@ bad_result.data     # { message: "`a` and `b` attributes must be numeric" }
 ### `Micro::Case::Result` - O que é o resultado de um caso de uso?
 
 Um `Micro::Case::Result` armazena os dados de output de um caso de uso. Esses são seus métodos:
-- `#success?` retorna true se for um resultado de sucesso.
-- `#failure?` retorna true se for um resultado de falha.
-- `#use_case` retorna o caso de uso reponsável pelo resultado. Essa funcionalidade é útil para lidar com falhas em flows (esse tópico será abordado mais a frente).
+- `#success?` retorna `true` se for um resultado de sucesso.
+- `#failure?` retorna `true` se for um resultado de falha.
+- `#use_case` retorna o caso de uso responsável pelo resultado. Essa funcionalidade é útil para lidar com falhas em flows (esse tópico será abordado mais a frente).
 - `#type` retorna um Symbol que dá significado ao resultado, isso é útil para declarar diferentes tipos de falha e sucesso.
-- `#data` os dados do resultado (um Hash).
+- `#data` os dados do resultado (um `Hash`).
 - `#[]` e `#values_at` são atalhos para acessar as propriedades do `#data`.
 - `#key?` retorna `true` se a chave estiver present no `#data`.
 - `#value?` retorna `true` se o valor estiver present no `#data`.
-- `#slice` retorna um novo hash que inclui apenas as chaves fornecidas. Se as chaves fornecidas não existirem, um hash vazio será retornado.
+- `#slice` retorna um novo `Hash` que inclui apenas as chaves fornecidas. Se as chaves fornecidas não existirem, um `Hash` vazio será retornado.
 - `#on_success` or `#on_failure` são métodos de hooks que te auxiliam a definir o fluxo da aplicação.
-- `#then` este método permite aplicar novos casos de uso ao resultado atual se ele for sucesso. A idia dessa feature é a criação de fluxos dinâmicos.
-- `#transitions` retorna um array com todoas as transformações que um resultado [teve durante um flow](#como-entender-o-que-aconteceu-durante-a-execução-de-um-flow).
+- `#then` este método permite aplicar novos casos de uso ao resultado atual se ele for sucesso. A ideia dessa feature é a criação de fluxos dinâmicos.
+- `#transitions` retorna um array com todas as transformações que um resultado [teve durante um flow](#como-entender-o-que-aconteceu-durante-a-execução-de-um-flow).
 
 > **Nota:** por conta de retrocompatibilidade, você pode usar o método `#value` como um alias para o método `#data`.
 
@@ -180,9 +197,9 @@ Um `Micro::Case::Result` armazena os dados de output de um caso de uso. Esses s�
 
 #### O que são os tipos de resultados?
 
-Todo resultado tem um tipo (type), e estão são os valores padrões:
-- `:ok` quando sucesso
-- `:error` or `:exception` quando falhas
+Todo resultado tem um tipo (`#type`), e estes são os valores padrões:
+- `:ok` em casos de sucesso;
+- `:error` ou `:exception` em casos de falhas.
 
 ```ruby
 class Divide < Micro::Case
@@ -238,9 +255,9 @@ err_result.use_case # #<Divide:0x0000 @__attributes={"a"=>2, "b"=>0}, @a=2, @b=0
 
 [⬆️ Voltar para o índice](#índice-)
 
-#### Como difinir tipos customizados de resultados?
+#### Como definir tipos customizados de resultados?
 
-Resposta: Use um Symbol com argumento dos métodos `Success()`, `Failure()` e declare o `result:` keyword para definir os dados do resultado.
+Resposta: Use um `Symbol` com argumento dos métodos `Success()`, `Failure()` e declare o `result:` keyword para definir os dados do resultado.
 
 ```ruby
 class Multiply < Micro::Case
@@ -310,10 +327,10 @@ result.use_case.attributes # {"a"=>2, "b"=>"2"}
 
 #### Como utilizar os hooks dos resultados?
 
-Como [mencionando anteriormente](#microcaseresult---o-que-é-o-resultado-de-um-caso-de-uso), o `Micro::Case::Result` tem dois métodoso para melhorar o controle do fluxo da aplicação. São eles:
+Como [mencionando anteriormente](#microcaseresult---o-que-é-o-resultado-de-um-caso-de-uso), o `Micro::Case::Result` tem dois métodos para melhorar o controle do fluxo da aplicação. São eles:
 `#on_success`, `on_failure`.
 
-Os exemplos abaixo demonstram eles em uso:
+Os exemplos abaixo os demonstram em uso:
 
 ```ruby
 class Double < Micro::Case
@@ -457,7 +474,7 @@ result[:number] * 4 == accum # true
 
 #### Como usar o método `Micro::Case::Result#then`?
 
-Este método permite você criar fluxos dinâmicos, então, com ele, você pode adicionar novos casos de uso ou fluxos para continuar a transformação de um resultado. por exemplo:
+Este método permite você criar fluxos dinâmicos. Com ele, você pode adicionar novos casos de uso ou fluxos para continuar a transformação de um resultado. Exemplo:
 
 ```ruby
 class ForbidNegativeNumber < Micro::Case
@@ -715,7 +732,7 @@ DoubleAllNumbersAndSquareAndAdd2
 
 #### É possível que um fluxo acumule sua entrada e mescle cada resultado de sucesso para usar como argumento dos próximos casos de uso?
 
-Resposta: Sim, é possível! Veja o exemplo abaixo para entender como funciona o acumulp de dados dentro da execução de um fluxo.
+Resposta: Sim, é possível! Veja o exemplo abaixo para entender como funciona o acúmulo de dados dentro da execução de um fluxo.
 
 ```ruby
 module Users
@@ -955,7 +972,7 @@ end
 
 #### `Micro::Case::Result#on_exception`
 
-Se você precisar lidar com um erro específico, recomendo o uso de uma instrução case. por exemplo:
+Se você precisar lidar com um erro específico, recomendo o uso de uma instrução case. Exemplo:
 
 ```ruby
 result.on_failure(:exception) do |data, use_case|
