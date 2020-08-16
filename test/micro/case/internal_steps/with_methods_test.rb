@@ -17,7 +17,7 @@ class Micro::Case::InternalStepsWithMethodsTest < Minitest::Test
     def call!
       validate_attributes
         .then(method(:sum_a_and_b))
-        .then(method(:add), number: 3)
+        .then(apply(:add), number: 3)
         .then(SumHalf)
     end
 
@@ -97,7 +97,7 @@ class Micro::Case::InternalStepsWithMethodsTest < Minitest::Test
     def call!
       validate_number
         .then(method(:normalize_number))
-        .then(method(:multiply_by_two))
+        .then(apply(:multiply_by_two))
     end
 
     private
@@ -128,7 +128,7 @@ class Micro::Case::InternalStepsWithMethodsTest < Minitest::Test
     def call!
       validate_attributes \
         | method(:sum_a_and_b) \
-        | method(:add) \
+        | apply(:add) \
         | SumHalf
     end
 
@@ -208,7 +208,7 @@ class Micro::Case::InternalStepsWithMethodsTest < Minitest::Test
     def call!
       validate_number \
         | method(:normalize_number) \
-        | method(:multiply_by_two)
+        | apply(:multiply_by_two)
     end
 
     private
@@ -239,7 +239,7 @@ class Micro::Case::InternalStepsWithMethodsTest < Minitest::Test
     def call!
       get_c
         .then(method(:get_d))
-        .then(method(:sum_a_b_c_d))
+        .then(apply(:sum_a_b_c_d))
         .then(SumHalf)
     end
 
@@ -307,7 +307,7 @@ class Micro::Case::InternalStepsWithMethodsTest < Minitest::Test
     def call!
       get_c \
         | method(:get_d) \
-        | method(:sum_a_b_c_d) \
+        | apply(:sum_a_b_c_d) \
         | SumHalf
     end
 

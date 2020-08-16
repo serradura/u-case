@@ -142,6 +142,10 @@ module Micro
 
     private
 
+      def apply(name)
+        method(name)
+      end
+
       def call
         return __call_use_case_flow if __call_use_case_flow?
 
