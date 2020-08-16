@@ -164,20 +164,23 @@ module Micro
         attributes = Utils.symbolize_hash_keys(arg)
 
         __update_accessible_attributes(attributes)
+        __fetch_accessible_attributes
       end
 
       private
 
-        def __fetch_accumulated_data(opt = nil)
-          __update_accessible_attributes(
-            opt ? opt.merge(@__accumulated_data) : @__accumulated_data
-          )
+        def __update_accessible_attributes(attributes)
+          @__accessible_attributes.merge!(attributes)
+        end
+
+        def __fetch_accessible_attributes
+          @__accessible_attributes.dup
         end
 
         def __call_proc(fn, expected)
-          input = __fetch_accumulated_data
+          __update_accessible_attributes(@__accumulated_data)
 
-          result = fn.arity.zero? ? fn.call : fn.call(input)
+          result = fn.arity.zero? ? fn.call : fn.call(__fetch_accessible_attributes)
 
           return self if result === self
 
@@ -185,9 +188,9 @@ module Micro
         end
 
         def __call_method(methd, attributes = nil)
-          input = __fetch_accumulated_data(attributes)
+          __update_accessible_attributes(attributes ? attributes.merge(@__accumulated_data) : @__accumulated_data)
 
-          result = methd.arity.zero? ? methd.call : methd.call(**input)
+          result = methd.arity.zero? ? methd.call : methd.call(**__fetch_accessible_attributes)
 
           return self if result === self
 
@@ -200,11 +203,6 @@ module Micro
 
         def __failure_type?(expected_type)
           failure? && (expected_type.nil? || expected_type == type)
-        end
-
-        def __update_accessible_attributes(attributes)
-          @__accessible_attributes.merge!(attributes)
-          @__accessible_attributes.dup
         end
 
         def __set_transition(use_case_attributes)

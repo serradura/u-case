@@ -17,7 +17,10 @@ end
 
 group :test do
   gem 'minitest', activemodel_version < '4.1' ? '~> 4.2' : '~> 5.0'
-  gem 'simplecov', require: false
+
+  simplecov_version = RUBY_VERSION < '2.4.0' ? '~> 0.17.1' : '>= 0.18.5'
+
+  gem 'simplecov', simplecov_version, require: false
 end
 
 pry_byebug_version =
