@@ -143,7 +143,7 @@ module Micro
 
         @success, @type, @use_case = is_success, type, use_case
 
-        @data = FetchData.call(data)
+        @data = FetchData.call(data).freeze
 
         raise Micro::Case::Error::InvalidResult.new(is_success, type, use_case) unless @data
 
