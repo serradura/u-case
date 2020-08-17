@@ -50,6 +50,7 @@ module MicroCaseAssertions
     value = options[:value] || :____skip____
 
     assert_kind_of_result(result)
+    assert_predicate(result.data, :frozen?)
     assert_equal(type, result.type) if type != :____skip____
     assert_equal(value, result.value) if value != :____skip____
   end
