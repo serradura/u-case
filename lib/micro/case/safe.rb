@@ -3,7 +3,7 @@
 module Micro
   class Case
     class Safe < ::Micro::Case
-      def self.__flow_builder
+      def self.__flow_builder__
         Cases::Safe::Flow
       end
 
