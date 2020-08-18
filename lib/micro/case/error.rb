@@ -47,7 +47,7 @@ module Micro
 
       class InvalidInvocationOfTheThenMethod < StandardError
         def initialize(class_name)
-          super("Invalid invocation of the #{class_name}#then method")
+          super("Invalid invocation of the #{class_name}then method")
         end
       end
 

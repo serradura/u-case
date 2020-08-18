@@ -22,19 +22,21 @@ module Micro
       new(options).__call__
     end
 
-    INVALID_INVOCATION_OF_THE_THE_METHOD =
-      Error::InvalidInvocationOfTheThenMethod.new(self.name)
+    INVALID_INVOCATION_OF_THE_THEN_METHOD =
+      Error::InvalidInvocationOfTheThenMethod.new("#{self.name}.")
 
     def self.then(use_case = nil, &block)
       can_yield_self = respond_to?(:yield_self)
 
       if block
-        raise INVALID_INVOCATION_OF_THE_THE_METHOD if use_case
+        raise INVALID_INVOCATION_OF_THE_THEN_METHOD if use_case
         raise NotImplementedError if !can_yield_self
 
         yield_self(&block)
       else
         return yield_self if !use_case && can_yield_self
+
+        raise INVALID_INVOCATION_OF_THE_THEN_METHOD unless ::Micro.case_or_flow?(use_case)
 
         self.call.then(use_case)
       end
@@ -206,7 +208,7 @@ module Micro
         __result.__set__(is_success, value, type, self)
       end
 
-      private_constant :MapFailureType
+    private_constant :MapFailureType, :INVALID_INVOCATION_OF_THE_THEN_METHOD
   end
 
   def self.case_or_flow?(arg)

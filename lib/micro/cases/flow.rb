@@ -49,18 +49,24 @@ module Micro
         can_yield_self = respond_to?(:yield_self)
 
         if block
-          raise Error::InvalidInvocationOfTheThenMethod.new(self.class.name) if use_case
+          raise_invalid_invocation_of_the_then_method if use_case
           raise NotImplementedError if !can_yield_self
 
           yield_self(&block)
         else
           return yield_self if !use_case && can_yield_self
 
+          raise_invalid_invocation_of_the_then_method unless ::Micro.case_or_flow?(use_case)
+
           self.call.then(use_case)
         end
       end
 
       private
+
+        def raise_invalid_invocation_of_the_then_method
+          raise Case::Error::InvalidInvocationOfTheThenMethod.new("#{self.class.name}#")
+        end
 
         def __case_use_case(use_case, result, input)
           use_case.__new__(result, input).__call__
