@@ -36,6 +36,10 @@ module Micro
         [data, type]
       end
 
+      def to_sym
+        @__success ? :success : :failure
+      end
+
       def [](key)
         data[key]
       end
