@@ -7,8 +7,8 @@ module Micro
     class Result
       Kind::Types.add(self)
 
-      INVALID_INVOCATION_OF_THE_THE_METHOD =
-        Error::InvalidInvocationOfTheThenMethod.new(self.name)
+      INVALID_INVOCATION_OF_THE_THEN_METHOD =
+        Error::InvalidInvocationOfTheThenMethod.new("#{self.name}#")
 
       @@transitions_enabled = true
 
@@ -51,7 +51,7 @@ module Micro
       end
 
       def success?
-        @success
+        @__success
       end
 
       def failure?
@@ -92,7 +92,7 @@ module Micro
         can_yield_self = respond_to?(:yield_self)
 
         if block
-          raise INVALID_INVOCATION_OF_THE_THE_METHOD if use_case
+          raise INVALID_INVOCATION_OF_THE_THEN_METHOD if use_case
           raise NotImplementedError if !can_yield_self
 
           yield_self(&block)
@@ -101,7 +101,7 @@ module Micro
           return failure? ? self : __call_proc(use_case, 'then(-> {})'.freeze) if use_case.is_a?(Proc)
           return failure? ? self : __call_method(use_case, attributes) if use_case.is_a?(Method)
 
-          raise INVALID_INVOCATION_OF_THE_THE_METHOD unless ::Micro.case_or_flow?(use_case)
+          raise INVALID_INVOCATION_OF_THE_THEN_METHOD unless ::Micro.case_or_flow?(use_case)
 
           return self if failure?
 
@@ -121,7 +121,7 @@ module Micro
         return __call_proc(arg, '| -> {}'.freeze) if arg.is_a?(Proc)
         return __call_method(arg) if arg.is_a?(Method)
 
-        raise INVALID_INVOCATION_OF_THE_THE_METHOD unless ::Micro.case_or_flow?(arg)
+        raise INVALID_INVOCATION_OF_THE_THEN_METHOD unless ::Micro.case_or_flow?(arg)
 
         failure? ? self : arg.__new__(self, data).__call__
       end
@@ -141,7 +141,7 @@ module Micro
         raise Error::InvalidResultType unless type.is_a?(Symbol)
         raise Error::InvalidUseCase unless use_case.is_a?(::Micro::Case)
 
-        @success, @type, @use_case = is_success, type, use_case
+        @__success, @type, @use_case = is_success, type, use_case
 
         @data = FetchData.call(data).freeze
 
@@ -208,7 +208,7 @@ module Micro
         def __set_transition(use_case_attributes)
           use_case_class = @use_case.class
 
-          result = @success ? :success : :failure
+          result = @__success ? :success : :failure
 
           @__transitions << {
             use_case: { class: use_case_class, attributes: use_case_attributes },
@@ -217,7 +217,7 @@ module Micro
           }
         end
 
-        private_constant :FetchData, :INVALID_INVOCATION_OF_THE_THE_METHOD
+      private_constant :FetchData, :INVALID_INVOCATION_OF_THE_THEN_METHOD
     end
   end
 end

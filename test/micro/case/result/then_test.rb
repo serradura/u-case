@@ -22,19 +22,8 @@ class Micro::Case::Result::ThenTest < Minitest::Test
 
       assert_raises(NotImplementedError) { result1.then { 0 } }
       assert_raises(NotImplementedError) { result2.then { 0 } }
-
-      assert_raises(Micro::Case::Error::InvalidInvocationOfTheThenMethod) { result1.then(1) { 0 } }
-      assert_raises(Micro::Case::Error::InvalidInvocationOfTheThenMethod) { result2.then(1) { 0 } }
     end
   else
-    def test_the_not_implemented_error
-      result1 = success_result(value: {number: 0})
-      result2 = failure_result(value: {number: 1})
-
-      assert_raises(Micro::Case::Error::InvalidInvocationOfTheThenMethod) { result1.then(1) { 0 } }
-      assert_raises(Micro::Case::Error::InvalidInvocationOfTheThenMethod) { result2.then(1) { 0 } }
-    end
-
     def test_the_method_then_with_a_block
       success = success_result(value: {number: 0})
       success_incr = 0
@@ -152,12 +141,19 @@ class Micro::Case::Result::ThenTest < Minitest::Test
     end
   end
 
-  def test_the_not_implemented_error_when_call_the_method_then_without_an_use_case
+  def test_the_invalid_invocation_error_when_the_method_then_was_called_without_an_use_case
     result1 = success_result(value: {number: 0})
     result2 = failure_result(value: {number: 1})
 
-    assert_raises(Micro::Case::Error::InvalidInvocationOfTheThenMethod) { result1.then(1) }
-    assert_raises(Micro::Case::Error::InvalidInvocationOfTheThenMethod) { result2.then(1) }
+    assert_raises_with_message(
+      Micro::Case::Error::InvalidInvocationOfTheThenMethod,
+      'Invalid invocation of the Micro::Case::Result#then method'
+    ) { result1.then(1) }
+
+    assert_raises_with_message(
+      Micro::Case::Error::InvalidInvocationOfTheThenMethod,
+      'Invalid invocation of the Micro::Case::Result#then method'
+    ) { result2.then(1) { 0 } }
   end
 
   class FooBar < Micro::Case
