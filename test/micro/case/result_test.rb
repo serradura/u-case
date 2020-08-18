@@ -23,6 +23,7 @@ class Micro::Case::ResultTest < Minitest::Test
     result = success_result(value: { a: 1, b: 2 }, type: :ok, use_case: use_case)
 
     assert_predicate(result, :success?)
+    assert_equal(:success, result.to_sym)
     assert_equal(1, result.value[:a])
 
     assert_same(use_case, result.use_case)
@@ -87,6 +88,7 @@ class Micro::Case::ResultTest < Minitest::Test
     refute_predicate(result, :success?)
     assert_predicate(result, :failure?)
 
+    assert_equal(:failure, result.to_sym)
     assert_equal(0, result.value[:a])
     assert_same(use_case, result.use_case)
 
