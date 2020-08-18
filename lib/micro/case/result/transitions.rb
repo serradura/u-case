@@ -5,7 +5,7 @@ module Micro
     class Result
       class Transitions
         MapEverything = -> (result, use_case_attributes) do
-          result_track = result.success? ? :success : :failure
+          result_track = result.to_sym
 
           {
             use_case: { class: result.use_case.class, attributes: use_case_attributes },
