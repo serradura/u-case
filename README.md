@@ -77,10 +77,10 @@ Version   | Documentation
     - [`Kind::Validator`](#kindvalidator)
 - [`Micro::Case.config`](#microcaseconfig)
 - [Benchmarks](#benchmarks)
-  - [`Micro::Case` (v3.1.0)](#microcase-v310)
+  - [`Micro::Case`](#microcase)
     - [Success results](#success-results)
     - [Failure results](#failure-results)
-  - [`Micro::Cases::Flow` (v3.1.0)](#microcasesflow-v310)
+  - [`Micro::Cases::Flow`](#microcasesflow)
   - [Comparisons](#comparisons)
 - [Examples](#examples)
   - [1️⃣ Users creation](#1️⃣-users-creation)
@@ -1187,7 +1187,7 @@ end
 
 ## Benchmarks
 
-### `Micro::Case` (v3.1.0)
+### `Micro::Case`
 
 #### Success results
 
@@ -1281,7 +1281,7 @@ https://github.com/serradura/u-case/blob/main/benchmarks/use_case/with_failure_r
 
 ---
 
-### `Micro::Cases::Flow` (v3.1.0)
+### `Micro::Cases::Flow`
 
 | Gems / Abstraction      | [Success results](https://github.com/serradura/u-case/blob/main/benchmarks/flow/with_success_result.rb#L40) | [Failure results](https://github.com/serradura/u-case/blob/main/benchmarks/flow/with_failure_result.rb#L40) |
 | ------------------------------------------- | ----------------: | ----------------: |
