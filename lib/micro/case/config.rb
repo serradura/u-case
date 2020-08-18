@@ -26,7 +26,7 @@ module Micro
       end
 
       def activemodel_validation_errors_failure
-        @activemodel_validation_errors_failure if defined?(@activemodel_validation_errors_failure)
+        return @activemodel_validation_errors_failure if defined?(@activemodel_validation_errors_failure)
 
         @activemodel_validation_errors_failure = :invalid_attributes
       end
