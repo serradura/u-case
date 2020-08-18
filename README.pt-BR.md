@@ -38,7 +38,7 @@ Principais objetivos deste projeto:
 
 Versão    | Documentação
 --------- | -------------
-3.0.0 | https://github.com/serradura/u-case/blob/main/README.md
+3.1.0 | https://github.com/serradura/u-case/blob/main/README.md
 2.6.0     | https://github.com/serradura/u-case/blob/v2.x/README.md
 1.1.0     | https://github.com/serradura/u-case/blob/v1.x/README.md
 
@@ -76,10 +76,10 @@ Versão    | Documentação
     - [`Kind::Validator`](#kindvalidator)
 - [`Micro::Case.config`](#microcaseconfig)
 - [Benchmarks](#benchmarks)
-  - [`Micro::Case` (v3.0.0)](#microcase-v300)
+  - [`Micro::Case`](#microcase)
     - [Success results](#success-results)
     - [Failure results](#failure-results)
-  - [`Micro::Cases::Flow` (v3.0.0)](#microcasesflow-v300)
+  - [`Micro::Cases::Flow`](#microcasesflow)
   - [Comparações](#comparações)
 - [Exemplos](#exemplos)
   - [1️⃣ Criação de usuários](#1️⃣-criação-de-usuários)
@@ -95,7 +95,7 @@ Versão    | Documentação
 
 | u-case         | branch  | ruby     |  activemodel  |
 | -------------- | ------- | -------- | ------------- |
-| 3.0.0      | main    | >= 2.2.0 | >= 3.2, < 6.1 |
+| 3.1.0      | main    | >= 2.2.0 | >= 3.2, < 6.1 |
 | 2.6.0          | v2.x    | >= 2.2.0 | >= 3.2, < 6.1 |
 | 1.1.0          | v1.x    | >= 2.2.0 | >= 3.2, < 6.1 |
 
@@ -118,7 +118,7 @@ Versão    | Documentação
 Adicione essa linha ao Gemfile da sua aplicação:
 
 ```ruby
-gem 'u-case', '~> 3.0.0'
+gem 'u-case', '~> 3.1.0'
 ```
 
 E então execute:
@@ -1191,7 +1191,7 @@ end
 
 ## Benchmarks
 
-### `Micro::Case` (v3.0.0)
+### `Micro::Case`
 
 #### Success results
 
@@ -1285,7 +1285,7 @@ https://github.com/serradura/u-case/blob/main/benchmarks/use_case/with_failure_r
 
 ---
 
-### `Micro::Cases::Flow` (v3.0.0)
+### `Micro::Cases::Flow`
 
 | Gem / Abstração      | [Resultados de sucesso](https://github.com/serradura/u-case/blob/main/benchmarks/flow/with_success_result.rb#L40) | [Resultados de falha](https://github.com/serradura/u-case/blob/main/benchmarks/flow/with_failure_result.rb#L40) |
 | ------------------------------------------- | ----------------: | ----------------: |
