@@ -23,6 +23,10 @@ class Micro::CaseTest < Minitest::Test
     end
   end
 
+  def test_the_case_flow_builder
+    assert_same(Micro::Cases::Flow, Double.__flow_builder__)
+  end
+
   def test_the_initializer_data_validation
     [nil, 1, true, '', []].each do |arg|
       assert_raises_with_message(ArgumentError, 'argument must be a Hash') do
