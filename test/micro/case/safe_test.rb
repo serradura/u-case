@@ -13,6 +13,10 @@ class Micro::Case::SafeTest < Minitest::Test
     end
   end
 
+  def test_the_case_flow_builder
+    assert_same(Micro::Cases::Safe::Flow, Divide.__flow_builder__)
+  end
+
   def test_class_call_method
     result = Divide.call(a: 4, b: 2)
 
