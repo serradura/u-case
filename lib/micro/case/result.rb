@@ -5,6 +5,8 @@ require 'set'
 module Micro
   class Case
     class Result
+      require 'micro/case/result/transitions'
+
       Kind::Types.add(self)
 
       INVALID_INVOCATION_OF_THE_THEN_METHOD =
@@ -20,10 +22,14 @@ module Micro
 
       alias value data
 
-      def initialize
-        @__transitions = @@transitions_enabled ? [] : Kind::Empty::ARRAY
+      def initialize(transitions_mapper = nil)
         @__accumulated_data = {}
         @__accessible_attributes = {}
+
+        enable_transitions = @@transitions_enabled
+
+        @__transitions = enable_transitions ? [] : Kind::Empty::ARRAY
+        @__transitions_mapper = transitions_mapper || Transitions::MapEverything if enable_transitions
       end
 
       def to_ary
@@ -56,6 +62,10 @@ module Micro
 
       def failure?
         !success?
+      end
+
+      def accessible_attributes
+        @__accessible_attributes.keys
       end
 
       def on_success(expected_type = nil)
@@ -127,7 +137,7 @@ module Micro
       end
 
       def transitions
-        @__transitions.clone
+        @__transitions.dup
       end
 
       FetchData = -> (data) do
@@ -206,15 +216,7 @@ module Micro
         end
 
         def __set_transition(use_case_attributes)
-          use_case_class = @use_case.class
-
-          result = @__success ? :success : :failure
-
-          @__transitions << {
-            use_case: { class: use_case_class, attributes: use_case_attributes },
-            result => { type: @type, result: data },
-            accessible_attributes: @__accessible_attributes.keys
-          }
+          @__transitions << @__transitions_mapper.call(self, use_case_attributes)
         end
 
       private_constant :FetchData, :INVALID_INVOCATION_OF_THE_THEN_METHOD
