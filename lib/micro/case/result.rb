@@ -22,14 +22,14 @@ module Micro
 
       alias value data
 
-      def initialize(transitions_mapper = nil)
+      def initialize(transitions_mapper = Transitions::MapEverything)
         @__accumulated_data = {}
         @__accessible_attributes = {}
 
         enable_transitions = @@transitions_enabled
 
         @__transitions = enable_transitions ? [] : Kind::Empty::ARRAY
-        @__transitions_mapper = transitions_mapper || Transitions::MapEverything if enable_transitions
+        @__transitions_mapper = transitions_mapper if enable_transitions
       end
 
       def to_ary
