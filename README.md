@@ -96,7 +96,7 @@ Version   | Documentation
 
 | u-case         | branch  | ruby     |  activemodel  |
 | -------------- | ------- | -------- | ------------- |
-| 3.1.0      | main    | >= 2.2.0 | >= 3.2, < 6.1 |
+| 3.1.0          | main    | >= 2.2.0 | >= 3.2, < 6.1 |
 | 2.6.0          | v2.x    | >= 2.2.0 | >= 3.2, < 6.1 |
 | 1.1.0          | v1.x    | >= 2.2.0 | >= 3.2, < 6.1 |
 
@@ -128,7 +128,7 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install u-case --pre
+    $ gem install u-case
 
 ## Usage
 
