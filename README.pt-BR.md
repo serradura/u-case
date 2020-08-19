@@ -38,7 +38,7 @@ Principais objetivos deste projeto:
 
 Versão    | Documentação
 --------- | -------------
-3.1.0 | https://github.com/serradura/u-case/blob/main/README.md
+3.1.0     | https://github.com/serradura/u-case/blob/main/README.md
 2.6.0     | https://github.com/serradura/u-case/blob/v2.x/README.md
 1.1.0     | https://github.com/serradura/u-case/blob/v1.x/README.md
 
@@ -95,7 +95,7 @@ Versão    | Documentação
 
 | u-case         | branch  | ruby     |  activemodel  |
 | -------------- | ------- | -------- | ------------- |
-| 3.1.0      | main    | >= 2.2.0 | >= 3.2, < 6.1 |
+| 3.1.0          | main    | >= 2.2.0 | >= 3.2, < 6.1 |
 | 2.6.0          | v2.x    | >= 2.2.0 | >= 3.2, < 6.1 |
 | 1.1.0          | v1.x    | >= 2.2.0 | >= 3.2, < 6.1 |
 
@@ -127,7 +127,7 @@ E então execute:
 
 Ou instale manualmente:
 
-    $ gem install u-case --pre
+    $ gem install u-case
 
 ## Uso
 
