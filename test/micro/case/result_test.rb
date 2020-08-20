@@ -172,7 +172,7 @@ class Micro::Case::ResultTest < Minitest::Test
   def test_the_on_unknown_hook
     number = rand(1..1_000_000)
 
-    failure_result = failure_result(value: { number }, type: :not_mapped, use_case: Micro::Case.new({}))
+    failure_result = failure_result(value: { number: number }, type: :not_mapped, use_case: Micro::Case.new({}))
 
     failure_result
       .on_failure(:a)
@@ -180,13 +180,12 @@ class Micro::Case::ResultTest < Minitest::Test
 
     # ---
 
-    success_result = success_result(value: { number }, type: :not_mapped, use_case: Micro::Case.new({}))
+    success_result = success_result(value: { number: number }, type: :not_mapped, use_case: Micro::Case.new({}))
 
     success_result
       .on_success(:b)
       .on_unknown { |data| assert_equal(number, data[:number]) }
 
-    assert_equal(1, success_counter)
   end
 
   def test_the_repeated_on_unknown_hook_exception
