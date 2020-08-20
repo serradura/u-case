@@ -25,12 +25,7 @@ class Multiply < Trailblazer::Operation
     end
 end
 
-SYMBOL_KEYS = { a: 2, b: 2 }
-STRING_KEYS = { 'a' => 2, 'b' => 2 }
+Multiply.call(a: nil, 'b' => 2)
 
-report = MemoryProfiler.report do
-  Multiply.call(SYMBOL_KEYS)
-  Multiply.call(STRING_KEYS)
-end
-
+report = MemoryProfiler.report { Multiply.call(a: nil, 'b' => 2) }
 report.pretty_print

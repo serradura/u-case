@@ -7,11 +7,7 @@ gemfile do
 
   gem 'memory_profiler'
 
-  gem 'u-case', path: '..'
-end
-
-Micro::Case.config do |config|
-  config.enable_transitions = false
+  gem 'u-case', '~> 2.0.0'
 end
 
 class Multiply < Micro::Case
@@ -19,19 +15,17 @@ class Multiply < Micro::Case
 
   def call!
     if a.is_a?(Numeric) && b.is_a?(Numeric)
-      Success(result: { number: a * b })
+      Success { { number: a * b } }
     else
       Failure(:invalid_data)
     end
   end
 end
 
-SYMBOL_KEYS = { a: nil, b: 2 }
-STRING_KEYS = { 'a' => 1, 'b' => '' }
+Multiply.call(a: 2, 'b' => 2)
 
 report = MemoryProfiler.report do
-  Multiply.call(SYMBOL_KEYS)
-  Multiply.call(STRING_KEYS)
+  Multiply.call(a: 2, 'b' => 2)
 end
 
 report.pretty_print

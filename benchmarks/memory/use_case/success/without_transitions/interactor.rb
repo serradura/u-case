@@ -25,12 +25,10 @@ class Multiply
   end
 end
 
-SYMBOL_KEYS = { a: nil, b: 2 }
-STRING_KEYS = { 'a' => 1, 'b' => '' }
+Multiply.call(a: 2, 'b' => 2)
 
 report = MemoryProfiler.report do
-  Multiply.call(SYMBOL_KEYS)
-  Multiply.call(STRING_KEYS)
+  Multiply.call(a: 2, 'b' => 2)
 end
 
 report.pretty_print
