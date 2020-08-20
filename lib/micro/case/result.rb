@@ -25,8 +25,7 @@ module Micro
       def initialize(transitions_mapper = Transitions::MapEverything)
         @__accumulated_data = {}
         @__accessible_attributes = {}
-        @__is_unknown = false
-
+        @__is_unknown = true
         enable_transitions = @@transitions_enabled
 
         @__transitions = enable_transitions ? [] : Kind::Empty::ARRAY
@@ -69,12 +68,15 @@ module Micro
         !success?
       end
 
+      def unknown?
+        @__is_unknown
+      end
+
       def accessible_attributes
         @__accessible_attributes.keys
       end
 
       def on_success(expected_type = nil)
-        @__is_unknown = true
         return self unless __success_type?(expected_type)
 
         hook_data = expected_type.nil? ? self : data
@@ -85,7 +87,6 @@ module Micro
       end
 
       def on_failure(expected_type = nil)
-        @__is_unknown = true
         return self unless __failure_type?(expected_type)
 
         hook_data = expected_type.nil? ? self : data
@@ -106,7 +107,9 @@ module Micro
       end
 
       def on_unknown
+        return self unless unknown?
 
+        yield(self, @use_case)
       end
 
       def then(use_case = nil, attributes = nil, &block)
