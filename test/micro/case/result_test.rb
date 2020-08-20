@@ -169,6 +169,59 @@ class Micro::Case::ResultTest < Minitest::Test
     assert_equal(2, counter)
   end
 
+  def test_the_on_unknown_hook
+    number = rand(1..1_000_000)
+
+    failure_result = failure_result(value: { number }, type: :not_mapped, use_case: Micro::Case.new({}))
+
+    failure_result
+      .on_failure(:a)
+      .on_unknown { |data| assert_equal(number, data[:number]) }
+
+    # ---
+
+    success_result = success_result(value: { number }, type: :not_mapped, use_case: Micro::Case.new({}))
+
+    success_result
+      .on_success(:b)
+      .on_unknown { |data| assert_equal(number, data[:number]) }
+
+    assert_equal(1, success_counter)
+  end
+
+  def test_the_repeated_on_unknown_hook_exception
+    result = success_result(value: {}, type: :ok, use_case: Micro::Case.new({}))
+
+    assert_raises do 
+      result
+        .on_unknown
+        .on_unknown
+    end
+  end
+
+  def test_the_on_unknown_hook_exclusivity
+
+    failure_counter = 0
+    failure_result = failure_result(value: {}, type: :not_mapped, use_case: Micro::Case.new({}))
+
+    failure_result
+      .on_failure { failure_counter += 1 }
+      .on_unknown { failure_counter += 1 }
+
+    assert_equal(1, failure_counter)
+
+    # ---
+
+    success_counter = 0
+    success_result = success_result(value: {}, type: :not_mapped, use_case: Micro::Case.new({}))
+
+    success_result
+      .on_success { success_counter += 1 }
+      .on_unknown { success_counter += 1 }
+
+    assert_equal(1, success_counter)
+  end
+
   def test_the_output_of_a_failure_hook_without_a_defined_type
     acc = 0
     number = rand(1..1_000_000)
