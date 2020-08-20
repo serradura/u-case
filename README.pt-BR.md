@@ -1197,104 +1197,104 @@ end
 
 | Gem / Abstração        | Iterações por segundo |        Comparação |
 | -----------------      | --------------------: | ----------------: |
-| Dry::Monads            |              141730.1 | _**O mais rápido**_ |
-| **Micro::Case**        |              103541.3 |     1.37x slower  |
-| Interactor             |               29100.8 |     4.87x slower  |
-| Trailblazer::Operation |               15031.4 |     9.43x slower  |
-| Dry::Transaction       |                5674.0 |    24.98x slower  |
+| Dry::Monads            |              281515.4 | _**O mais rápido**_ |
+| **Micro::Case**        |              151711.3 |     1.86x mais lento  |
+| Interactor             |               53016.2 |     5.31x mais lento  |
+| Trailblazer::Operation |               38314.2 |     7.35x mais lento  |
+| Dry::Transaction       |               10440.7 |    26.96x mais lento  |
 
 <details>
   <summary>Show the full <a href="https://github.com/evanphx/benchmark-ips">benchmark/ips</a> results.</summary>
 
 ```ruby
 # Warming up --------------------------------------
-#           Interactor     2.915k i/100ms
-# Trailblazer::Operation   1.543k i/100ms
-#          Dry::Monads    14.288k i/100ms
-#     Dry::Transaction   571.000  i/100ms
-#          Micro::Case    10.418k i/100ms
-#  Micro::Case::Strict     8.296k i/100ms
-#    Micro::Case::Safe    10.254k i/100ms
+#           Interactor     5.151k i/100ms
+# Trailblazer::Operation   3.805k i/100ms
+#          Dry::Monads    28.153k i/100ms
+#     Dry::Transaction     1.063k i/100ms
+#          Micro::Case    15.159k i/100ms
+#    Micro::Case::Safe    15.172k i/100ms
+#  Micro::Case::Strict    12.557k i/100ms
 
 # Calculating -------------------------------------
-#           Interactor     29.101k (± 2.1%) i/s -    145.750k in   5.010660s
-# Trailblazer::Operation   15.031k (± 2.0%) i/s -     75.607k in   5.032071s
-#          Dry::Monads    141.730k (± 3.1%) i/s -    714.400k in   5.045546s
-#     Dry::Transaction      5.674k (± 1.9%) i/s -     28.550k in   5.033564s
-#          Micro::Case    103.541k (± 1.6%) i/s -    520.900k in   5.032077s
-#  Micro::Case::Strict     83.045k (± 2.4%) i/s -    423.096k in   5.098031s
-#    Micro::Case::Safe    101.662k (± 1.5%) i/s -    512.700k in   5.044386s
+#           Interactor     53.016k (± 1.8%) i/s -    267.852k in   5.053967s
+# Trailblazer::Operation   38.314k (± 1.7%) i/s -    194.055k in   5.066374s
+#          Dry::Monads    281.515k (± 2.4%) i/s -      1.408M in   5.003266s
+#     Dry::Transaction     10.441k (± 2.1%) i/s -     53.150k in   5.092957s
+#          Micro::Case    151.711k (± 1.7%) i/s -    773.109k in   5.097555s
+#    Micro::Case::Safe    145.801k (± 6.7%) i/s -    728.256k in   5.022666s
+#  Micro::Case::Strict    115.636k (± 8.4%) i/s -    577.622k in   5.042079s
 
 # Comparison:
-#          Dry::Monads:   141730.1 i/s
-#          Micro::Case:   103541.3 i/s - 1.37x  (± 0.00) slower
-#    Micro::Case::Safe:   101662.2 i/s - 1.39x  (± 0.00) slower
-#  Micro::Case::Strict:    83044.6 i/s - 1.71x  (± 0.00) slower
-#           Interactor:    29100.8 i/s - 4.87x  (± 0.00) slower
-# Trailblazer::Operation:  15031.4 i/s - 9.43x  (± 0.00) slower
-#     Dry::Transaction:     5674.0 i/s - 24.98x  (± 0.00) slower
+#          Dry::Monads:   281515.4 i/s
+#          Micro::Case:   151711.3 i/s - 1.86x  (± 0.00) slower
+#    Micro::Case::Safe:   145800.8 i/s - 1.93x  (± 0.00) slower
+#  Micro::Case::Strict:   115635.8 i/s - 2.43x  (± 0.00) slower
+#           Interactor:    53016.2 i/s - 5.31x  (± 0.00) slower
+# Trailblazer::Operation:  38314.2 i/s - 7.35x  (± 0.00) slower
+#     Dry::Transaction:    10440.7 i/s - 26.96x  (± 0.00) slower
 ```
 </details>
 
-https://github.com/serradura/u-case/blob/main/benchmarks/use_case/with_success_result.rb
+https://github.com/serradura/u-case/blob/main/benchmarks/perfomance/use_case/success_results.
 
 #### Failure results
 
 | Gem / Abstração        | Iterações por segundo |        Comparação |
 | -----------------      | --------------------: | ----------------: |
-| **Micro::Case**        |               98820.8 | _**O mais rápido**_ |
-| Dry::Monads            |               71329.7 |     1.39x slower  |
-| Trailblazer::Operation |               15034.9 |     6.57x slower  |
-| Interactor             |               13958.7 |     7.08x slower  |
-| Dry::Transaction       |                5067.5 |    19.50x slower  |
+| **Micro::Case**        |              140794.0 | _**O mais rápido**_ |
+| Dry::Monads            |              133865.5 |        0x mais devagar  |
+| Trailblazer::Operation |               39829.9 |     3.53x mais devagar  |
+| Interactor             |               23856.0 |     5.90x mais devagar  |
+| Dry::Transaction       |                7975.0 |    17.65x mais devagar  |
 
 <details>
   <summary>Mostrar o resultado completo do <a href="https://github.com/evanphx/benchmark-ips">benchmark/ips</a>.</summary>
 
 ```ruby
 # Warming up --------------------------------------
-#           Interactor     1.324k i/100ms
-# Trailblazer::Operation   1.525k i/100ms
-#          Dry::Monads     7.126k i/100ms
-#     Dry::Transaction   499.000  i/100ms
-#          Micro::Case     9.919k i/100ms
-#  Micro::Case::Strict     7.837k i/100ms
-#    Micro::Case::Safe     9.762k i/100ms
+#           Interactor     2.351k i/100ms
+# Trailblazer::Operation   3.941k i/100ms
+#          Dry::Monads    13.567k i/100ms
+#     Dry::Transaction   927.000  i/100ms
+#          Micro::Case    14.959k i/100ms
+#    Micro::Case::Safe    14.904k i/100ms
+#  Micro::Case::Strict    12.007k i/100ms
 
 # Calculating -------------------------------------
-#           Interactor     13.959k (± 2.5%) i/s -     70.172k in   5.030240s
-# Trailblazer::Operation   15.035k (± 2.2%) i/s -     76.250k in   5.074108s
-#          Dry::Monads     71.330k (± 2.4%) i/s -    363.426k in   5.097993s
-#     Dry::Transaction      5.068k (± 1.9%) i/s -     25.449k in   5.023922s
-#          Micro::Case     98.821k (± 2.9%) i/s -    495.950k in   5.023421s
-#  Micro::Case::Strict     79.936k (± 3.1%) i/s -    399.687k in   5.005435s
-#    Micro::Case::Safe     98.695k (± 1.9%) i/s -    497.862k in   5.046246s
+#           Interactor     23.856k (± 1.7%) i/s -    119.901k in   5.027585s
+# Trailblazer::Operation   39.830k (± 1.2%) i/s -    200.991k in   5.047032s
+#          Dry::Monads    133.866k (± 2.5%) i/s -    678.350k in   5.070899s
+#     Dry::Transaction      7.975k (± 8.6%) i/s -     39.861k in   5.036260s
+#          Micro::Case    130.534k (±24.4%) i/s -    583.401k in   5.040907s
+#    Micro::Case::Safe    140.794k (± 8.1%) i/s -    700.488k in   5.020935s
+#  Micro::Case::Strict    102.641k (±21.3%) i/s -    480.280k in   5.020354s
 
 # Comparison:
-#          Micro::Case:    98820.8 i/s
-#    Micro::Case::Safe:    98695.0 i/s - same-ish: difference falls within error
-#  Micro::Case::Strict:    79935.9 i/s - 1.24x  (± 0.00) slower
-#          Dry::Monads:    71329.7 i/s - 1.39x  (± 0.00) slower
-# Trailblazer::Operation:  15034.9 i/s - 6.57x  (± 0.00) slower
-#           Interactor:    13958.7 i/s - 7.08x  (± 0.00) slower
-#     Dry::Transaction:     5067.5 i/s - 19.50x  (± 0.00) slower
+#    Micro::Case::Safe:   140794.0 i/s
+#          Dry::Monads:   133865.5 i/s - same-ish: difference falls within error
+#          Micro::Case:   130534.0 i/s - same-ish: difference falls within error
+#  Micro::Case::Strict:   102640.7 i/s - 1.37x  (± 0.00) slower
+# Trailblazer::Operation:  39829.9 i/s - 3.53x  (± 0.00) slower
+#           Interactor:    23856.0 i/s - 5.90x  (± 0.00) slower
+#     Dry::Transaction:     7975.0 i/s - 17.65x  (± 0.00) slower
 ```
 </details>
 
-https://github.com/serradura/u-case/blob/main/benchmarks/use_case/with_failure_result.rb
+https://github.com/serradura/u-case/blob/main/benchmarks/perfomance/use_case/failure_results.
 
 ---
 
 ### `Micro::Cases::Flow`
 
-| Gem / Abstração      | [Resultados de sucesso](https://github.com/serradura/u-case/blob/main/benchmarks/flow/with_success_result.rb#L40) | [Resultados de falha](https://github.com/serradura/u-case/blob/main/benchmarks/flow/with_failure_result.rb#L40) |
+| Gem / Abstração      | [Resultados de sucesso](https://github.com/serradura/u-case/blob/main/benchmarks/perfomance/flow/success_results.rb) | [Resultados de falha](https://github.com/serradura/u-case/blob/main/benchmarks/perfomance/flow/failure_results.rb) |
 | ------------------------------------------- | ----------------: | ----------------: |
-| Micro::Case internal flow (private methods) | _**O mais rápido**_ | _**O mais rápido**_ |
-| Micro::Case internal flow (through lambdas) |      1.03x slower |      1.04x slower |
-| Micro::Case `then` method                   |      1.49x slower |         0x slower |
-| Micro::Cases.flow                           |      1.53x slower |      1.04x slower |
-| Micro::Cases.safe_flow                      |      1.54x slower |      1.04x slower |
-| Interactor::Organizer                       |      2.05x slower |      6.27x slower |
+| Micro::Case::Result `pipe` method           |      172734.4 i/s |      153745.6 i/s |
+| Micro::Case::Result `then` method           | 1.24x mais devagar | 1.21x mais devagar |
+| Micro::Cases.flow                           | 1.30x mais devagar | 1.30x mais devagar |
+| Micro::Case class with an inner flow        | 2.05x mais devagar | 1.98x mais devagar |
+| Micro::Case class including itself as a step| 2.14x mais devagar | 2.09x mais devagar |
+| Interactor::Organizer                       | 7.69x mais devagar | 7.03x mais devagar |
 
 \* As gems `Dry::Monads`, `Dry::Transaction`, `Trailblazer::Operation` estão fora desta análise por não terem esse tipo de funcionalidade.
 
@@ -1303,40 +1303,28 @@ https://github.com/serradura/u-case/blob/main/benchmarks/use_case/with_failure_r
 
 ```ruby
 # Warming up --------------------------------------
-# Interactor::Organizer
-#                          4.837k i/100ms
-# Micro::Cases.flow([])
-#                          6.755k i/100ms
-# Micro::Cases::safe_flow([])
-#                          6.809k i/100ms
-# Micro::Case flow using `then` method
-#                          6.968k i/100ms
-# Micro::Case flow using private methods
-#                         10.362k i/100ms
-# Micro::Case flow using private methods through lambdas
-#                         10.258k i/100ms
+# Interactor::Organizer            2.163k i/100ms
+# Micro::Cases.flow([])           13.158k i/100ms
+# Micro::Case flow in a class      8.400k i/100ms
+# Micro::Case including the class  8.008k i/100ms
+# Micro::Case::Result#|           17.151k i/100ms
+# Micro::Case::Result#then        14.121k i/100ms
 
 # Calculating -------------------------------------
-# Interactor::Organizer
-#                          50.731k (± 1.6%) i/s -    256.361k in   5.054694s
-# Micro::Cases.flow([])
-#                          67.757k (± 1.6%) i/s -    344.505k in   5.085681s
-# Micro::Cases::safe_flow([])
-#                          67.613k (± 1.6%) i/s -    340.450k in   5.036562s
-# Micro::Case flow using `then` method
-#                          69.483k (± 1.5%) i/s -    348.400k in   5.015351s
-# Micro::Case flow using private methods
-#                         103.788k (± 1.0%) i/s -    528.462k in   5.092240s
-# Micro::Case flow using private methods through lambdas
-#                         101.081k (± 1.2%) i/s -    512.900k in   5.074904s
+# Interactor::Organizer            22.467k (± 1.8%) i/s -    112.476k in   5.007787s
+# Micro::Cases.flow([])           133.183k (± 1.5%) i/s -    671.058k in   5.039815s
+# Micro::Case flow in a class      84.083k (± 1.8%) i/s -    428.400k in   5.096623s
+# Micro::Case including the class  80.574k (± 1.6%) i/s -    408.408k in   5.070029s
+# Micro::Case::Result#|           172.734k (± 1.1%) i/s -    874.701k in   5.064429s
+# Micro::Case::Result#then        139.799k (± 1.7%) i/s -    706.050k in   5.052035s
 
 # Comparison:
-# Micro::Case flow using private methods:                 103787.5 i/s
-# Micro::Case flow using private methods through lambdas: 101080.6 i/s - 1.03x  (± 0.00) slower
-# Micro::Case flow using `then` method:                    69483.3 i/s - 1.49x  (± 0.00) slower
-# Micro::Cases.flow([]):                                   67757.2 i/s - 1.53x  (± 0.00) slower
-# Micro::Cases::safe_flow([]):                             67613.3 i/s - 1.54x  (± 0.00) slower
-# Interactor::Organizer:                                   50730.8 i/s - 2.05x  (± 0.00) slower
+# Micro::Case::Result#|:          172734.4 i/s
+# Micro::Case::Result#then:       139799.0 i/s - 1.24x  (± 0.00) slower
+# Micro::Cases.flow([]):          133182.9 i/s - 1.30x  (± 0.00) slower
+# Micro::Case flow in a class:     84082.6 i/s - 2.05x  (± 0.00) slower
+# Micro::Case including the class: 80574.3 i/s - 2.14x  (± 0.00) slower
+# Interactor::Organizer:           22467.4 i/s - 7.69x  (± 0.00) slower
 ```
 </details>
 
@@ -1345,43 +1333,32 @@ https://github.com/serradura/u-case/blob/main/benchmarks/use_case/with_failure_r
 
 ```ruby
 # Warming up --------------------------------------
-# Interactor::Organizer
-#                          2.299k i/100ms
-# Micro::Cases.flow([])
-#                         14.187k i/100ms
-# Micro::Cases::safe_flow([])
-#                         13.609k i/100ms
-# Micro::Case flow using `then` method
-#                         14.578k i/100ms
-# Micro::Case flow using private methods
-#                         14.101k i/100ms
-# Micro::Case flow using private methods through lambdas
-#                         13.670k i/100ms
+# Interactor::Organizer            2.167k i/100ms
+# Micro::Cases.flow([])           11.797k i/100ms
+# Micro::Case flow in a class      7.783k i/100ms
+# Micro::Case including the class  7.097k i/100ms
+# Micro::Case::Result#|           14.398k i/100ms
+# Micro::Case::Result#then        12.719k i/100ms
+
 # Calculating -------------------------------------
-# Interactor::Organizer
-#                          23.306k (± 2.1%) i/s -    117.249k in   5.033171s
-# Micro::Cases.flow([])
-#                         140.111k (± 1.6%) i/s -    709.350k in   5.064041s
-# Micro::Cases::safe_flow([])
-#                         139.927k (± 1.7%) i/s -    707.668k in   5.058971s
-# Micro::Case flow using `then` method
-#                         146.073k (± 2.0%) i/s -    743.478k in   5.091741s
-# Micro::Case flow using private methods
-#                         142.092k (± 1.5%) i/s -    719.151k in   5.062298s
-# Micro::Case flow using private methods through lambdas
-#                         140.791k (± 1.2%) i/s -    710.840k in   5.049584s
+# Interactor::Organizer            21.863k (± 2.5%) i/s -    110.517k in   5.058420s
+# Micro::Cases.flow([])           118.124k (± 1.8%) i/s -    601.647k in   5.095102s
+# Micro::Case flow in a class      77.801k (± 1.5%) i/s -    389.150k in   5.003002s
+# Micro::Case including the class  73.533k (± 2.1%) i/s -    369.044k in   5.021076s
+# Micro::Case::Result#|           153.746k (± 1.5%) i/s -    777.492k in   5.058177s
+# Micro::Case::Result#then        126.897k (± 1.7%) i/s -    635.950k in   5.013059s
 
 # Comparison:
-# Micro::Case flow using `then` method:                     146073.0 i/s
-# Micro::Case flow using private methods:                   142091.7 i/s - same-ish: difference falls within error
-# Micro::Case flow using private methods through lambdas:   140791.1 i/s - 1.04x  (± 0.00) slower
-# Micro::Cases.flow([]):                                    140110.8 i/s - 1.04x  (± 0.00) slower
-# Micro::Cases::safe_flow([]):                              139926.6 i/s - 1.04x  (± 0.00) slower
-# Interactor::Organizer:                                     23305.9 i/s - 6.27x  (± 0.00) slower
+# Micro::Case::Result#|:          153745.6 i/s
+# Micro::Case::Result#then:       126896.6 i/s - 1.21x  (± 0.00) slower
+# Micro::Cases.flow([]):          118123.9 i/s - 1.30x  (± 0.00) slower
+# Micro::Case flow in a class:     77800.7 i/s - 1.98x  (± 0.00) slower
+# Micro::Case including the class: 73532.9 i/s - 2.09x  (± 0.00) slower
+# Interactor::Organizer:           21862.9 i/s - 7.03x  (± 0.00) slower
 ```
 </details>
 
-https://github.com/serradura/u-case/tree/main/benchmarks/flow
+https://github.com/serradura/u-case/blob/main/benchmarks/perfomance/flow/
 
 ### Comparações
 
