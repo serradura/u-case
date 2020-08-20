@@ -24,12 +24,7 @@ class Multiply < Micro::Case
   end
 end
 
-SYMBOL_KEYS = { a: nil, b: 2 }
-STRING_KEYS = { 'a' => 1, 'b' => '' }
+Multiply.call(a: nil, 'b' => 2)
 
-report = MemoryProfiler.report do
-  Multiply.call(SYMBOL_KEYS)
-  Multiply.call(STRING_KEYS)
-end
-
+report = MemoryProfiler.report { Multiply.call(a: nil, 'b' => 2) }
 report.pretty_print
