@@ -26,6 +26,7 @@ module Micro
         @__accumulated_data = {}
         @__accessible_attributes = {}
         @__is_unknown = true
+
         enable_transitions = @@transitions_enabled
 
         @__transitions = enable_transitions ? [] : Kind::Empty::ARRAY
@@ -79,6 +80,7 @@ module Micro
       def on_success(expected_type = nil)
         return self unless __success_type?(expected_type)
 
+        @__is_unknown = false
         hook_data = expected_type.nil? ? self : data
 
         yield(hook_data, @use_case)
@@ -89,6 +91,7 @@ module Micro
       def on_failure(expected_type = nil)
         return self unless __failure_type?(expected_type)
 
+        @__is_unknown = false
         hook_data = expected_type.nil? ? self : data
 
         yield(hook_data, @use_case)
