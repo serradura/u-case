@@ -18,7 +18,7 @@ class Multiply < Trailblazer::Operation
 
   private
 
-    def calculate(options, a:, b:, **)
+    def calculate(options, a:, b:)
       if a.is_a?(Numeric) && b.is_a?(Numeric)
         options[:number] = a * b
       end
