@@ -80,6 +80,9 @@ Versão    | Documentação
     - [Success results](#success-results)
     - [Failure results](#failure-results)
   - [`Micro::Cases::Flow`](#microcasesflow)
+  - [Execuntando os benchmarks](#execuntando-os-benchmarks)
+    - [Performance (Benchmarks IPS)](#performance-benchmarks-ips)
+    - [Memory profiling](#memory-profiling)
   - [Comparações](#comparações)
 - [Exemplos](#exemplos)
   - [1️⃣ Criação de usuários](#1️⃣-criação-de-usuários)
@@ -1359,6 +1362,46 @@ https://github.com/serradura/u-case/blob/main/benchmarks/perfomance/use_case/fai
 </details>
 
 https://github.com/serradura/u-case/blob/main/benchmarks/perfomance/flow/
+
+[⬆️ Back to Top](#table-of-contents-)
+
+### Execuntando os benchmarks
+
+#### Performance (Benchmarks IPS)
+
+Clone este repositório e acesse a sua pasta, então execute os comandos abaixo:
+
+**Casos de uso**
+
+```sh
+ruby benchmarks/perfomance/use_case/failure_results.rb
+ruby benchmarks/perfomance/use_case/success_results.rb
+```
+
+**Flows**
+
+```sh
+ruby benchmarks/perfomance/flow/failure_results.rb
+ruby benchmarks/perfomance/flow/success_results.rb
+```
+
+#### Memory profiling
+
+**Casos de uso**
+
+```sh
+./benchmarks/memory/use_case/success/with_transitions/analyze.sh
+./benchmarks/memory/use_case/success/without_transitions/analyze.sh
+```
+
+**Flows**
+
+```sh
+./benchmarks/memory/flow/success/with_transitions/analyze.sh
+./benchmarks/memory/flow/success/without_transitions/analyze.sh
+```
+
+[⬆️ Back to Top](#table-of-contents-)
 
 ### Comparações
 
