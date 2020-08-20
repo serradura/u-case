@@ -20,7 +20,7 @@ gemfile do
   gem 'u-case', '~> 3.1.0'
 end
 
-require_relative '../../use_case/multiply_with/all'
+require_relative '../../examples/use_case/multiply_with/all'
 require_relative 'call_use_cases'
 
 Micro::Case.config do |config|
