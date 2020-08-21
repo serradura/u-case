@@ -16,7 +16,7 @@ module Micro
 
     require 'micro/cases'
 
-    include Micro::Attributes.without(:strict_initialize)
+    include Micro::Attributes.with(:initialize, :diff)
 
     def self.call(options = Kind::Empty::HASH)
       new(options).__call__
@@ -63,7 +63,8 @@ module Micro
     end
 
     def self.inherited(subclass)
-      subclass.attributes(self.attributes_data({}))
+      subclass.__attributes_set_after_inherit__(self.__attributes_data__)
+
       subclass.extend ::Micro::Attributes.const_get('Macros::ForSubclasses'.freeze)
 
       if self.send(:__flow_use_cases) && !subclass.name.to_s.end_with?(FLOW_STEP)
