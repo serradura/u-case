@@ -124,7 +124,7 @@ Version   | Documentation
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'u-case', '~> 3.1.0'
+gem 'u-case', '~> 4.0.0'
 ```
 
 And then execute:
