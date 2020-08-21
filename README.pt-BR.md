@@ -123,7 +123,7 @@ Versão    | Documentação
 Adicione essa linha ao Gemfile da sua aplicação:
 
 ```ruby
-gem 'u-case', '~> 3.1.0'
+gem 'u-case', '~> 4.0.0'
 ```
 
 E então execute:
