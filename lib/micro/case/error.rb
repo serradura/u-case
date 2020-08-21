@@ -52,7 +52,10 @@ module Micro
       end
 
       def self.by_wrong_usage?(exception)
-        exception.is_a?(InvalidResult) || exception.is_a?(UnexpectedResult) || exception.is_a?(ArgumentError)
+        case exception
+        when Kind::Error, ArgumentError, InvalidResult, UnexpectedResult then true
+        else false
+        end
       end
     end
   end

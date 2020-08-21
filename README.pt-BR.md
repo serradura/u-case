@@ -1,7 +1,7 @@
 <p align="center">
-  <img src="./assets/ucase_logo_v1.png" alt="u-case - Create simple and powerful use cases as Ruby objects.">
+  <img src="./assets/ucase_logo_v1.png" alt="u-case - Represent use cases in a simple and powerful way while writing modular, expressive and sequentially logical code.">
 
-  <p align="center"><i>Crie simples e poderosos casos de uso como objetos em Ruby.</i></p>
+  <p align="center"><i> Represente casos de uso de forma simples e poderosa ao escrever código modular, expressivo e sequencialmente lógico.</i></p>
   <br>
 </p>
 
@@ -38,7 +38,8 @@ Principais objetivos deste projeto:
 
 Versão    | Documentação
 --------- | -------------
-3.1.0     | https://github.com/serradura/u-case/blob/main/README.md
+4.0.0     | https://github.com/serradura/u-case/blob/main/README.md
+3.1.0     | https://github.com/serradura/u-case/blob/v3.x/README.md
 2.6.0     | https://github.com/serradura/u-case/blob/v2.x/README.md
 1.1.0     | https://github.com/serradura/u-case/blob/v1.x/README.md
 
@@ -96,11 +97,12 @@ Versão    | Documentação
 
 ## Compatibilidade
 
-| u-case         | branch  | ruby     |  activemodel  |
-| -------------- | ------- | -------- | ------------- |
-| 3.1.0          | main    | >= 2.2.0 | >= 3.2, < 6.1 |
-| 2.6.0          | v2.x    | >= 2.2.0 | >= 3.2, < 6.1 |
-| 1.1.0          | v1.x    | >= 2.2.0 | >= 3.2, < 6.1 |
+| u-case         | branch  | ruby     |  activemodel  | u-attributes |
+| -------------- | ------- | -------- | ------------- | ------------ |
+| 4.0.0          | main    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 2.0 |
+| 3.1.0          | v3.x    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 1.1 |
+| 2.6.0          | v2.x    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 1.1 |
+| 1.1.0          | v1.x    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 1.1 |
 
 > Nota: O activemodel é uma dependência opcional, esse módulo que [pode ser habilitado](#u-casewith_activemodel_validation---como-validar-os-atributos-do-caso-de-uso) para validar os atributos dos casos de uso.
 

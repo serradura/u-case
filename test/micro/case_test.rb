@@ -29,7 +29,7 @@ class Micro::CaseTest < Minitest::Test
 
   def test_the_initializer_data_validation
     [nil, 1, true, '', []].each do |arg|
-      assert_raises_with_message(ArgumentError, 'argument must be a Hash') do
+      assert_raises_with_message(Kind::Error, 'expected to be a kind of Hash') do
         Multiply.new(arg)
       end
     end
@@ -47,7 +47,7 @@ class Micro::CaseTest < Minitest::Test
 
   def test_the_data_validation_error_when_calling_the_call_class_method
     [nil, 1, true, '', []].each do |arg|
-      assert_raises_with_message(ArgumentError, 'argument must be a Hash') do
+      assert_raises_with_message(Kind::Error, 'expected to be a kind of Hash') do
         Multiply.call(arg)
       end
     end
