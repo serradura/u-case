@@ -3,10 +3,10 @@
 module Micro
   class Case
     class Strict < ::Micro::Case
-      include Micro::Attributes::Features::StrictInitialize
+      include Micro::Attributes::Features::Initialize::Strict
 
       class Safe < ::Micro::Case::Safe
-        include Micro::Attributes::Features::StrictInitialize
+        include Micro::Attributes::Features::Initialize::Strict
       end
     end
   end

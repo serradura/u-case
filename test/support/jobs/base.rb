@@ -2,7 +2,7 @@ require 'securerandom'
 
 module Jobs
   class Entity
-    include Micro::Attributes.with(:strict_initialize, :diff)
+    include Micro::Attributes.with(:diff, initialize: :strict)
 
     attributes :id, :state
 

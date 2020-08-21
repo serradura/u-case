@@ -48,7 +48,9 @@ class Micro::Cases::Safe::Flow::CollectionTest < Minitest::Test
   def test_the_data_validation_error_when_calling_with_the_wrong_king_of_data
     [nil, 1, true, '', []].each do |arg|
       EXAMPLES.map(&:flow).each do |flow|
-        assert_raises_with_message(ArgumentError, 'argument must be a Hash') { flow.call(arg) }
+        assert_raises_with_message(Kind::Error, 'expected to be a kind of Hash') {
+          flow.call(arg)
+        }
       end
     end
   end
