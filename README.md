@@ -1,7 +1,7 @@
 <p align="center">
-  <img src="./assets/ucase_logo_v1.png" alt="u-case - Create simple and powerful use cases as Ruby objects.">
+  <img src="./assets/ucase_logo_v1.png" alt="u-case - Represent use cases in a simple and powerful way while writing modular, expressive and sequentially logical code.">
 
-  <p align="center"><i>Create simple and powerful use cases as Ruby objects.</i></p>
+  <p align="center"><i>Represent use cases in a simple and powerful way while writing modular, expressive and sequentially logical code.</i></p>
   <br>
 </p>
 
