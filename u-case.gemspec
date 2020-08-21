@@ -9,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ['Rodrigo Serradura']
   spec.email         = ['rodrigo.serradura@gmail.com']
 
-  spec.summary       = %q{Create simple and powerful use cases as Ruby objects.}
-  spec.description   = %q{Create simple and powerful use cases as Ruby objects.}
+  spec.summary       = %q{Represent use cases in a simple and powerful way while writing modular, expressive and sequentially logical code.}
+  spec.description   = %q{Represent use cases in a simple and powerful way while writing modular, expressive and sequentially logical code.}
   spec.homepage      = 'https://github.com/serradura/u-case'
   spec.license       = 'MIT'
 
@@ -26,7 +26,7 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = '>= 2.2.0'
 
   spec.add_runtime_dependency 'kind', '>= 3.0', '< 5.0'
-  spec.add_runtime_dependency 'u-attributes', '~> 1.1'
+  spec.add_runtime_dependency 'u-attributes', '~> 2.0'
 
   spec.add_development_dependency 'bundler'
   spec.add_development_dependency 'rake', '~> 13.0'

@@ -123,7 +123,8 @@ class Micro::Case::InternalStepsWithMethodsTest < Minitest::Test
   end
 
   class DoSomeSumUsingPipeWithMethods < Micro::Case
-    attributes :a, :b, number: 4
+    attributes :a, :b
+    attribute :number, default: 4
 
     def call!
       validate_attributes \
