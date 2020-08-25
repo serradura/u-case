@@ -225,6 +225,21 @@ module Micro
         __get_result(false, value, type)
       end
 
+      def Check(type = nil, result: nil)
+        value = yield
+        final_result = result || value
+
+        if value
+          type ||= :check_ok
+
+          Success(type, result: { type => final_result })
+        else
+          type ||= :check_fail
+
+          Failure(type, result: { type => final_result })
+        end
+      end
+
       def __get_result(is_success, value, type)
         @__result.__set__(is_success, value, type, self)
       end

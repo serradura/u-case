@@ -150,4 +150,40 @@ class Micro::CaseTest < Minitest::Test
       Multiply.inspect
     )
   end
+
+  class IsTruthy < Micro::Case
+    attribute :value
+
+    def call!
+      Check(:value_is_truthy) { value }
+    end
+  end
+
+  def test_that_it_returns_a_success_result_on_truthy_values
+    result = IsTruthy.call(value: true)
+
+    assert_success_result(result, value: { value_is_truthy: true })
+
+    result = IsTruthy.call(value: 'true')
+
+    assert_success_result(result, value: { value_is_truthy: 'true' })
+  end
+
+  class IsEven < Micro::Case
+    attributes :number
+
+    def call!
+      Check(result: number) { number.even? }
+    end
+  end
+
+  def test_that_it_can_define_the_result_value
+    result = IsEven.call(number: 2)
+
+    assert_success_result(result, value: { check_ok: 2 })
+
+    result = IsEven.call(number: 1)
+
+    assert_failure_result(result, value: { check_fail: 1 })
+  end
 end
