@@ -1,11 +1,23 @@
 require 'test_helper'
 
 class Micro::Cases::MapTest < Minitest::Test
-  def test_the_data_array_validation_error_when_calling_the_build_method
+  def test_invalid_types_should_raise_exception
     [nil, 1, true, '', {}].each do |arg|
       assert_raises_with_message(Kind::Error, "#{arg} expected to be a kind of Array") do
         Micro::Cases::Map.build(arg)
       end
+    end
+  end
+
+  def test_invalid_array_instances_should_raise_exception
+    assert_raises_with_message(Kind::Error, '"wrong" expected to be a kind of Module') do
+      Micro::Cases.map(%w[wrong params]).call(foo: 'foo')
+    end
+  end
+
+  def test_invalid_array_classes_should_raise_exception
+    assert_raises_with_message(Micro::Cases::Map::InvalidUseCases, 'argument must be a collection of `Micro::Case` classes') do
+      Micro::Cases.map([String, Integer]).call(foo: 'foo')
     end
   end
 
