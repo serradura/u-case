@@ -7,14 +7,24 @@ module Micro
         def initialize; super('argument must be a collection of `Micro::Case` classes'.freeze); end
       end
 
+      ValidArgs = -> (args) do
+        Kind.of(Array, args).all? do |arg|
+          if arg.is_a?(Array)
+            arg.size == 2 && Kind.is(::Micro::Case, arg.first) && arg.last.is_a?(Hash)
+          else
+            Kind.is(::Micro::Case, arg)
+          end
+        end
+      end
+
       attr_reader :use_cases
 
+      private_constant :ValidArgs
+
       def self.build(args)
-        use_cases = Kind.of.Array(args)
+        raise InvalidUseCases unless ValidArgs[args]
 
-        raise InvalidUseCases if use_cases.any? { |klass| !(klass < ::Micro::Case) }
-
-        new(use_cases)
+        new(args)
       end
 
       def initialize(use_cases)
@@ -22,8 +32,15 @@ module Micro
       end
 
       def call(arg = {})
-        hash_arg = Kind.of.Hash(arg)
-        use_cases.map { |use_case| use_case.call(hash_arg) }
+        hash_arg = Kind.of(Hash, arg)
+
+        use_cases.map do |use_case|
+          if use_case.is_a?(Array)
+            use_case.first.call(hash_arg.merge(use_case.last))
+          else
+            use_case.call(hash_arg)
+          end
+        end
       end
     end
   end
