@@ -10,9 +10,9 @@ module Micro
       ValidArgs = -> (args) do
         Kind.of(Array, args).all? do |arg|
           if arg.is_a?(Array)
-            arg.size == 2 && Kind.is(::Micro::Case, arg.first) && arg.last.is_a?(Hash)
+            arg.size == 2 && Kind.is.Micro::Case(arg.first) && arg.last.is_a?(Hash)
           else
-            Kind.is(::Micro::Case, arg)
+            Kind.is.Micro::Case(arg)
           end
         end
       end
