@@ -23,9 +23,9 @@ module Micro
       alias value data
 
       def initialize(transitions_mapper = Transitions::MapEverything)
+        @__is_unknown = true
         @__accumulated_data = {}
         @__accessible_attributes = {}
-        @__is_unknown = true
 
         enable_transitions = @@transitions_enabled
 
