@@ -113,6 +113,8 @@ module Micro
         return self unless unknown?
 
         yield(self, @use_case)
+
+        self
       end
 
       def then(use_case = nil, attributes = nil, &block)
