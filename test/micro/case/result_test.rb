@@ -175,7 +175,7 @@ class Micro::Case::ResultTest < Minitest::Test
     failure_result = failure_result(value: { number: number }, type: :not_mapped, use_case: Micro::Case.new({}))
 
     failure_result
-      .on_failure(:a)
+      .on_failure(:a) { raise }
       .on_unknown { |data| assert_equal(number, data[:number]) }
 
     assert_predicate(failure_result, :unknown?)
@@ -185,7 +185,7 @@ class Micro::Case::ResultTest < Minitest::Test
     success_result = success_result(value: { number: number }, type: :not_mapped, use_case: Micro::Case.new({}))
 
     success_result
-      .on_success(:b)
+      .on_success(:b) { raise }
       .on_unknown { |data| assert_equal(number, data[:number]) }
 
     assert_predicate(success_result, :unknown?)
