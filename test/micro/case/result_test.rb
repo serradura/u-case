@@ -179,6 +179,7 @@ class Micro::Case::ResultTest < Minitest::Test
       .on_unknown { |data| assert_equal(number, data[:number]) }
 
     assert_predicate(failure_result, :unknown?)
+
     # ---
 
     success_result = success_result(value: { number: number }, type: :not_mapped, use_case: Micro::Case.new({}))
@@ -188,16 +189,6 @@ class Micro::Case::ResultTest < Minitest::Test
       .on_unknown { |data| assert_equal(number, data[:number]) }
 
     assert_predicate(success_result, :unknown?)
-  end
-
-  def test_the_repeated_on_unknown_hook_exception
-    result = success_result(value: {}, type: :ok, use_case: Micro::Case.new({}))
-
-    assert_raises do 
-      result
-        .on_unknown
-        .on_unknown
-    end
   end
 
   def test_the_on_unknown_hook_exclusivity
@@ -223,6 +214,17 @@ class Micro::Case::ResultTest < Minitest::Test
 
     assert_equal(1, success_counter)
     refute_predicate(failure_result, :unknown?)
+
+    # ---
+
+    unknown_counter = 0
+    unknown_result = success_result(value: {}, type: :not_mapped, use_case: Micro::Case.new({}))
+
+    unknown_result
+      .on_unknown { unknown_counter += 1 }
+      .on_unknown { unknown_counter += 1 }
+
+    assert_equal(2, unknown_counter)
   end
 
   def test_the_output_of_a_failure_hook_without_a_defined_type
