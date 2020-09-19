@@ -23,6 +23,7 @@ module Micro
       alias value data
 
       def initialize(transitions_mapper = Transitions::MapEverything)
+        @__is_unknown = true
         @__accumulated_data = {}
         @__accessible_attributes = {}
 
@@ -68,6 +69,10 @@ module Micro
         !success?
       end
 
+      def unknown?
+        @__is_unknown
+      end
+
       def accessible_attributes
         @__accessible_attributes.keys
       end
@@ -75,6 +80,7 @@ module Micro
       def on_success(expected_type = nil)
         return self unless __success_type?(expected_type)
 
+        @__is_unknown = false
         hook_data = expected_type.nil? ? self : data
 
         yield(hook_data, @use_case)
@@ -85,6 +91,7 @@ module Micro
       def on_failure(expected_type = nil)
         return self unless __failure_type?(expected_type)
 
+        @__is_unknown = false
         hook_data = expected_type.nil? ? self : data
 
         yield(hook_data, @use_case)
@@ -98,6 +105,14 @@ module Micro
         if !expected_exception || (Kind.is(Exception, expected_exception) && data.fetch(:exception).is_a?(expected_exception))
           yield(data, @use_case)
         end
+
+        self
+      end
+
+      def on_unknown
+        return self unless unknown?
+
+        yield(self, @use_case)
 
         self
       end
