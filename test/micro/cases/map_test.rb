@@ -1,7 +1,7 @@
 require 'test_helper'
 
 class Micro::Cases::MapTest < Minitest::Test
-  def test_invalid_types_should_raise_exception
+  def test_invalid_types_should_raise_an_exception
     [nil, 1, true, '', {}].each do |arg|
       assert_raises_with_message(Kind::Error, "#{arg} expected to be a kind of Array") do
         Micro::Cases::Map.build(arg)
@@ -9,16 +9,18 @@ class Micro::Cases::MapTest < Minitest::Test
     end
   end
 
-  def test_invalid_array_instances_should_raise_exception
-    assert_raises_with_message(Kind::Error, '"wrong" expected to be a kind of Module') do
-      Micro::Cases.map(%w[wrong params]).call(foo: 'foo')
-    end
-  end
+  def test_invalid_array_should_raise_an_exception
+    assert_raises_with_message(
+      Micro::Cases::Map::InvalidUseCases,
+      'argument must be a collection of `Micro::Case` classes'
+    ) { Micro::Cases.map(%w[wrong params]).call(foo: 'foo') }
 
-  def test_invalid_array_classes_should_raise_exception
-    assert_raises_with_message(Micro::Cases::Map::InvalidUseCases, 'argument must be a collection of `Micro::Case` classes') do
-      Micro::Cases.map([String, Integer]).call(foo: 'foo')
-    end
+    # --
+
+    assert_raises_with_message(
+      Micro::Cases::Map::InvalidUseCases,
+      'argument must be a collection of `Micro::Case` classes'
+    ) { Micro::Cases.map([String, Integer]).call(foo: 'foo') }
   end
 
   class Foo < Micro::Case
@@ -61,20 +63,37 @@ class Micro::Cases::MapTest < Minitest::Test
     end
   end
 
-  def test_result_have_success_and_failure
-    results = Micro::Cases.map([Foo,
-                                Bar,
-                                FooOrBar,
-                                FooAndBar]).call(foo: 'foo')
+  def test_the_calling_of_use_cases_and_flows
+    map_use_cases1 = Micro::Cases.map([
+      Foo, Bar, FooOrBar, FooAndBar
+    ])
 
-    assert_equal(results.select(&:success?).map { |result| result.use_case.class }, [Foo, FooOrBar])
-    assert_equal(results.select(&:failure?).map { |result| result.use_case.class }, [Bar, FooAndBar])
+    results1 = map_use_cases1.call(foo: 'foo')
+
+    assert_equal(results1.select(&:success?).map { |result| result.use_case.class }, [Foo, FooOrBar])
+    assert_equal(results1.select(&:failure?).map { |result| result.use_case.class }, [Bar, FooAndBar])
+
+    # --
+
+    flow1 = Micro::Cases.flow([Foo, Foo])
+    flow2 = Micro::Cases.flow([Foo, Bar])
+
+    map_use_cases2 = Micro::Cases.map([
+      flow1, flow2, FooOrBar, FooAndBar
+    ])
+
+    results2 = map_use_cases2.call(foo: 'foo')
+
+    assert_equal(results2.select(&:success?).map { |result| result.use_case.class }, [Foo, FooOrBar])
+    assert_equal(results2.select(&:failure?).map { |result| result.use_case.class }, [Bar, FooAndBar])
   end
 
-  def test_build_succes_with_dependencies_injection
-    results = Micro::Cases.map([Foo,
-                                FooOrBar,
-                                [FooAndBar, bar: 'bar']]).call(foo: 'foo')
+  def test_the_calling_with_dependency_injection
+    map_use_cases = Micro::Cases.map([
+      Foo, FooOrBar, [FooAndBar, bar: 'bar']
+    ])
+
+    results = map_use_cases.call(foo: 'foo')
 
     assert(results.all?(&:success?))
   end
