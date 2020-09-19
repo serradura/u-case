@@ -7,22 +7,14 @@ module Micro
         def initialize; super('argument must be a collection of `Micro::Case` classes'.freeze); end
       end
 
-      ValidArgs = -> (args) do
-        Kind.of(Array, args).all? do |arg|
-          if arg.is_a?(Array)
-            arg.size == 2 && Kind.is.Micro::Case(arg.first) && arg.last.is_a?(Hash)
-          else
-            Kind.is.Micro::Case(arg)
-          end
-        end
-      end
+      IsAUseCaseWithDefaults = -> arg { arg.is_a?(Array) && Micro.case_or_flow?(arg[0]) && arg[1].is_a?(Hash) }
+      IsAUseCaseOrFlow = -> arg { Micro.case_or_flow?(arg) || IsAUseCaseWithDefaults[arg] }
+      HasValidArgs = -> (args) { Kind.of(Array, args).all?(&IsAUseCaseOrFlow) }
 
       attr_reader :use_cases
 
-      private_constant :ValidArgs
-
       def self.build(args)
-        raise InvalidUseCases unless ValidArgs[args]
+        raise InvalidUseCases unless HasValidArgs[args]
 
         new(args)
       end
@@ -31,17 +23,21 @@ module Micro
         @use_cases = use_cases
       end
 
-      def call(arg = {})
-        hash_arg = Kind.of(Hash, arg)
+      GetUseCaseResult = -> (hash) do
+        -> (use_case) do
+          return use_case.call(hash) unless use_case.is_a?(Array)
 
-        use_cases.map do |use_case|
-          if use_case.is_a?(Array)
-            use_case.first.call(hash_arg.merge(use_case.last))
-          else
-            use_case.call(hash_arg)
-          end
+          use_case[0].call(hash.merge(use_case[1]))
         end
       end
+
+      def call(arg = {})
+        hash = Kind.of(Hash, arg)
+
+        use_cases.map(&GetUseCaseResult[hash])
+      end
+
+      private_constant :HasValidArgs, :IsAUseCaseOrFlow, :IsAUseCaseWithDefaults, :GetUseCaseResult
     end
   end
 end
