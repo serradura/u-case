@@ -35,6 +35,12 @@ module Micro
         @__transitions_mapper = transitions_mapper if enable_transitions
       end
 
+      def inspect
+        pretty_type = @__success ? 'Success' : 'Failure'
+
+        "<%s (%s) type=:%s data=%s transitions=%d>" % [pretty_type, self.class, @type, data, @__transitions.size]
+      end
+
       def to_ary
         [data, type]
       end
