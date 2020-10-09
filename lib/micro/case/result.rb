@@ -58,7 +58,7 @@ module Micro
       end
 
       def slice(*keys)
-        Utils.slice_hash(data, keys)
+        Utils::Hashes.slice(data, keys)
       end
 
       def success?
@@ -178,7 +178,7 @@ module Micro
 
         @__accumulated_data.merge!(@data)
 
-        use_case_attributes = Utils.symbolize_hash_keys(@use_case.attributes)
+        use_case_attributes = Utils::Hashes.symbolize_keys(@use_case.attributes)
 
         __update_accessible_attributes(use_case_attributes)
 
@@ -190,7 +190,7 @@ module Micro
       def __set_accessible_attributes__(arg)
         return arg unless arg.is_a?(Hash)
 
-        attributes = Utils.symbolize_hash_keys(arg)
+        attributes = Utils::Hashes.symbolize_keys(arg)
 
         __update_accessible_attributes(attributes)
         __fetch_accessible_attributes
