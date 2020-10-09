@@ -4,6 +4,14 @@ module Micro
   class Case
     module Utils
 
+      module Arrays
+        def self.flatten_and_compact(arg)
+          array = Kind.of(Array, arg).flatten
+          array.compact!
+          array
+        end
+      end
+
       module Hashes
         def self.respond_to?(hash, method)
           Kind.of(Hash, hash).respond_to?(method)
