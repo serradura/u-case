@@ -47,7 +47,7 @@ module Micro
     end
 
     def self.flow(*args)
-      @__flow_use_cases = args
+      @__flow_use_cases = Utils::Arrays.flatten_and_compact(args)
     end
 
     class << self

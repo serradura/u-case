@@ -18,9 +18,11 @@ class Micro::Case::WithInnerFlowTest < Minitest::Test
   end
 
   class Double < Micro::Case
-    flow ConvertTextToNumber,
-        self.call!,
-        ConvertNumberToText
+    flow([
+      ConvertTextToNumber,
+      self.call!,
+      ConvertNumberToText
+    ])
 
     attribute :number
 
