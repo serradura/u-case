@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/ruby-2.2+-ruby.svg?colorA=99004d&colorB=cc0066" alt="Ruby">
+  <img src="https://img.shields.io/badge/ruby->%3D%202.2.0-ruby.svg?colorA=99004d&colorB=cc0066" alt="Ruby">
 
   <a href="https://rubygems.org/gems/u-case">
     <img alt="Gem" src="https://img.shields.io/gem/v/u-case.svg?style=flat-square">
@@ -38,7 +38,8 @@ The main project goals are:
 
 Version   | Documentation
 --------- | -------------
-4.0.0     | https://github.com/serradura/u-case/blob/main/README.md
+unreleased| https://github.com/serradura/u-case/blob/main/README.md
+4.0.0     | https://github.com/serradura/u-case/blob/v4.x/README.md
 3.1.0     | https://github.com/serradura/u-case/blob/v3.x/README.md
 2.6.0     | https://github.com/serradura/u-case/blob/v2.x/README.md
 1.1.0     | https://github.com/serradura/u-case/blob/v1.x/README.md
@@ -100,7 +101,8 @@ Version   | Documentation
 
 | u-case         | branch  | ruby     |  activemodel  | u-attributes |
 | -------------- | ------- | -------- | ------------- | ------------ |
-| 4.0.0          | main    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 2.0 |
+| unreleased     | main    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 2.0 |
+| 4.0.0          | v4.x    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 2.0 |
 | 3.1.0          | v3.x    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 1.1 |
 | 2.6.0          | v2.x    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 1.1 |
 | 1.1.0          | v1.x    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 1.1 |
