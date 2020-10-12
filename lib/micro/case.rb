@@ -18,8 +18,8 @@ module Micro
 
     include Micro::Attributes.with(:initialize)
 
-    def self.call(options = Kind::Empty::HASH)
-      new(options).__call__
+    def self.call(input = Kind::Empty::HASH)
+      __new__(Result.new, input).__call__
     end
 
     INVALID_INVOCATION_OF_THE_THEN_METHOD =
@@ -144,6 +144,23 @@ module Micro
     end
 
     private
+
+      def call(use_case, defaults = Kind::Empty::HASH)
+        if ::Micro.case_or_flow?(use_case)
+          attrs_data =
+            if self.class.attributes.empty?
+              Utils::Hashes.stringify_keys(__result.send(:__fetch_accessible_attributes))
+            else
+              attributes
+            end
+
+          input = attrs_data.merge(Utils::Hashes.stringify_keys(defaults))
+
+          use_case.__new__(__result, input).__call__
+        else
+          raise Error::InvalidUseCase
+        end
+      end
 
       def apply(name)
         method(name)
