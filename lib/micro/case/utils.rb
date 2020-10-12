@@ -18,14 +18,18 @@ module Micro
         end
 
         def self.symbolize_keys(hash)
-          if respond_to?(hash, :transform_keys)
-            hash.transform_keys { |key| key.to_sym rescue key }
-          else
-            hash.each_with_object({}) do |(k, v), memo|
-              key = k.to_sym rescue k
-              memo[key] = v
-            end
+          return hash.transform_keys { |key| key.to_sym rescue key } if respond_to?(hash, :transform_keys)
+
+          hash.each_with_object({}) do |(k, v), memo|
+            key = k.to_sym rescue k
+            memo[key] = v
           end
+        end
+
+        def self.stringify_keys(hash)
+          return hash.transform_keys(&:to_s) if respond_to?(hash, :transform_keys)
+
+          hash.each_with_object({}) { |(k, v), memo| memo[k.to_s] = v }
         end
 
         def self.slice(hash, keys)
