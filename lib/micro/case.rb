@@ -131,7 +131,7 @@ module Micro
     end
 
     def __call__
-      call
+      __call_the_use_case_or_its_flow
     end
 
     def __set_result__(result)
@@ -149,8 +149,8 @@ module Micro
         method(name)
       end
 
-      def call
-        return __call_use_case_flow if __call_use_case_flow?
+      def __call_the_use_case_or_its_flow
+        return __call_the_use_case_flow if __call_the_use_case_flow?
 
         __call_use_case
       end
@@ -171,11 +171,11 @@ module Micro
         raise Error::UnexpectedResult.new("#{self.class.name}#call!")
       end
 
-      def __call_use_case_flow?
+      def __call_the_use_case_flow?
         self.class.__flow_get__
       end
 
-      def __call_use_case_flow
+      def __call_the_use_case_flow
         self.class.__flow_get__.call(@__input)
       end
 
