@@ -5,6 +5,7 @@ require 'set'
 module Micro
   class Case
     class Result
+      require 'micro/case/result/wrapper'
       require 'micro/case/result/transitions'
 
       Kind::Types.add(self)
