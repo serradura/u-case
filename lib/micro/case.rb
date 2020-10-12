@@ -153,7 +153,7 @@ module Micro
         input =
           defaults.empty? ? attributes : attributes.merge(Utils::Hashes.stringify_keys(defaults))
 
-        use_case.__new__(__result, input).__call__
+        use_case.__new__(@__result, input).__call__
       end
 
       def apply(name)
@@ -212,12 +212,8 @@ module Micro
         __get_result(false, value, type)
       end
 
-      def __result
-        @__result ||= Result.new
-      end
-
       def __get_result(is_success, value, type)
-        __result.__set__(is_success, value, type, self)
+        @__result.__set__(is_success, value, type, self)
       end
 
     private_constant :MapFailureType, :INVALID_INVOCATION_OF_THE_THEN_METHOD
