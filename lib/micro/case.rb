@@ -18,8 +18,8 @@ module Micro
 
     include Micro::Attributes.with(:initialize)
 
-    def self.call(options = Kind::Empty::HASH)
-      new(options).__call__
+    def self.call(input = Kind::Empty::HASH)
+      __new__(Result.new, input).__call__
     end
 
     INVALID_INVOCATION_OF_THE_THEN_METHOD =
@@ -131,7 +131,7 @@ module Micro
     end
 
     def __call__
-      call
+      __call_the_use_case_or_its_flow
     end
 
     def __set_result__(result)
@@ -145,12 +145,29 @@ module Micro
 
     private
 
+      def call(use_case, defaults = Kind::Empty::HASH)
+        if ::Micro.case_or_flow?(use_case)
+          attrs_data =
+            if self.class.attributes.empty?
+              Utils::Hashes.stringify_keys(__result.send(:__fetch_accessible_attributes))
+            else
+              attributes
+            end
+
+          input = attrs_data.merge(Utils::Hashes.stringify_keys(defaults))
+
+          use_case.__new__(__result, input).__call__
+        else
+          raise Error::InvalidUseCase
+        end
+      end
+
       def apply(name)
         method(name)
       end
 
-      def call
-        return __call_use_case_flow if __call_use_case_flow?
+      def __call_the_use_case_or_its_flow
+        return __call_the_use_case_flow if __call_the_use_case_flow?
 
         __call_use_case
       end
@@ -171,11 +188,11 @@ module Micro
         raise Error::UnexpectedResult.new("#{self.class.name}#call!")
       end
 
-      def __call_use_case_flow?
+      def __call_the_use_case_flow?
         self.class.__flow_get__
       end
 
-      def __call_use_case_flow
+      def __call_the_use_case_flow
         self.class.__flow_get__.call(@__input)
       end
 
