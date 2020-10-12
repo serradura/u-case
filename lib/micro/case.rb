@@ -16,7 +16,7 @@ module Micro
 
     require 'micro/cases'
 
-    include Micro::Attributes.with(:initialize)
+    include Micro::Attributes
 
     def self.call(input = Kind::Empty::HASH)
       __new__(Result.new, input).__call__
@@ -146,20 +146,12 @@ module Micro
     private
 
       def call(use_case, defaults = Kind::Empty::HASH)
-        if ::Micro.case_or_flow?(use_case)
-          attrs_data =
-            if self.class.attributes.empty?
-              Utils::Hashes.stringify_keys(__result.send(:__fetch_accessible_attributes))
-            else
-              attributes
-            end
+        raise Error::InvalidUseCase unless ::Micro.case_or_flow?(use_case)
 
-          input = attrs_data.merge(Utils::Hashes.stringify_keys(defaults))
+        input =
+          defaults.empty? ? attributes : attributes.merge(Utils::Hashes.stringify_keys(defaults))
 
-          use_case.__new__(__result, input).__call__
-        else
-          raise Error::InvalidUseCase
-        end
+        use_case.__new__(__result, input).__call__
       end
 
       def apply(name)
