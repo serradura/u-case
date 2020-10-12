@@ -81,6 +81,8 @@ module Micro
       new(input).__set_result__(result)
     end
 
+    private_class_method :new
+
     def self.__flow_builder__
       Cases::Flow
     end
