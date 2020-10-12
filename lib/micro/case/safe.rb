@@ -8,7 +8,7 @@ module Micro
       end
 
       def __call__
-        call
+        __call_the_use_case_or_its_flow
       rescue => exception
         raise exception if Error.by_wrong_usage?(exception)
 
