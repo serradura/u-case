@@ -16,7 +16,7 @@ module Micro
 
     require 'micro/cases'
 
-    include Micro::Attributes.with(:initialize)
+    include Micro::Attributes
 
     def self.call(input = Kind::Empty::HASH)
       __new__(Result.new, input).__call__
