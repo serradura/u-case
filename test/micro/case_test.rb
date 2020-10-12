@@ -30,7 +30,7 @@ class Micro::CaseTest < Minitest::Test
   def test_the_initializer_data_validation
     [nil, 1, true, '', []].each do |arg|
       assert_raises_with_message(Kind::Error, 'expected to be a kind of Hash') do
-        Multiply.new(arg)
+        Multiply.call(arg)
       end
     end
   end
@@ -80,8 +80,7 @@ class Micro::CaseTest < Minitest::Test
   def test_that_sets_a_result_object_avoiding_the_use_case_to_create_one
     result_instance = Micro::Case::Result.new
 
-    use_case = Multiply.new(a: 3, b: 2)
-    use_case.__set_result__(result_instance)
+    use_case = Multiply.__new__(result_instance, {})
 
     result = use_case.__call__
 
@@ -89,7 +88,7 @@ class Micro::CaseTest < Minitest::Test
   end
 
   def test_the_error_when_trying_to_set_an_invalid_result_object
-    use_case = Multiply.new(a: 3, b: 2)
+    use_case = Multiply.__new__(Micro::Case::Result.new, a: 3, b: 2)
 
     assert_raises_with_message(
       ArgumentError,
@@ -98,8 +97,7 @@ class Micro::CaseTest < Minitest::Test
   end
 
   def test_when_already_exists_a_result_and_tries_to_set_a_new_one
-    use_case = Multiply.new(a: 3, b: 2)
-    use_case.__call__
+    use_case = Multiply.__new__(Micro::Case::Result.new, a: 3, b: 2)
 
     assert_raises_with_message(ArgumentError, 'result is already defined') do
       use_case.__set_result__(Micro::Case::Result.new)
