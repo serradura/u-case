@@ -3,7 +3,7 @@ require 'test_helper'
 class Micro::Case::Result::ThenTest < Minitest::Test
   def build_result(success:, value:, type:, use_case: nil)
     result = Micro::Case::Result.new
-    result.__set__(success, value, type, use_case || Micro::Case.new({}))
+    result.__set__(success, value, type, use_case || Micro::Case.send(:new, {}))
     result
   end
 
