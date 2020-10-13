@@ -36,7 +36,11 @@ module Micro
       end
 
       def call(input = Kind::Empty::HASH)
-        call!(input: input, result: Case::Result.new)
+        result = call!(input: input, result: Case::Result.new)
+
+        return result unless block_given?
+
+        yield ::Micro::Case::Result::Wrapper.new(result)
       end
 
       alias __call__ call
