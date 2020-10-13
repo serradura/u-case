@@ -24,11 +24,12 @@ module Micro
       alias value data
 
       def initialize(transitions_mapper = Transitions::MapEverything)
+        enable_transitions = @@transitions_enabled
+
         @__is_unknown = true
         @__accumulated_data = {}
+        @__tracked_use_cases = Set.new
         @__accessible_attributes = {}
-
-        enable_transitions = @@transitions_enabled
 
         @__transitions = enable_transitions ? [] : Kind::Empty::ARRAY
         @__transitions_mapper = transitions_mapper if enable_transitions
@@ -181,7 +182,11 @@ module Micro
 
         use_case_attributes = Utils::Hashes.symbolize_keys(@use_case.attributes)
 
-        __update_accessible_attributes(use_case_attributes)
+        unless @__tracked_use_cases.member?(use_case_class = @use_case.class)
+          @__tracked_use_cases.add(use_case_class)
+
+          __update_accessible_attributes(use_case_attributes)
+        end
 
         __set_transition(use_case_attributes) unless @__transitions.frozen?
 
