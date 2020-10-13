@@ -19,7 +19,11 @@ module Micro
     include Micro::Attributes
 
     def self.call(input = Kind::Empty::HASH)
-      __new__(Result.new, input).__call__
+      result = __new__(Result.new, input).__call__
+
+      return result unless block_given?
+
+      yield Result::Wrapper.new(result)
     end
 
     INVALID_INVOCATION_OF_THE_THEN_METHOD =

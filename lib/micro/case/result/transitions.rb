@@ -15,4 +15,3 @@ module Micro
     end
   end
 end
-

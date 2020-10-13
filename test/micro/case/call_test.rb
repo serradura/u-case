@@ -112,7 +112,7 @@ class Micro::Case::CallTest < Minitest::Test
     end
   end
 
-  def test_the_calling_of_use_cases
+  def test_the_calling_of_use_cases_without_blocks
     [1, nil, []].each do |arg|
       assert_raises(Kind::Error) { Sum.call(arg) }
       assert_raises(Kind::Error) { Add3.call(arg) }
@@ -172,5 +172,65 @@ class Micro::Case::CallTest < Minitest::Test
     assert_equal(12, SumABCAndAdd3.call(a: 3, b: 3, c: '3')[:number])
 
     assert_equal(20, Add9.call(number: 2).then(Add9)[:number])
+  end
+
+  def test_the_calling_of_use_cases_with_block
+    [
+      Sum,
+      Add3,
+      Add9,
+      SumAndAdd9,
+      SumAndAdd18,
+      SumWithOneDefaultAndAdd6,
+      SumWithoutAttributesAndAdd3,
+      SumWithoutAttributesAndOneDefaultAndAdd3,
+      SumABC,
+      SumABC2,
+      SumAB_and_C,
+      SumABCAndAdd3
+    ].each do |use_case|
+      [1, nil, []].each do |arg|
+        assert_raises(Kind::Error) { use_case.call(arg) { |_| } }
+      end
+
+      # --
+
+      count_failure = 0
+
+      output = use_case.call() do |on|
+        on.failure { count_failure +=1 }
+      end
+
+      assert_equal(1, output)
+      assert_equal(1, count_failure)
+    end
+
+    # --
+
+    [
+      [Sum, { a: 1, b: 1 }, 2],
+      [Add3, { number: 1 }, 4],
+      [Add9, { number: 1 }, 10],
+      [SumAndAdd9, { a: 1, b: 1 }, 11],
+      [SumAndAdd18, { a: 1, b: 1 }, 20],
+      [SumWithOneDefaultAndAdd6, { a: 2 }, 10],
+      [SumWithoutAttributesAndAdd3, { a: 1, b: 1 }, 5],
+      [SumWithoutAttributesAndOneDefaultAndAdd3, { a: 1 }, 7],
+      [SumABC, { a: 1, b: 1, c: 2 }, 4],
+      [SumABC2, { a: 2, b: 2 }, 6],
+      [SumAB_and_C, { a: 2, b: 2, c: 1 }, 5],
+      [SumABCAndAdd3, { a: 3, b: 3, c: '3' }, 12]
+    ].each do |use_case, input, expected_number|
+      count_success = 0
+
+      output = use_case.call(input) do |on|
+        on.success { count_success +=1 }
+        on.success(:foo) { raise }
+        on.success(:ok) { |result| result[:number] }
+      end
+
+      assert_equal(1, count_success)
+      assert_equal(expected_number, output)
+    end
   end
 end
