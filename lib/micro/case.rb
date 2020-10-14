@@ -7,6 +7,7 @@ require 'micro/case/version'
 
 module Micro
   class Case
+    require 'micro/cases/utils'
     require 'micro/case/utils'
     require 'micro/case/error'
     require 'micro/case/result'
@@ -51,7 +52,7 @@ module Micro
     end
 
     def self.flow(*args)
-      @__flow_use_cases = Utils::Arrays.flatten_and_compact(args)
+      @__flow_use_cases = Cases::Utils::MapUseCases.call(args)
     end
 
     class << self
