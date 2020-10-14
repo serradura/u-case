@@ -4,7 +4,7 @@ module Micro
   module Cases
 
     module Utils
-      MapUseCases = -> args do
+      def self.map_use_cases(args)
         collection = args.is_a?(Array) && args.size == 1 ? args[0] : args
 
         Array(collection).each_with_object([]) do |arg, memo|
