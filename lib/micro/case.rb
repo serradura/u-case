@@ -129,6 +129,14 @@ module Micro
       __flow_set(__flow_use_cases_get) if !__flow_get__ && __flow_use_cases
     end
 
+    def self.inspect
+      if __flow_use_cases
+        '<%s (%s) use_cases=%s>' % [self, __flow_builder__, @__flow_use_cases]
+      else
+        '<%s (%s) attributes=%s>' % [self, self.superclass, attributes]
+      end
+    end
+
     def initialize(input)
       __setup_use_case(input)
     end

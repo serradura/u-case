@@ -104,4 +104,11 @@ class Micro::Case::StrictTest < Minitest::Test
       values
     )
   end
+
+  def test_inspect
+    assert_equal(
+      '<Micro::Case::StrictTest::Multiply (Micro::Case::Strict) attributes=["a", "b"]>',
+      Multiply.inspect
+    )
+  end
 end
