@@ -197,12 +197,26 @@ class Micro::Case::CallTest < Minitest::Test
 
       count_failure = 0
 
-      output = use_case.call() do |on|
+      output1 = use_case.call() do |on|
         on.failure { count_failure +=1 }
       end
 
-      assert_equal(1, output)
+      assert_equal(1, output1)
       assert_equal(1, count_failure)
+
+      # --
+
+      count_unknown = 0
+
+      output2 = use_case.call() do |on|
+        on.success { raise }
+        on.failure(:foo) { raise }
+        on.failure(:bar) { raise }
+        on.unknown { count_unknown +=1 }
+      end
+
+      assert_equal(1, output2)
+      assert_equal(1, count_unknown)
     end
 
     # --
