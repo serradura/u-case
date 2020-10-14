@@ -7,6 +7,7 @@ require 'micro/case/version'
 
 module Micro
   class Case
+    require 'micro/cases/utils'
     require 'micro/case/utils'
     require 'micro/case/error'
     require 'micro/case/result'
@@ -51,7 +52,7 @@ module Micro
     end
 
     def self.flow(*args)
-      @__flow_use_cases = Utils::Arrays.flatten_and_compact(args)
+      @__flow_use_cases = Cases::Utils.map_use_cases(args)
     end
 
     class << self
@@ -223,7 +224,11 @@ module Micro
     private_constant :MapFailureType, :INVALID_INVOCATION_OF_THE_THEN_METHOD
   end
 
+  def self.case?(arg)
+    arg.is_a?(Class) && arg < Case
+  end
+
   def self.case_or_flow?(arg)
-    (arg.is_a?(Class) && arg < Case) || arg.is_a?(Cases::Flow)
+    case?(arg) || arg.is_a?(Cases::Flow)
   end
 end
