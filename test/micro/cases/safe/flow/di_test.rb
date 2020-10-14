@@ -52,4 +52,40 @@ class Micro::Cases::Safe::Flow::DITest < Minitest::Test
 
     assert_equal(21, result[:number])
   end
+
+
+  class Add11 < Micro::Case::Safe
+    flow([
+      Add2,
+      [Sum, adder: Add3],
+      [Sum, adder: Add2],
+      self
+    ])
+
+    attribute :number
+
+    def call!
+      number.is_a?(Numeric) ? Success(result: { number: number + 4 }) : Failure()
+    end
+  end
+
+  class Add22 < Micro::Case::Safe
+    flow(Add11, Add11)
+  end
+
+  def test_dependency_injection_using_an_inner_flow
+    result = Add11.call(number: 1)
+
+    assert_predicate(result, :success?)
+
+    assert_equal(12, result[:number])
+
+    # --
+
+    result = Add22.call(number: 1)
+
+    assert_predicate(result, :success?)
+
+    assert_equal(23, result[:number])
+  end
 end
