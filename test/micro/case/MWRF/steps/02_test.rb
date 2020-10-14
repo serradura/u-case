@@ -57,7 +57,7 @@ class Micro::Case::MWRF
 
               Success :sync_with_crm, result: { user: user, crm_id: crm_id }
             else
-              Failure :crm_error, result: { message: "User can't be sent to the CRM" }
+              Failure :sync_failed, result: { message: "User can't be sent to the CRM" }
             end
           end
       end
