@@ -9,7 +9,7 @@ module Micro
       attr_reader :use_cases
 
       def self.build(args)
-        use_cases = Utils::MapUseCases.call(args)
+        use_cases = Utils.map_use_cases(args)
 
         raise Error::InvalidUseCases if use_cases.none?(&IsAValidUseCase)
 

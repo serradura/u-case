@@ -52,7 +52,7 @@ module Micro
     end
 
     def self.flow(*args)
-      @__flow_use_cases = Cases::Utils::MapUseCases.call(args)
+      @__flow_use_cases = Cases::Utils.map_use_cases(args)
     end
 
     class << self
