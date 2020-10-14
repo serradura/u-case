@@ -5,20 +5,11 @@ module Micro
     class Flow
       IsAUseCaseWithDefaults = -> arg { arg.is_a?(Array) && Micro.case?(arg[0]) && arg[1].is_a?(Hash) }
       IsAValidUseCase = -> use_case { Micro.case?(use_case) || IsAUseCaseWithDefaults[use_case] }
-      MapUseCases = -> args do
-        Array(args).each_with_object([]) do |arg, memo|
-          if arg.is_a?(Flow)
-            arg.use_cases.each { |use_case| memo << use_case }
-          else
-            memo << arg
-          end
-        end
-      end
 
       attr_reader :use_cases
 
       def self.build(args)
-        use_cases = MapUseCases.call(args)
+        use_cases = Utils::MapUseCases.call(args)
 
         raise Error::InvalidUseCases if use_cases.none?(&IsAValidUseCase)
 
