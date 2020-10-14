@@ -13,7 +13,7 @@ Micro::Case.config do |config|
   config.enable_activemodel_validation = true
 
   # Use to enable/disable the `Micro::Case::Results#transitions` tracking.
-  config.enable_transitions = true
+  config.enable_transitions = false
 end
 
 module Users
@@ -29,33 +29,61 @@ module Users
 end
 
 module Users::Creation
-  require 'uri'
-  require 'securerandom'
-
-  class Process < Micro::Case
+  class NormalizeParams < Micro::Case
     attributes :name, :email
 
     def call!
       normalized_name = String(name).strip.gsub(/\s+/, ' ')
       normalized_email = String(email).downcase.strip
 
-      validation_errors = []
-      validation_errors << "Name can't be blank" if normalized_name.blank?
-      validation_errors << "Email is invalid" unless normalized_email.match?(URI::MailTo::EMAIL_REGEXP)
+      Success result: { name: normalized_name, email: normalized_email }
+    end
+  end
+end
 
-      if validation_errors.present?
-        return Failure :invalid_attributes, result: {
-          errors: OpenStruct.new(full_messages: validation_errors)
-        }
+module Users::Creation
+  require 'uri'
+
+  class ValidateParams < Micro::Case
+    attributes :name, :email
+
+    validates :name, presence: true
+    validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }
+
+    def call!
+      Success result: attributes(:name, :email)
+    end
+  end
+end
+
+require 'securerandom'
+
+module Users::Creation
+  class Persist < Micro::Case
+    attributes :name, :email
+
+    validates :name, :email, kind: String
+
+    def call!
+      user_data = attributes.merge(id: SecureRandom.uuid)
+
+      Success result: { user: Users::Entity.new(user_data) }
+    end
+  end
+end
+
+module Users::Creation
+  class SyncWithCRM < Micro::Case
+    attribute :user
+
+    validates :user, kind: Users::Entity
+
+    def call!
+      if user.persisted?
+        Success result: { user_id: user.id, crm_id: sync_with_crm }
+      else
+        Failure :crm_error, result: { message: "User can't be sent to the CRM" }
       end
-
-      user = Users::Entity.new(
-        id: SecureRandom.uuid,
-        name: normalized_name,
-        email: normalized_email
-      )
-
-      Success result: { user_id: user.id, crm_id: sync_with_crm }
     end
 
     private def sync_with_crm
@@ -65,10 +93,34 @@ module Users::Creation
   end
 end
 
+module Users::Creation
+  class Process < Micro::Case
+    def call!
+      call(NormalizeParams)
+        .then(ValidateParams)
+        .then(Persist)
+        .then(SyncWithCRM)
+    end
+  end
+end
+
 params = {
   "name" => "  Rodrigo  \n  Serradura ",
   "email" => "   RoDRIGo.SERRAdura@gmail.com   "
 }
+
+#--------------------------------------#
+puts "\n-- Parameters processing --\n\n"
+#--------------------------------------#
+
+print 'Before: '
+p params
+
+print ' After: '
+
+Users::Creation::NormalizeParams
+  .call(params)
+  .on_success { |result| p result.data }
 
 #---------------------------------#
 puts "\n-- Success scenario --\n\n"
@@ -95,6 +147,10 @@ Users::Creation::Process
   end
 
 # :: example of the output: ::
+# -- Parameters processing --
+#
+# Before: {"name"=>"  Rodrigo  \n  Serradura ", "email"=>"   RoDRIGo.SERRAdura@gmail.com   "}
+#  After: {:name=>"Rodrigo Serradura", :email=>"rodrigo.serradura@gmail.com"}
 #
 # -- Success scenario --
 #

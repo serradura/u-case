@@ -5,7 +5,7 @@ This example uses [rake](http://rubygems.org/gems/rake) to expose a CLI calculat
 ## Installation instructions
 ```sh
 gem install rake
-gem install u-case -v 3.1.0
+gem install u-case -v 4ß.1.0
 ```
 
 *Note:*

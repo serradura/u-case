@@ -7,7 +7,7 @@ class Operation < Micro::Case
   end
 
   class Add < Operation
-    attribute :operator, '+'
+    attribute :operator, default: '+'
 
     def call!
       Success result: operation_info(a + b)
@@ -15,7 +15,7 @@ class Operation < Micro::Case
   end
 
   class Subtract < Operation
-    attribute :operator, '-'
+    attribute :operator, default: '-'
 
     def call!
       Success result: operation_info(a - b)
@@ -23,7 +23,7 @@ class Operation < Micro::Case
   end
 
   class Multiply < Operation
-    attribute :operator, 'x'
+    attribute :operator, default: 'x'
 
     def call!
       Success result: operation_info(a * b)
@@ -31,7 +31,7 @@ class Operation < Micro::Case
   end
 
   class Divide < Operation
-    attribute :operator, '/'
+    attribute :operator, default: '/'
 
     def call!
       Success result: operation_info(a / b)
