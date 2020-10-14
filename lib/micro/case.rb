@@ -130,7 +130,11 @@ module Micro
     end
 
     def self.inspect
-      "<%s (%s) attributes=%s>" % [self, self.superclass, attributes]
+      if __flow_use_cases
+        '<%s (%s) use_cases=%s>' % [self, __flow_builder__, @__flow_use_cases]
+      else
+        '<%s (%s) attributes=%s>' % [self, self.superclass, attributes]
+      end
     end
 
     def initialize(input)

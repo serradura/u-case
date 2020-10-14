@@ -59,4 +59,18 @@ class Micro::Cases::Flow::BlendTest < Minitest::Test
       assert_failure_result(result, value: { message: 'numbers must contain only numeric types' })
     end
   end
+
+  def test_inspect
+    assert_equal(
+      '<(Micro::Cases::Flow) use_cases=[<Steps::ConvertToNumbers (Micro::Case) attributes=["numbers"]>, <Steps::Add2 (Micro::Case::Strict) attributes=["numbers"]>]>',
+      Add2ToAllNumbers.inspect
+    )
+
+    # --
+
+    assert_equal(
+      '<Micro::Cases::Flow::BlendTest::SquareAllNumbers (Micro::Cases::Flow) use_cases=[<Steps::ConvertToNumbers (Micro::Case) attributes=["numbers"]>, <Steps::Square (Micro::Case::Strict) attributes=["numbers"]>]>',
+      SquareAllNumbers.inspect
+    )
+  end
 end
