@@ -11,14 +11,14 @@ class Micro::Cases::MapTest < Minitest::Test
 
   def test_invalid_array_should_raise_an_exception
     assert_raises_with_message(
-      Micro::Cases::Map::InvalidUseCases,
+      Micro::Cases::Error::InvalidUseCases,
       'argument must be a collection of `Micro::Case` classes'
     ) { Micro::Cases.map(%w[wrong params]).call(foo: 'foo') }
 
     # --
 
     assert_raises_with_message(
-      Micro::Cases::Map::InvalidUseCases,
+      Micro::Cases::Error::InvalidUseCases,
       'argument must be a collection of `Micro::Case` classes'
     ) { Micro::Cases.map([String, Integer]).call(foo: 'foo') }
   end

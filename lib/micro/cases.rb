@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'micro/cases/utils'
+require 'micro/cases/error'
 require 'micro/cases/flow'
 require 'micro/cases/safe/flow'
 require 'micro/cases/map'

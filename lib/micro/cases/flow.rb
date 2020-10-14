@@ -3,20 +3,15 @@
 module Micro
   module Cases
     class Flow
-      class InvalidUseCases < ArgumentError
-        def initialize; super('argument must be a collection of `Micro::Case` classes'.freeze); end
-      end
+      IsAUseCaseWithDefaults = -> arg { arg.is_a?(Array) && Micro.case?(arg[0]) && arg[1].is_a?(Hash) }
+      IsAValidUseCase = -> use_case { Micro.case?(use_case) || IsAUseCaseWithDefaults[use_case] }
 
       attr_reader :use_cases
 
-      def self.map_use_cases(arg)
-        arg.is_a?(Flow) ? arg.use_cases : Array(arg)
-      end
-
       def self.build(args)
-        use_cases = Array(args).flat_map { |arg| map_use_cases(arg) }
+        use_cases = Utils.map_use_cases(args)
 
-        raise InvalidUseCases if use_cases.any? { |klass| !(klass < ::Micro::Case) }
+        raise Error::InvalidUseCases if use_cases.none?(&IsAValidUseCase)
 
         new(use_cases)
       end
@@ -28,7 +23,7 @@ module Micro
       end
 
       def call!(input:, result:)
-        first_result = __case_use_case(@first, result, input)
+        first_result = __call_use_case(@first, result, input)
 
         return first_result if @next_ones.empty?
 
@@ -72,16 +67,22 @@ module Micro
           raise Case::Error::InvalidInvocationOfTheThenMethod.new("#{self.class.name}#")
         end
 
-        def __case_use_case(use_case, result, input)
-          use_case.__new__(result, input).__call__
+        def __call_use_case(use_case, result, input)
+          __build_use_case(use_case, result, input).__call__
         end
 
         def __call_next_use_cases(first_result)
           @next_ones.reduce(first_result) do |result, use_case|
             break result if result.failure?
 
-            __case_use_case(use_case, result, result.data)
+            __call_use_case(use_case, result, result.data)
           end
+        end
+
+        def __build_use_case(use_case, result, input)
+          return use_case.__new__(result, input) unless use_case.is_a?(Array)
+
+          use_case[0].__new__(result, input.merge(use_case[1]))
         end
     end
   end
