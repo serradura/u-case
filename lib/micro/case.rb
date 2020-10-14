@@ -223,7 +223,11 @@ module Micro
     private_constant :MapFailureType, :INVALID_INVOCATION_OF_THE_THEN_METHOD
   end
 
+  def self.case?(arg)
+    arg.is_a?(Class) && arg < Case
+  end
+
   def self.case_or_flow?(arg)
-    (arg.is_a?(Class) && arg < Case) || arg.is_a?(Cases::Flow)
+    case?(arg) || arg.is_a?(Cases::Flow)
   end
 end
