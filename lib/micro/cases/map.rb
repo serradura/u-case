@@ -3,18 +3,14 @@
 module Micro
   module Cases
     class Map
-      class InvalidUseCases < ArgumentError
-        def initialize; super('argument must be a collection of `Micro::Case` classes'.freeze); end
-      end
-
-      IsAUseCaseWithDefaults = -> arg { arg.is_a?(Array) && Micro.case_or_flow?(arg[0]) && arg[1].is_a?(Hash) }
-      IsAUseCaseOrFlow = -> arg { Micro.case_or_flow?(arg) || IsAUseCaseWithDefaults[arg] }
+      IsAUseCaseOrFlowWithDefaults = -> arg { arg.is_a?(Array) && Micro.case_or_flow?(arg[0]) && arg[1].is_a?(Hash) }
+      IsAUseCaseOrFlow = -> arg { Micro.case_or_flow?(arg) || IsAUseCaseOrFlowWithDefaults[arg] }
       HasValidArgs = -> (args) { Kind.of(Array, args).all?(&IsAUseCaseOrFlow) }
 
       attr_reader :use_cases
 
       def self.build(args)
-        raise InvalidUseCases unless HasValidArgs[args]
+        raise Error::InvalidUseCases unless HasValidArgs[args]
 
         new(args)
       end
@@ -37,7 +33,7 @@ module Micro
         use_cases.map(&GetUseCaseResult[hash])
       end
 
-      private_constant :HasValidArgs, :IsAUseCaseOrFlow, :IsAUseCaseWithDefaults, :GetUseCaseResult
+      private_constant :HasValidArgs, :IsAUseCaseOrFlow, :IsAUseCaseOrFlowWithDefaults, :GetUseCaseResult
     end
   end
 end
