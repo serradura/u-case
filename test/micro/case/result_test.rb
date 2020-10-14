@@ -340,13 +340,16 @@ class Micro::Case::ResultTest < Minitest::Test
 
   def test_inspect
     success_result = success_result(value: { number: 1 }, type: :ok)
-
-    assert_equal('<Success (Micro::Case::Result) type=:ok data={:number=>1} transitions=1>', success_result.inspect)
-
-    # --
-
     failure_result = failure_result(value: { number: 0 }, type: :error)
 
-    assert_equal('<Failure (Micro::Case::Result) type=:error data={:number=>0} transitions=1>', failure_result.inspect)
+    if Micro::Case::Result.transitions_enabled?
+      assert_equal('<Success (Micro::Case::Result) type=:ok data={:number=>1} transitions=1>', success_result.inspect)
+
+      assert_equal('<Failure (Micro::Case::Result) type=:error data={:number=>0} transitions=1>', failure_result.inspect)
+    else
+      assert_equal('<Success (Micro::Case::Result) type=:ok data={:number=>1}>', success_result.inspect)
+
+      assert_equal('<Failure (Micro::Case::Result) type=:error data={:number=>0}>', failure_result.inspect)
+    end
   end
 end

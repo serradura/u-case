@@ -38,7 +38,10 @@ module Micro
       def inspect
         pretty_type = @__success ? 'Success' : 'Failure'
 
-        "<%s (%s) type=:%s data=%s transitions=%d>" % [pretty_type, self.class, @type, data, @__transitions.size]
+        instance_info = '%s (%s) type=:%s data=%s' % [pretty_type, self.class, @type, data]
+        transitions_info = ' transitions=%d' % [@__transitions.size] if Micro::Case::Result.transitions_enabled?
+
+        "<#{instance_info}#{transitions_info}>"
       end
 
       def to_ary
