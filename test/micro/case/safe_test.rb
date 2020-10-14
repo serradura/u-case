@@ -142,4 +142,11 @@ class Micro::Case::SafeTest < Minitest::Test
       values
     )
   end
+  
+  def test_inspect
+    assert_equal(
+      '<Micro::Case::SafeTest::Divide (Micro::Case::Safe) attributes=["a", "b"]>',
+      Divide.inspect
+    )
+  end
 end
