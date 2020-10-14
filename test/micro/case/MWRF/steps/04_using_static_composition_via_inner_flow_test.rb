@@ -64,7 +64,7 @@ class Micro::Case::MWRF
           if user.persisted?
             Success result: { user: user, crm_id: sync_with_crm }
           else
-            Failure :crm_error, result: { message: "User can't be sent to the CRM" }
+            Failure :sync_failed, result: { message: "User can't be sent to the CRM" }
           end
         end
 
