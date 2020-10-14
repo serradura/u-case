@@ -337,4 +337,16 @@ class Micro::Case::ResultTest < Minitest::Test
 
     assert_failure_result(result2, value: { numbers: 'must contain only numeric types' })
   end
+
+  def test_inspect
+    success_result = success_result(value: { number: 1 }, type: :ok)
+
+    assert_equal('<Success (Micro::Case::Result) type=:ok data={:number=>1} transitions=1>', success_result.inspect)
+
+    # --
+
+    failure_result = failure_result(value: { number: 0 }, type: :error)
+
+    assert_equal('<Failure (Micro::Case::Result) type=:error data={:number=>0} transitions=1>', failure_result.inspect)
+  end
 end

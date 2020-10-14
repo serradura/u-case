@@ -116,4 +116,18 @@ class Micro::Cases::Safe::Flow::BlendTest < Minitest::Test
 
     assert_raises_with_message(ArgumentError, 'missing keywords: :a, :b') { flow_2.call({}) }
   end
+
+  def test_inspect
+    assert_equal(
+      '<(Micro::Cases::Safe::Flow) use_cases=[<Steps::ConvertToNumbers (Micro::Case) attributes=["numbers"]>, <Steps::Add2 (Micro::Case::Strict) attributes=["numbers"]>]>',
+      Add2ToAllNumbers.inspect
+    )
+
+    # --
+
+    assert_equal(
+      '<Micro::Cases::Safe::Flow::BlendTest::SquareAllNumbers (Micro::Cases::Safe::Flow) use_cases=[<Steps::ConvertToNumbers (Micro::Case) attributes=["numbers"]>, <Steps::Square (Micro::Case::Strict) attributes=["numbers"]>]>',
+      SquareAllNumbers.inspect
+    )
+  end
 end
