@@ -98,4 +98,11 @@ class Micro::Case::Strict::SafeTest < Minitest::Test
       values
     )
   end
+
+  def test_inspect
+    assert_equal(
+      '<Micro::Case::Strict::SafeTest::Multiply (Micro::Case::Strict::Safe) attributes=["a", "b"]>',
+      Multiply.inspect
+    )
+  end
 end

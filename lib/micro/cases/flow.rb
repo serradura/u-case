@@ -22,6 +22,10 @@ module Micro
         @first = @next_ones.shift
       end
 
+      def inspect
+        '<(%s) use_cases=%s>' % [self.class, @use_cases]
+      end
+
       def call!(input:, result:)
         first_result = __call_use_case(@first, result, input)
 
