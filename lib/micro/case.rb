@@ -129,11 +129,25 @@ module Micro
       __flow_set(__flow_use_cases_get) if !__flow_get__ && __flow_use_cases
     end
 
+    InspectKey = :__inspect_key__ # :nodoc:
+
     def self.inspect
-      if __flow_use_cases
-        '<%s (%s) use_cases=%s>' % [self, __flow_builder__, @__flow_use_cases]
-      else
-        '<%s (%s) attributes=%s>' % [self, self.superclass, attributes]
+      ids = (Thread.current[InspectKey] ||= [])
+
+      if ids.include?(object_id)
+        return sprintf('#<%s: {...}>', self)
+      end
+
+      begin
+        ids << object_id
+
+        if __flow_use_cases
+          return '<%s (%s) use_cases=%s>' % [self, __flow_builder__, @__flow_use_cases]
+        else
+          return '<%s (%s) attributes=%s>' % [self, self.superclass, attributes]
+        end
+      ensure
+        ids.pop
       end
     end
 

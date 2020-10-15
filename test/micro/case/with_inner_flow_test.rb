@@ -62,4 +62,11 @@ class Micro::Case::WithInnerFlowTest < Minitest::Test
       Class.new(Double)
     end
   end
+
+  def test_the_inspect
+    assert_equal(
+      '<Micro::Case::WithInnerFlowTest::Double (Micro::Cases::Flow) use_cases=[<Micro::Case::WithInnerFlowTest::ConvertTextToNumber (Micro::Case) attributes=["text"]>, #<Micro::Case::WithInnerFlowTest::Double: {...}>, <Micro::Case::WithInnerFlowTest::ConvertNumberToText (Micro::Case) attributes=["number"]>]>',
+      Double.inspect
+    )
+  end
 end
