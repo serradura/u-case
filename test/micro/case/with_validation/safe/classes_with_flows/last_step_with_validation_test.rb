@@ -1,6 +1,6 @@
 require 'test_helper'
 
-if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
+if ENV.fetch('ACTIVERECORD_VERSION', '6.1') <= '6.0.0'
 
   module Micro::Case::WithValidation
     module ClassesWithFlows

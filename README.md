@@ -44,7 +44,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
 2.6.0     | https://github.com/serradura/u-case/blob/v2.x/README.md
 1.1.0     | https://github.com/serradura/u-case/blob/v1.x/README.md
 
-> **Note:** Você entende português? 🇧🇷🇵🇹 Verifique o [README traduzido em pt-BR](https://github.com/serradura/u-case/blob/main/README.pt-BR.md).
+> **Note:** Você entende português? 🇧🇷&nbsp;🇵🇹 Verifique o [README traduzido em pt-BR](https://github.com/serradura/u-case/blob/main/README.pt-BR.md).
 
 ## Table of Contents <!-- omit in toc -->
 - [Compatibility](#compatibility)
