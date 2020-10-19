@@ -1,26 +1,14 @@
 require 'test_helper'
 
-if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
+if ENV.fetch('ACTIVERECORD_VERSION', '6.1') <= '6.0.0'
   require_relative '../users_entity'
   require_relative '../shared_assertions'
 
   class Micro::Case::MWRF::WithValidation
-    class Step03Test < Minitest::Test
+    class Step02Test < Minitest::Test
       include SharedAssertions
 
-      module Users::Creation3
-        class Persist < Micro::Case
-          attributes :name, :email, validates: { kind: String }
-
-          def call!
-            user_data = attributes.merge(id: SecureRandom.uuid)
-
-            Success :persist, result: { user: Users::Entity.new(user_data) }
-          end
-        end
-      end
-
-      module Users::Creation3
+      module Users::Creation2
         require 'uri'
         require 'securerandom'
 
@@ -29,9 +17,9 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
 
           def call!
             normalize_params
-              .then(apply(:validate_params))
-              .then(Persist)
-              .then(apply(:sync_with_crm))
+              .then(method(:validate_params))
+              .then(method(:persist))
+              .then(method(:sync_with_crm))
           end
 
           private
@@ -55,6 +43,14 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
               }
             end
 
+            def persist(name:, email:, **)
+              user_data = { name: name, email: email, id: SecureRandom.uuid }
+
+              user = Users::Entity.new(user_data)
+
+              Success :persist, result: { user: user }
+            end
+
             def sync_with_crm(user:, **)
               if user.persisted?
                 # Do some integration stuff...
@@ -69,7 +65,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
       end
 
       def use_case
-        Users::Creation3::Process
+        Users::Creation2::Process
       end
 
     end

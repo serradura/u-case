@@ -1,8 +1,8 @@
 require 'test_helper'
 
-if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
+if ENV.fetch('ACTIVERECORD_VERSION', '6.1') <= '6.0.0'
 
-  module Micro::Case::WithValidation::Safe
+  module Micro::Case::WithActivemodelValidation::Safe
     module ClassesWithFlows
       class LastStepWithValidationTest < Minitest::Test
         class ConvertTextToNumber < Micro::Case::Safe

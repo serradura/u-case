@@ -243,6 +243,20 @@ module Micro
         @__result.__set__(is_success, value, type, self)
       end
 
+      def transaction(adapter = :activerecord)
+        raise NotImplementedError unless adapter == :activerecord
+
+        result = nil
+
+        ActiveRecord::Base.transaction do
+          result = yield
+
+          raise ActiveRecord::Rollback if result.failure?
+        end
+
+        result
+      end
+
     private_constant :MapFailureType, :INVALID_INVOCATION_OF_THE_THEN_METHOD
   end
 

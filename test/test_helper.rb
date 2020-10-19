@@ -7,7 +7,7 @@ SimpleCov.start do
   enable_coverage :branch if RUBY_VERSION >= '2.5.0'
 end
 
-if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') < '4.1'
+if ENV.fetch('ACTIVERECORD_VERSION', '6.1') < '4.1'
   require 'minitest/unit'
 
   module Minitest
@@ -20,7 +20,7 @@ $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 require 'u-case'
 
 Micro::Case.config do |config|
-  enable_activemodel = ENV.fetch('ACTIVEMODEL_VERSION', '6.1.0') < '6.1.0'
+  enable_activemodel = ENV.fetch('ACTIVERECORD_VERSION', '6.1.0') < '6.1.0'
 
   config.enable_activemodel_validation = enable_activemodel
 

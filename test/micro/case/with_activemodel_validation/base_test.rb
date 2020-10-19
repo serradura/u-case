@@ -1,25 +1,25 @@
 require 'test_helper'
 
-if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
+if ENV.fetch('ACTIVERECORD_VERSION', '6.1') <= '6.0.0'
 
-  module Micro::Case::WithValidation::Safe
+  module Micro::Case::WithActivemodelValidation
     class BaseTest < Minitest::Test
-      class Multiply < Micro::Case::Safe
+      class Multiply < Micro::Case
         attribute :a
         attribute :b
         validates :a, :b, presence: true, numericality: true
 
         def call!
-          Success(result: { number: a * b })
+          Success(result: {number: a * b})
         end
       end
 
-      class NumberToString < Micro::Case::Safe
+      class NumberToString < Micro::Case
         attribute :number
         validates :number, presence: true, numericality: true
 
         def call!
-          Success(result: { string: number.to_s })
+          Success result: { string: number.to_s }
         end
       end
 

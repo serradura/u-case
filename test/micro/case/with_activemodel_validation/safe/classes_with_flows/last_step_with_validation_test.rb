@@ -1,14 +1,12 @@
 require 'test_helper'
 
-if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
+if ENV.fetch('ACTIVERECORD_VERSION', '6.1') <= '6.0.0'
 
-  module Micro::Case::WithValidation::Safe
+  module Micro::Case::WithActivemodelValidation
     module ClassesWithFlows
-      class AllStepsWithValidationTest < Minitest::Test
-        class ConvertTextToNumber < Micro::Case::Safe
+      class LastStepWithValidationTest < Minitest::Test
+        class ConvertTextToNumber < Micro::Case
           attribute :text
-
-          validates :text, presence: true
 
           def call!
             number = text.include?('.') ? text.to_f : text.to_i
@@ -17,7 +15,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
           end
         end
 
-        class ConvertNumberToText < Micro::Case::Safe
+        class ConvertNumberToText < Micro::Case
           attribute :number
 
           validates :number, presence: true
@@ -27,14 +25,14 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
           end
         end
 
-        class Double < Micro::Case::Safe
+        class Double < Micro::Case
           flow ConvertTextToNumber,
               self.call!,
               ConvertNumberToText
 
           attribute :number
 
-          validates :number, kind: Integer
+          validates :number, numericality: { only_integer: true }
 
           def call!
             Success result: { number: number * 2 }
@@ -42,10 +40,6 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
         end
 
         def test_the_use_case_result
-          assert_failure_result(Double.call(text: ''), type: :invalid_attributes)
-
-          # ---
-
           result = Double.call(text: '4')
 
           assert_success_result(result, value: { text: '8' })
@@ -61,7 +55,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
 
           assert_failure_result(result, type: :invalid_attributes)
 
-          assert_equal(['must be a kind of: Integer'], result.value[:errors][:number])
+          assert_equal(['must be an integer'], result.value[:errors][:number])
         end
       end
     end

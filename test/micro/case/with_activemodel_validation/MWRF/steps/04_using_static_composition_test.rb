@@ -1,14 +1,14 @@
 require 'test_helper'
 
-if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
+if ENV.fetch('ACTIVERECORD_VERSION', '6.1') <= '6.0.0'
   require_relative '../users_entity'
   require_relative '../shared_assertions'
 
   class Micro::Case::MWRF::WithValidation
-    class Step04UsingVariableCompositionTest < Minitest::Test
+    class Step04UsingStaticCompositionTest < Minitest::Test
       include SharedAssertions
 
-      module Users::Creation4c
+      module Users::Creation4a
         class NormalizeParams < Micro::Case
           attributes :name, :email
 
@@ -21,7 +21,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
         end
       end
 
-      module Users::Creation4c
+      module Users::Creation4a
         require 'uri'
 
         class ValidateParams < Micro::Case
@@ -36,7 +36,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
 
       require 'securerandom'
 
-      module Users::Creation4c
+      module Users::Creation4a
         class Persist < Micro::Case
           attributes :name, :email, validates: { kind: String }
 
@@ -48,7 +48,7 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
         end
       end
 
-      module Users::Creation4c
+      module Users::Creation4a
         class SyncWithCRM < Micro::Case
           attribute :user, validates: { kind: Users::Entity }
 
@@ -67,19 +67,17 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
         end
       end
 
-      module Users::Creation4c
-        class Process < Micro::Case
-          def call!
-            call(NormalizeParams)
-              .then(ValidateParams)
-              .then(Persist)
-              .then(SyncWithCRM)
-          end
-        end
+      module Users::Creation4a
+        Process = Micro::Cases.flow([
+          NormalizeParams,
+          ValidateParams,
+          Persist,
+          SyncWithCRM
+        ])
       end
 
       def use_case
-        Users::Creation4c::Process
+        Users::Creation4a::Process
       end
 
     end

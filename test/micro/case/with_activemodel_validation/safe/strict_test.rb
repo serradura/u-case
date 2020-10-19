@@ -1,20 +1,20 @@
 require 'test_helper'
 
-if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
+if ENV.fetch('ACTIVERECORD_VERSION', '6.1') <= '6.0.0'
 
-  module Micro::Case::WithValidation
-    class BaseTest < Minitest::Test
-      class Multiply < Micro::Case
+  module Micro::Case::WithActivemodelValidation::Safe
+    class StrictTest < Minitest::Test
+      class Multiply < Micro::Case::Strict::Safe
         attribute :a
         attribute :b
         validates :a, :b, presence: true, numericality: true
 
         def call!
-          Success(result: {number: a * b})
+          Success result: { number: a * b }
         end
       end
 
-      class NumberToString < Micro::Case
+      class NumberToString < Micro::Case::Strict::Safe
         attribute :number
         validates :number, presence: true, numericality: true
 
@@ -32,10 +32,16 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
 
         flow = Micro::Cases.flow([Multiply, NumberToString])
 
-        assert_success_result(flow.call(a: 2, b: 2), value: { string: '4' })
+        assert_success_result(flow.call(a: 2, b: 2), value: { string: '4' } )
       end
 
       def test_failure
+        assert_raises_with_message(ArgumentError, 'missing keywords: :a, :b') { Multiply.call({}) }
+
+        assert_raises_with_message(ArgumentError, 'missing keyword: :b') { Multiply.call({a: 1}) }
+
+        # ---
+
         result = Multiply.call(a: 1, b: nil)
 
         assert_failure_result(result, type: :invalid_attributes)

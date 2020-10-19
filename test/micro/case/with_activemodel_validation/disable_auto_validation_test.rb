@@ -1,10 +1,10 @@
 require 'test_helper'
 
-if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
+if ENV.fetch('ACTIVERECORD_VERSION', '6.1') <= '6.0.0'
 
-  module Micro::Case::WithValidation::Safe
+  module Micro::Case::WithActivemodelValidation
     class DisableAutoValidationTest < Minitest::Test
-      class Multiply < Micro::Case::Safe
+      class Multiply < Micro::Case
         disable_auto_validation
 
         attribute :a
@@ -12,11 +12,11 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
         validates :a, :b, presence: true, numericality: true
 
         def call!
-          Success(result: { number: a * b })
+          Success result: { number: a * b }
         end
       end
 
-      class Add < Micro::Case::Safe
+      class Add < Micro::Case
         attribute :a
         attribute :b
         validates :a, :b, presence: true, numericality: true
@@ -33,9 +33,9 @@ if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
 
         # ---
 
-        result2 = Multiply.call(a: 2, b: 'a')
-
-        assert_exception_result(result2, value: { exception: TypeError })
+        assert_raises_with_message(TypeError, /String can't be coerced into (Integer|Fixnum)/) do
+          Multiply.call(a: 2, b: 'a')
+        end
       end
     end
   end

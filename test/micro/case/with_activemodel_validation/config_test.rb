@@ -1,6 +1,6 @@
 require 'test_helper'
 
-module Micro::Case::WithValidation
+module Micro::Case::WithActivemodelValidation
   class ConfigTest < Minitest::Test
     i_suck_and_my_tests_are_order_dependent!
 
@@ -22,7 +22,7 @@ module Micro::Case::WithValidation
       )
     end
 
-    if ENV.fetch('ACTIVEMODEL_VERSION', '6.1') <= '6.0.0'
+    if ENV.fetch('ACTIVERECORD_VERSION', '6.1') <= '6.0.0'
       class Multiply < Micro::Case
         attribute :a
         attribute :b
