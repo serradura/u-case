@@ -2,9 +2,9 @@ require 'test_helper'
 
 if ENV.fetch('ACTIVERECORD_VERSION', '6.1') <= '6.0.0'
 
-  module Micro::Case::WithValidation
+  module Micro::Case::WithActivemodelValidation::Safe
     class StrictTest < Minitest::Test
-      class Multiply < Micro::Case::Strict
+      class Multiply < Micro::Case::Strict::Safe
         attribute :a
         attribute :b
         validates :a, :b, presence: true, numericality: true
@@ -14,7 +14,7 @@ if ENV.fetch('ACTIVERECORD_VERSION', '6.1') <= '6.0.0'
         end
       end
 
-      class NumberToString < Micro::Case::Strict
+      class NumberToString < Micro::Case::Strict::Safe
         attribute :number
         validates :number, presence: true, numericality: true
 
@@ -32,7 +32,7 @@ if ENV.fetch('ACTIVERECORD_VERSION', '6.1') <= '6.0.0'
 
         flow = Micro::Cases.flow([Multiply, NumberToString])
 
-        assert_success_result(flow.call(a: 2, b: 2), value: { string: '4' })
+        assert_success_result(flow.call(a: 2, b: 2), value: { string: '4' } )
       end
 
       def test_failure

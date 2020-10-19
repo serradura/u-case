@@ -2,10 +2,10 @@ require 'test_helper'
 
 if ENV.fetch('ACTIVERECORD_VERSION', '6.1') <= '6.0.0'
 
-  module Micro::Case::WithValidation
+  module Micro::Case::WithActivemodelValidation::Safe
     module ClassesWithFlows
       class AllStepsWithValidationTest < Minitest::Test
-        class ConvertTextToNumber < Micro::Case
+        class ConvertTextToNumber < Micro::Case::Safe
           attribute :text
 
           validates :text, presence: true
@@ -17,7 +17,7 @@ if ENV.fetch('ACTIVERECORD_VERSION', '6.1') <= '6.0.0'
           end
         end
 
-        class ConvertNumberToText < Micro::Case
+        class ConvertNumberToText < Micro::Case::Safe
           attribute :number
 
           validates :number, presence: true
@@ -27,14 +27,14 @@ if ENV.fetch('ACTIVERECORD_VERSION', '6.1') <= '6.0.0'
           end
         end
 
-        class Double < Micro::Case
+        class Double < Micro::Case::Safe
           flow ConvertTextToNumber,
               self.call!,
               ConvertNumberToText
 
           attribute :number
 
-          validates :number, numericality: { only_integer: true }
+          validates :number, kind: Integer
 
           def call!
             Success result: { number: number * 2 }
@@ -61,7 +61,7 @@ if ENV.fetch('ACTIVERECORD_VERSION', '6.1') <= '6.0.0'
 
           assert_failure_result(result, type: :invalid_attributes)
 
-          assert_equal(['must be an integer'], result.value[:errors][:number])
+          assert_equal(['must be a kind of: Integer'], result.value[:errors][:number])
         end
       end
     end

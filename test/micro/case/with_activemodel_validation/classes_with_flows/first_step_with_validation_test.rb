@@ -2,9 +2,9 @@ require 'test_helper'
 
 if ENV.fetch('ACTIVERECORD_VERSION', '6.1') <= '6.0.0'
 
-  module Micro::Case::WithValidation::Safe
+  module Micro::Case::WithActivemodelValidation::Safe
     module ClassesWithFlows
-      class AllStepsWithValidationTest < Minitest::Test
+      class FirstStepWithValidationTest < Minitest::Test
         class ConvertTextToNumber < Micro::Case::Safe
           attribute :text
 
@@ -19,8 +19,6 @@ if ENV.fetch('ACTIVERECORD_VERSION', '6.1') <= '6.0.0'
 
         class ConvertNumberToText < Micro::Case::Safe
           attribute :number
-
-          validates :number, presence: true
 
           def call!
             Success result: { text: number.to_s }

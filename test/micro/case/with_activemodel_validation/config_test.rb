@@ -1,6 +1,6 @@
 require 'test_helper'
 
-module Micro::Case::WithValidation
+module Micro::Case::WithActivemodelValidation
   class ConfigTest < Minitest::Test
     i_suck_and_my_tests_are_order_dependent!
 

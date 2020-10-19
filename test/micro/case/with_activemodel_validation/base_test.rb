@@ -2,7 +2,7 @@ require 'test_helper'
 
 if ENV.fetch('ACTIVERECORD_VERSION', '6.1') <= '6.0.0'
 
-  module Micro::Case::WithValidation
+  module Micro::Case::WithActivemodelValidation
     class BaseTest < Minitest::Test
       class Multiply < Micro::Case
         attribute :a
