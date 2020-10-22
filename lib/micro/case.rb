@@ -135,7 +135,7 @@ module Micro
       ids = (Thread.current[InspectKey] ||= [])
 
       if ids.include?(object_id)
-        return sprintf('#<%s: {...}>', self)
+        return sprintf('#<%s: ...>', self)
       end
 
       begin
