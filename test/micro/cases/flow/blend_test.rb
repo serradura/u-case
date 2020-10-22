@@ -62,7 +62,7 @@ class Micro::Cases::Flow::BlendTest < Minitest::Test
 
   def test_inspect
     assert_equal(
-      '<(Micro::Cases::Flow) use_cases=[<Steps::ConvertToNumbers (Micro::Case) attributes=["numbers"]>, <Steps::Add2 (Micro::Case::Strict) attributes=["numbers"]>]>',
+      '#<(Micro::Cases::Flow) use_cases=[<Steps::ConvertToNumbers (Micro::Case) attributes=["numbers"]>, <Steps::Add2 (Micro::Case::Strict) attributes=["numbers"]>]>',
       Add2ToAllNumbers.inspect
     )
 

@@ -23,7 +23,7 @@ module Micro
       end
 
       def inspect
-        '<(%s) use_cases=%s>' % [self.class, @use_cases]
+        '#<(%s) use_cases=%s>' % [self.class, @use_cases]
       end
 
       def call!(input:, result:)
