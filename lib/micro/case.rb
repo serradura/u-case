@@ -240,27 +240,22 @@ module Micro
       end
 
 
-      def Check(type = nil, result: nil)
-        value = yield
-        final_result = result || value
+      def Check(type = nil, result: nil, on: {})
+        result_key = type || :check
 
         if value
-          type ||= :check_ok
+          result = on[:success] || { result_key => true }
 
-          Success(type, result: { type => final_result })
+          Success(type || :ok, result: result)
         else
-          type ||= :check_fail
+          result = on[:failure] || { result_key => false }
 
-          Failure(type, result: { type => final_result })
+          Failure(type || :error, result: result)
         end
       end
 
       def __get_result(is_success, value, type)
         @__result.__set__(is_success, value, type, self)
-      end
-
-      def __result
-        @__result ||= Result.new
       end
 
       def transaction(adapter = :activerecord)

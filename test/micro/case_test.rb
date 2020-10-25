@@ -155,35 +155,62 @@ class Micro::CaseTest < Minitest::Test
     attribute :value
 
     def call!
-      Check(:value_is_truthy) { value }
+      Check(result: value)
     end
   end
 
-  def test_that_it_returns_a_success_result_on_truthy_values
+  def test_check_with_just_the_value
     result = IsTruthy.call(value: true)
 
-    assert_success_result(result, value: { value_is_truthy: true })
+    assert_success_result(result, value: { check: true })
 
     result = IsTruthy.call(value: 'true')
+
+    assert_success_result(result, value: { check: true })
+
+    result = IsTruthy.call(value: false)
     
-    assert_success_result(result, value: { value_is_truthy: 'true' })
+    assert_failure_result(result, value: { check: false })
+
+    result = IsTruthy.call(value: nil)
+    
+    assert_failure_result(result, value: { check: false })
   end
 
-  class IsEven < Micro::Case
-    attributes :number
+  class IsTruthyWithType < Micro::Case
+    attribute :value
 
     def call!
-      Check(result: number) { number.even? }
+      Check(:is_truthy, result: value)
     end
   end
 
-  def test_that_it_can_define_the_result_value
-    result = IsEven.call(number: 2)
 
-    assert_success_result(result, value: { check_ok: 2 })
+  def test_check_with_custom_type
+    result = IsTruthyWithType.call(value: true)
 
-    result = IsEven.call(number: 1)
+    assert_success_result(result, value: { is_truthy: true })
 
-    assert_failure_result(result, value: { check_fail: 1 })
+    result = IsTruthyWithType.call(value: false)
+
+    assert_failure_result(result, value: { is_truthy: false })
+  end
+
+  class IsTruthyWithCustomData < Micro::Case
+    attribute :value
+
+    def call!
+      Check(result: value, on: { success: { result: :yay }, failure: { result: :nay } })
+    end
+  end
+
+  def test_check_with_custom_data
+    result = IsTruthyWithCustomData.call(value: true)
+
+    assert_success_result(result, value: { result: :yay })
+
+    result = IsTruthyWithCustomData.call(value: false)
+
+    assert_failure_result(result, value: { result: :nay })
   end
 end
