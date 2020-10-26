@@ -239,6 +239,19 @@ module Micro
         __get_result(false, value, type)
       end
 
+
+      def Try(type = nil, catch: StandardError, on: {})
+        result_key = type || :try
+        block_value = yield
+        result = on[:success] || { result_key => block_value }
+
+        Success(type || :ok, result: result)
+      rescue *catch => e
+        result = on[:failure] || { result_key => e }
+
+        Failure(type || :exception, result: result)
+      end
+
       def __get_result(is_success, value, type)
         @__result.__set__(is_success, value, type, self)
       end
