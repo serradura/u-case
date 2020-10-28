@@ -1,11 +1,11 @@
 require 'test_helper'
 
 class Micro::Case::Result::ThenTest < Minitest::Test
-  def build_result(success:, value:, type:)
+  def build_result(success:, data:, type:)
     use_case = Micro::Case.send(:__new, {})
 
     result = Micro::Case::Result.new
-    result.__set__(success, value, type, use_case)
+    result.__set__(success, data, type, use_case)
     result
   end
 
@@ -19,15 +19,15 @@ class Micro::Case::Result::ThenTest < Minitest::Test
 
   if RUBY_VERSION < '2.5.0'
     def test_the_not_implemented_error
-      result1 = success_result(value: {number: 0})
-      result2 = failure_result(value: {number: 1})
+      result1 = success_result(data: {number: 0})
+      result2 = failure_result(data: {number: 1})
 
       assert_raises(NotImplementedError) { result1.then { 0 } }
       assert_raises(NotImplementedError) { result2.then { 0 } }
     end
   else
     def test_the_method_then_with_a_block
-      success = success_result(value: {number: 0})
+      success = success_result(data: {number: 0})
       success_incr = 0
 
       then_output1 =
@@ -38,7 +38,7 @@ class Micro::Case::Result::ThenTest < Minitest::Test
 
       # ---
 
-      failure = failure_result(value: {number: 1})
+      failure = failure_result(data: {number: 1})
       failure_incr = 0
 
       then_output2 =
@@ -49,13 +49,13 @@ class Micro::Case::Result::ThenTest < Minitest::Test
     end
 
     def test_the_method_then_without_a_block_or_an_argument
-      success = success_result(value: {number: 0})
+      success = success_result(data: {number: 0})
 
       assert_instance_of(Enumerator, success.then)
 
       # ---
 
-      failure = failure_result(value: {number: 1})
+      failure = failure_result(data: {number: 1})
 
       assert_instance_of(Enumerator, failure.then)
     end
@@ -84,7 +84,7 @@ class Micro::Case::Result::ThenTest < Minitest::Test
   def test_the_output_when_call_the_then_method_with_an_use_case
     result1 = ConvertTextIntoInteger.call(text: '0').then(Add3)
 
-    assert_success_result(result1, value: { number: 3 })
+    assert_success_result(result1, data: { number: 3 })
 
     if ::Micro::Case::Result.transitions_enabled?
       expected_transitions1 = [
@@ -119,7 +119,7 @@ class Micro::Case::Result::ThenTest < Minitest::Test
 
     result2 = ConvertTextIntoInteger.call(text: 0).then(Add3)
 
-    assert_failure_result(result2, value: { text_isnt_a_string_only_with_numbers: true })
+    assert_failure_result(result2, data: { text_isnt_a_string_only_with_numbers: true })
 
     if ::Micro::Case::Result.transitions_enabled?
       expected_transitions2 = [
@@ -144,8 +144,8 @@ class Micro::Case::Result::ThenTest < Minitest::Test
   end
 
   def test_the_invalid_invocation_error_when_the_method_then_was_called_without_an_use_case
-    result1 = success_result(value: {number: 0})
-    result2 = failure_result(value: {number: 1})
+    result1 = success_result(data: {number: 0})
+    result2 = failure_result(data: {number: 1})
 
     assert_raises_with_message(
       Micro::Case::Error::InvalidInvocationOfTheThenMethod,

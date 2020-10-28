@@ -26,7 +26,7 @@ class Micro::Case::SafeTest < Minitest::Test
 
     result = Divide.call(a: 2.0, b: 2)
 
-    assert_failure_result(result, type: :not_an_integer, value: { not_an_integer: true })
+    assert_failure_result(result, type: :not_an_integer, data: { not_an_integer: true })
   end
 
   class Foo < Micro::Case::Safe
@@ -56,7 +56,7 @@ class Micro::Case::SafeTest < Minitest::Test
   def test_that_exceptions_generate_a_failure
     result = Divide.call(a: 2, b: 0)
 
-    assert_exception_result(result, value: { exception: ZeroDivisionError })
+    assert_exception_result(result, data: { exception: ZeroDivisionError })
   end
 
   class Divide2ByArgV1 < Micro::Case::Safe
@@ -104,27 +104,27 @@ class Micro::Case::SafeTest < Minitest::Test
       Divide2ByArgV1.call(arg: 0),
       Divide2ByArgV2.call(arg: 0)
     ].each do |result|
-      assert_exception_result(result, value: { exception: ZeroDivisionError })
+      assert_exception_result(result, data: { exception: ZeroDivisionError })
     end
 
     # ---
 
     result = Divide2ByArgV3.call(arg: 0)
 
-    assert_exception_result(result, type: :foo, value: { exception: ZeroDivisionError })
+    assert_exception_result(result, type: :foo, data: { exception: ZeroDivisionError })
 
     # ---
 
     result = GenerateZeroDivisionError.call(arg: 2)
     assert_success_result(result)
 
-    assert_kind_of(ZeroDivisionError, result.value[:exception])
+    assert_kind_of(ZeroDivisionError, result.data[:exception])
   end
 
   def test_that_when_a_failure_result_is_a_symbol_both_type_and_value_will_be_the_same
     result = Divide.call(a: 2, b: 'a')
 
-    assert_failure_result(result, value: { not_an_integer: true })
+    assert_failure_result(result, data: { not_an_integer: true })
   end
 
   def test_to_proc
@@ -135,14 +135,14 @@ class Micro::Case::SafeTest < Minitest::Test
       {a: 8, b: 2}
     ].map(&Divide)
 
-    values = results.map(&:value)
+    values = results.map(&:data)
 
     assert_equal(
       [{number: 1}, {number: 2}, {number: 3}, {number: 4}],
       values
     )
   end
-  
+
   def test_inspect
     assert_equal(
       '<Micro::Case::SafeTest::Divide (Micro::Case::Safe) attributes=["a", "b"]>',
