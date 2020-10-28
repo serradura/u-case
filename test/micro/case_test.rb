@@ -38,11 +38,11 @@ class Micro::CaseTest < Minitest::Test
   def test_the_class_call_method
     result = Double.call(number: 3)
 
-    assert_success_result(result, value: { number: 6 })
+    assert_success_result(result, data: { number: 6 })
 
     result = Double.call(number: 0)
 
-    assert_failure_result(result, type: :error, value: { message: 'number must be greater than 0' })
+    assert_failure_result(result, type: :error, data: { message: 'number must be greater than 0' })
   end
 
   def test_the_data_validation_error_when_calling_the_call_class_method
@@ -119,13 +119,13 @@ class Micro::CaseTest < Minitest::Test
   def test_the_exception_result_type
     result = Divide.call(a: 2, b: 0)
 
-    assert_exception_result(result, value: { exception: ZeroDivisionError })
+    assert_exception_result(result, data: { exception: ZeroDivisionError })
   end
 
   def test_that_when_a_failure_result_is_a_symbol_both_type_and_value_will_be_the_same
     result = Divide.call(a: 2, b: 'a')
 
-    assert_failure_result(result, value: { not_an_integer: true })
+    assert_failure_result(result, data: { not_an_integer: true })
   end
 
   def test_to_proc
@@ -136,7 +136,7 @@ class Micro::CaseTest < Minitest::Test
       {a: 4, b: 2}
     ].map(&Multiply)
 
-    values = results.map(&:value)
+    values = results.map(&:data)
 
     assert_equal(
       [{number: 2}, {number: 4}, {number: 6}, {number: 8}],

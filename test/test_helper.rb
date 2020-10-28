@@ -52,18 +52,18 @@ module MicroCaseAssertions
 
   def assert_result(result, options)
     type = options[:type] || :____skip____
-    value = options[:value] || :____skip____
+    data = options[:data] || :____skip____
 
     assert_kind_of_result(result)
     assert_predicate(result.data, :frozen?)
     assert_equal(type, result.type) if type != :____skip____
-    assert_equal(value, result.value) if value != :____skip____
+    assert_equal(data, result.data) if data != :____skip____
   end
 
   def assert_success_result(result, options = { type: :ok })
-    value = (block_given? ? yield : options[:value])
+    data = (block_given? ? yield : options[:data])
 
-    assert_result(result, options.merge(value: value)) if value
+    assert_result(result, options.merge(data: data)) if data
 
     assert_predicate(result, :success?)
 
@@ -78,9 +78,9 @@ module MicroCaseAssertions
   end
 
   def assert_failure_result(result, options = {})
-    value = (block_given? ? yield : options[:value])
+    data = (block_given? ? yield : options[:data])
 
-    assert_result(result, options.merge(value: value))
+    assert_result(result, options.merge(data: data))
 
     assert_predicate(result, :failure?)
 
@@ -95,10 +95,10 @@ module MicroCaseAssertions
     assert_equal(2, count)
   end
 
-  def assert_exception_result(result, value: :____skip____, type: :exception)
+  def assert_exception_result(result, data: :____skip____, type: :exception)
     assert_kind_of_result(result)
     assert_equal(type, result.type)
-    assert_kind_of(value[:exception], result.value[:exception]) if value != :____skip____
+    assert_kind_of(data[:exception], result.data[:exception]) if data != :____skip____
     assert_predicate(result, :failure?)
 
     # assert the on_failure hook
@@ -117,24 +117,24 @@ module MicroCaseAssertions
 
   def refute_result(result, options)
     type = options[:type] || :____skip____
-    value = options[:value] || :____skip____
+    data = options[:data] || :____skip____
 
     assert_kind_of_result(result)
     refure_equal(type, result.type) if type != :____skip____
-    refute_equal(value, result.value) if value != :____skip____
+    refute_equal(data, result.data) if data != :____skip____
   end
 
   def refute_success_result(result, options = {})
-    value = (block_given? ? yield : options[:value])
+    data = (block_given? ? yield : options[:data])
 
-    refute_result(result, options.merge(value: value))
+    refute_result(result, options.merge(data: data))
     refute_predicate(result, :success?)
   end
 
   def refute_failure_result(result, options = {})
-    value = (block_given? ? yield : options[:value])
+    data = (block_given? ? yield : options[:data])
 
-    refute_result(result, options.merge(value: value))
+    refute_result(result, options.merge(data: data))
     refute_predicate(result, :failure?)
   end
 end

@@ -39,7 +39,7 @@ class Micro::Case::InternalStepsWithMethodsTest < Minitest::Test
   def test_the_then_method_with_method_instances
     resulta = DoSomeSumUsingThenWithMethods.call(a: 1, b: 2)
 
-    assert_success_result(resulta, value: { sum: 6.5 })
+    assert_success_result(resulta, data: { sum: 6.5 })
 
     if ::Micro::Case::Result.transitions_enabled?
       [
@@ -74,7 +74,7 @@ class Micro::Case::InternalStepsWithMethodsTest < Minitest::Test
 
     resultb = DoSomeSumUsingThenWithMethods.call(a: 1, b: '2')
 
-    assert_failure_result(resultb, value: { error: true })
+    assert_failure_result(resultb, data: { error: true })
 
     if ::Micro::Case::Result.transitions_enabled?
       [
@@ -151,7 +151,7 @@ class Micro::Case::InternalStepsWithMethodsTest < Minitest::Test
   def test_the_pipe_method_with_method_instances
     resulta = DoSomeSumUsingPipeWithMethods.call(a: 1, b: 2)
 
-    assert_success_result(resulta, value: { sum: 7.5 })
+    assert_success_result(resulta, data: { sum: 7.5 })
 
     if ::Micro::Case::Result.transitions_enabled?
       [
@@ -186,7 +186,7 @@ class Micro::Case::InternalStepsWithMethodsTest < Minitest::Test
 
     resultb = DoSomeSumUsingPipeWithMethods.call(a: 1, b: '2')
 
-    assert_failure_result(resultb, value: { error: true })
+    assert_failure_result(resultb, data: { error: true })
 
     if ::Micro::Case::Result.transitions_enabled?
       [
@@ -262,7 +262,7 @@ class Micro::Case::InternalStepsWithMethodsTest < Minitest::Test
   def test_the_data_accumulation_through_the_then_method
     result = DoSomeCalcUsingThenWithMethods.call(a: 1, b: 2)
 
-    assert_success_result(result, value: { sum: 10.5 })
+    assert_success_result(result, data: { sum: 10.5 })
 
     if ::Micro::Case::Result.transitions_enabled?
       [
@@ -332,7 +332,7 @@ class Micro::Case::InternalStepsWithMethodsTest < Minitest::Test
   def test_the_data_accumulation_through_the_pipe_method
     result = DoSomeCalcUsingPipeWithMethods.call(a: 2, b: 2)
 
-    assert_success_result(result, value: { sum: 11.5 })
+    assert_success_result(result, data: { sum: 11.5 })
 
     if ::Micro::Case::Result.transitions_enabled?
       [

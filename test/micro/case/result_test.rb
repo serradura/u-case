@@ -1,14 +1,14 @@
 require 'test_helper'
 
 class Micro::Case::ResultTest < Minitest::Test
-  def build_result(success:, value:, type:, use_case: nil)
+  def build_result(success:, data:, type:, use_case: nil)
     result = Micro::Case::Result.new
-    result.__set__(success, value, type, use_case || Micro::Case.send(:__new, {}))
+    result.__set__(success, data, type, use_case || Micro::Case.send(:__new, {}))
     result
   end
 
   def failure_result(options = {})
-    type = options[:value].is_a?(Exception) ? :exception : :error
+    type = options[:data].is_a?(Exception) ? :exception : :error
 
     build_result(**{ type: type }.merge(options).merge(success: false))
   end
@@ -20,7 +20,7 @@ class Micro::Case::ResultTest < Minitest::Test
   def test_success_result
     use_case = Micro::Case.send(:__new, {})
 
-    result = success_result(value: { a: 1, b: 2 }, type: :ok, use_case: use_case)
+    result = success_result(data: { a: 1, b: 2 }, type: :ok, use_case: use_case)
 
     assert_predicate(result, :success?)
     assert_equal(:success, result.to_sym)
@@ -83,7 +83,7 @@ class Micro::Case::ResultTest < Minitest::Test
   def test_failure_result
     use_case = Micro::Case.send(:__new, {})
 
-    result = failure_result(value: { a: 0, b: -1 }, type: :error, use_case: use_case)
+    result = failure_result(data: { a: 0, b: -1 }, type: :error, use_case: use_case)
 
     refute_predicate(result, :success?)
     assert_predicate(result, :failure?)
@@ -131,10 +131,10 @@ class Micro::Case::ResultTest < Minitest::Test
 
   def test_the_result_value
     success_number = rand(1..1_000_000)
-    success = success_result(value: { number: success_number }, type: :ok)
+    success = success_result(data: { number: success_number }, type: :ok)
 
     failure_number = rand(1..1_000_000)
-    failure = failure_result(value: { number: failure_number }, type: :error)
+    failure = failure_result(data: { number: failure_number }, type: :error)
 
     assert_equal(success_number, success.value[:number])
     assert_equal(failure_number, failure.value[:number])
@@ -143,7 +143,7 @@ class Micro::Case::ResultTest < Minitest::Test
   def test_the_on_success_hook
     counter = 0
     number = rand(1..1_000_000)
-    result = success_result(value: { number: number }, type: :valid)
+    result = success_result(data: { number: number }, type: :valid)
 
     result
       .on_failure { raise }
@@ -158,7 +158,7 @@ class Micro::Case::ResultTest < Minitest::Test
   def test_the_on_failure_hook
     counter = 0
     number = rand(1..1_000_000)
-    result = failure_result(value: { number: number }, type: :invalid)
+    result = failure_result(data: { number: number }, type: :invalid)
 
     result
       .on_success { raise }
@@ -172,7 +172,7 @@ class Micro::Case::ResultTest < Minitest::Test
   def test_the_on_unknown_hook
     number = rand(1..1_000_000)
 
-    failure_result = failure_result(value: { number: number }, type: :not_mapped)
+    failure_result = failure_result(data: { number: number }, type: :not_mapped)
 
     failure_result
       .on_failure(:a) { raise }
@@ -182,7 +182,7 @@ class Micro::Case::ResultTest < Minitest::Test
 
     # ---
 
-    success_result = success_result(value: { number: number }, type: :not_mapped)
+    success_result = success_result(data: { number: number }, type: :not_mapped)
 
     success_result
       .on_success(:b) { raise }
@@ -194,7 +194,7 @@ class Micro::Case::ResultTest < Minitest::Test
   def test_the_on_unknown_hook_exclusivity
 
     failure_counter = 0
-    failure_result = failure_result(value: {}, type: :not_mapped)
+    failure_result = failure_result(data: {}, type: :not_mapped)
 
     failure_result
       .on_failure { failure_counter += 1 }
@@ -206,7 +206,7 @@ class Micro::Case::ResultTest < Minitest::Test
     # ---
 
     success_counter = 0
-    success_result = success_result(value: {}, type: :not_mapped)
+    success_result = success_result(data: {}, type: :not_mapped)
 
     success_result
       .on_success { success_counter += 1 }
@@ -218,7 +218,7 @@ class Micro::Case::ResultTest < Minitest::Test
     # ---
 
     unknown_counter = 0
-    unknown_result = success_result(value: {}, type: :not_mapped)
+    unknown_result = success_result(data: {}, type: :not_mapped)
 
     unknown_result
       .on_unknown { unknown_counter += 1 }
@@ -230,7 +230,7 @@ class Micro::Case::ResultTest < Minitest::Test
   def test_the_output_of_a_failure_hook_without_a_defined_type
     acc = 0
     number = rand(1..1_000_000)
-    result = failure_result(value: { number: number }, type: :invalid)
+    result = failure_result(data: { number: number }, type: :invalid)
 
     result
       .on_failure(:invalid) { |value| acc += value[:number] }
@@ -250,7 +250,7 @@ class Micro::Case::ResultTest < Minitest::Test
     zero_division_error = ZeroDivisionError.new('divided by 0')
 
     counter1 = 0
-    result1 = failure_result(value: zero_division_error, use_case: use_case_instance)
+    result1 = failure_result(data: zero_division_error, use_case: use_case_instance)
 
     result1
       .on_exception { counter1 += 1 }
@@ -284,7 +284,7 @@ class Micro::Case::ResultTest < Minitest::Test
     # ---
 
     counter2 = 0
-    result2 = failure_result(value: {})
+    result2 = failure_result(data: {})
 
     result2
       .on_success { counter2 +=1 }
@@ -299,7 +299,7 @@ class Micro::Case::ResultTest < Minitest::Test
     result = Micro::Case::Result.new
 
     assert_raises_with_message(TypeError, 'type must be a Symbol') do
-      result.__set__(true, :value, 'type', nil)
+      result.__set__(true, :data, 'type', nil)
     end
   end
 
@@ -329,7 +329,7 @@ class Micro::Case::ResultTest < Minitest::Test
   def test_the_result_when_transitions_are_disabled
     return if ::Micro::Case::Result.transitions_enabled?
 
-    result = success_result(value: { number: 1 }, type: :ok)
+    result = success_result(data: { number: 1 }, type: :ok)
 
     assert_predicate(result.transitions, :empty?)
 
@@ -337,16 +337,16 @@ class Micro::Case::ResultTest < Minitest::Test
 
     result1 = Add2ToAllNumbers.call(numbers: %w[1 1 2 2 3 4])
 
-    assert_success_result(result1, value: { numbers: [3, 3, 4, 4, 5, 6] })
+    assert_success_result(result1, data: { numbers: [3, 3, 4, 4, 5, 6] })
 
     result2 = Add2ToAllNumbers.call(numbers: %w[1 1 2 2 c 4])
 
-    assert_failure_result(result2, value: { numbers: 'must contain only numeric types' })
+    assert_failure_result(result2, data: { numbers: 'must contain only numeric types' })
   end
 
   def test_inspect
-    success_result = success_result(value: { number: 1 }, type: :ok)
-    failure_result = failure_result(value: { number: 0 }, type: :error)
+    success_result = success_result(data: { number: 1 }, type: :ok)
+    failure_result = failure_result(data: { number: 0 }, type: :error)
 
     if Micro::Case::Result.transitions_enabled?
       assert_equal('#<Success (Micro::Case::Result) type=:ok data={:number=>1} transitions=1>', success_result.inspect)

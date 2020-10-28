@@ -26,13 +26,13 @@ if ENV.fetch('ACTIVERECORD_VERSION', '7') <= '6.1.0'
       def test_success
         calculation = Multiply.call(a: 2, b: 2)
 
-        assert_success_result(calculation, value: { number: 4 })
+        assert_success_result(calculation, data: { number: 4 })
 
         # ---
 
         flow = Micro::Cases.flow([Multiply, NumberToString])
 
-        assert_success_result(flow.call(a: 2, b: 2), value: { string: '4' })
+        assert_success_result(flow.call(a: 2, b: 2), data: { string: '4' })
       end
 
       def test_failure

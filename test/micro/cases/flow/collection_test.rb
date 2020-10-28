@@ -56,7 +56,7 @@ class Micro::Cases::Flow::CollectionTest < Minitest::Test
     EXAMPLES.each do |example|
       result = example.flow.call(numbers: %w[1 1 2 2 3 4])
 
-      assert_success_result(result, value: { numbers: example.result })
+      assert_success_result(result, data: { numbers: example.result })
     end
   end
 
@@ -64,7 +64,7 @@ class Micro::Cases::Flow::CollectionTest < Minitest::Test
     EXAMPLES.map(&:flow).each do |flow|
       result = flow.call(numbers: %w[1 1 2 a 3 4])
 
-      assert_failure_result(result, value: { message: 'numbers must contain only numeric types' })
+      assert_failure_result(result, data: { message: 'numbers must contain only numeric types' })
     end
   end
 end

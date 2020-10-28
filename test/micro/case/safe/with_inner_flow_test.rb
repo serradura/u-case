@@ -32,7 +32,7 @@ class Micro::Case::Safe::WithInnerFlowTest < Minitest::Test
   def test_the_use_case_result
     result = Double.call(text: '4')
 
-    assert_success_result(result, value: { text: '8' })
+    assert_success_result(result, data: { text: '8' })
 
     assert_equal(
       [ConvertTextToNumber, Double::Self, ConvertNumberToText],
