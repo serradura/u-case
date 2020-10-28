@@ -3,7 +3,7 @@ require 'test_helper'
 class Micro::Case::ResultTest < Minitest::Test
   def build_result(success:, value:, type:, use_case: nil)
     result = Micro::Case::Result.new
-    result.__set__(success, value, type, use_case || Micro::Case.send(:new, {}))
+    result.__set__(success, value, type, use_case || Micro::Case.send(:__new, {}))
     result
   end
 
@@ -18,7 +18,7 @@ class Micro::Case::ResultTest < Minitest::Test
   end
 
   def test_success_result
-    use_case = Micro::Case.send(:new, {})
+    use_case = Micro::Case.send(:__new, {})
 
     result = success_result(value: { a: 1, b: 2 }, type: :ok, use_case: use_case)
 
@@ -81,7 +81,7 @@ class Micro::Case::ResultTest < Minitest::Test
   end
 
   def test_failure_result
-    use_case = Micro::Case.send(:new, {})
+    use_case = Micro::Case.send(:__new, {})
 
     result = failure_result(value: { a: 0, b: -1 }, type: :error, use_case: use_case)
 
@@ -131,10 +131,10 @@ class Micro::Case::ResultTest < Minitest::Test
 
   def test_the_result_value
     success_number = rand(1..1_000_000)
-    success = success_result(value: { number: success_number }, type: :ok, use_case: nil)
+    success = success_result(value: { number: success_number }, type: :ok)
 
     failure_number = rand(1..1_000_000)
-    failure = failure_result(value: { number: failure_number }, type: :error, use_case: Micro::Case.send(:new, {}))
+    failure = failure_result(value: { number: failure_number }, type: :error)
 
     assert_equal(success_number, success.value[:number])
     assert_equal(failure_number, failure.value[:number])
@@ -143,7 +143,7 @@ class Micro::Case::ResultTest < Minitest::Test
   def test_the_on_success_hook
     counter = 0
     number = rand(1..1_000_000)
-    result = success_result(value: { number: number }, type: :valid, use_case: nil)
+    result = success_result(value: { number: number }, type: :valid)
 
     result
       .on_failure { raise }
@@ -158,7 +158,7 @@ class Micro::Case::ResultTest < Minitest::Test
   def test_the_on_failure_hook
     counter = 0
     number = rand(1..1_000_000)
-    result = failure_result(value: { number: number }, type: :invalid, use_case: Micro::Case.send(:new, {}))
+    result = failure_result(value: { number: number }, type: :invalid)
 
     result
       .on_success { raise }
@@ -172,7 +172,7 @@ class Micro::Case::ResultTest < Minitest::Test
   def test_the_on_unknown_hook
     number = rand(1..1_000_000)
 
-    failure_result = failure_result(value: { number: number }, type: :not_mapped, use_case: Micro::Case.send(:new, {}))
+    failure_result = failure_result(value: { number: number }, type: :not_mapped)
 
     failure_result
       .on_failure(:a) { raise }
@@ -182,7 +182,7 @@ class Micro::Case::ResultTest < Minitest::Test
 
     # ---
 
-    success_result = success_result(value: { number: number }, type: :not_mapped, use_case: Micro::Case.send(:new, {}))
+    success_result = success_result(value: { number: number }, type: :not_mapped)
 
     success_result
       .on_success(:b) { raise }
@@ -194,7 +194,7 @@ class Micro::Case::ResultTest < Minitest::Test
   def test_the_on_unknown_hook_exclusivity
 
     failure_counter = 0
-    failure_result = failure_result(value: {}, type: :not_mapped, use_case: Micro::Case.send(:new, {}))
+    failure_result = failure_result(value: {}, type: :not_mapped)
 
     failure_result
       .on_failure { failure_counter += 1 }
@@ -206,7 +206,7 @@ class Micro::Case::ResultTest < Minitest::Test
     # ---
 
     success_counter = 0
-    success_result = success_result(value: {}, type: :not_mapped, use_case: Micro::Case.send(:new, {}))
+    success_result = success_result(value: {}, type: :not_mapped)
 
     success_result
       .on_success { success_counter += 1 }
@@ -218,7 +218,7 @@ class Micro::Case::ResultTest < Minitest::Test
     # ---
 
     unknown_counter = 0
-    unknown_result = success_result(value: {}, type: :not_mapped, use_case: Micro::Case.send(:new, {}))
+    unknown_result = success_result(value: {}, type: :not_mapped)
 
     unknown_result
       .on_unknown { unknown_counter += 1 }
@@ -230,7 +230,7 @@ class Micro::Case::ResultTest < Minitest::Test
   def test_the_output_of_a_failure_hook_without_a_defined_type
     acc = 0
     number = rand(1..1_000_000)
-    result = failure_result(value: { number: number }, type: :invalid, use_case: Micro::Case.send(:new, {}))
+    result = failure_result(value: { number: number }, type: :invalid)
 
     result
       .on_failure(:invalid) { |value| acc += value[:number] }
@@ -243,7 +243,7 @@ class Micro::Case::ResultTest < Minitest::Test
   end
 
   def test_the_on_exception_hook
-    use_case_instance = Micro::Case.send(:new, {})
+    use_case_instance = Micro::Case.send(:__new, {})
 
     # ---
 
@@ -284,7 +284,7 @@ class Micro::Case::ResultTest < Minitest::Test
     # ---
 
     counter2 = 0
-    result2 = failure_result(value: {}, use_case: Micro::Case.send(:new, {}))
+    result2 = failure_result(value: {})
 
     result2
       .on_success { counter2 +=1 }
