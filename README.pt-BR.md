@@ -70,9 +70,8 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
     - [É possível declarar um fluxo que inclui o próprio caso de uso?](#é-possível-declarar-um-fluxo-que-inclui-o-próprio-caso-de-uso)
   - [`Micro::Case::Strict` - O que é um caso de uso estrito?](#microcasestrict---o-que-é-um-caso-de-uso-estrito)
   - [`Micro::Case::Safe` - Existe algum recurso para lidar automaticamente com exceções dentro de um caso de uso ou fluxo?](#microcasesafe---existe-algum-recurso-para-lidar-automaticamente-com-exceções-dentro-de-um-caso-de-uso-ou-fluxo)
-    - [`Micro::Case::Result#on_exception`](#microcaseresulton_exception)
     - [`Micro::Cases::Safe::Flow`](#microcasessafeflow)
-    - [`Micro::Case::Result#on_exception`](#microcaseresulton_exception-1)
+    - [`Micro::Case::Result#on_exception`](#microcaseresulton_exception)
   - [`u-case/with_activemodel_validation` - Como validar os atributos do caso de uso?](#u-casewith_activemodel_validation---como-validar-os-atributos-do-caso-de-uso)
     - [Se eu habilitei a validação automática, é possível desabilitá-la apenas em casos de uso específicos?](#se-eu-habilitei-a-validação-automática-é-possível-desabilitá-la-apenas-em-casos-de-uso-específicos)
     - [`Kind::Validator`](#kindvalidator)
@@ -100,7 +99,8 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
 
 | u-case         | branch  | ruby     |  activemodel  | u-attributes |
 | -------------- | ------- | -------- | ------------- | ------------ |
-| 4.2.1          | main    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 2.0 |
+| unreleased     | main    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 2.0 |
+| 4.2.1          | v4.x    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 2.0 |
 | 3.1.0          | v3.x    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 1.1 |
 | 2.6.0          | v2.x    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 1.1 |
 | 1.1.0          | v1.x    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 1.1 |
@@ -975,8 +975,6 @@ result.on_failure(:exception) do |result|
   AppLogger.error(result[:exception].message) # E, [2019-08-21T00:05:44.195506 #9532] ERROR -- : divided by 0
 end
 ```
-
-#### `Micro::Case::Result#on_exception`
 
 Se você precisar lidar com um erro específico, recomendo o uso de uma instrução case. Exemplo:
 
