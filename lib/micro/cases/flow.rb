@@ -39,7 +39,11 @@ module Micro
 
         return result unless block_given?
 
-        yield ::Micro::Case::Result::Wrapper.new(result)
+        result_wrapper = ::Micro::Case::Result::Wrapper.new(result)
+
+        yield(result_wrapper)
+
+        result_wrapper.output
       end
 
       alias __call__ call

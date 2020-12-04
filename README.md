@@ -39,7 +39,7 @@ The main project goals are:
 Version   | Documentation
 --------- | -------------
 unreleased| https://github.com/serradura/u-case/blob/main/README.md
-4.2.1     | https://github.com/serradura/u-case/blob/v4.x/README.md
+4.2.2     | https://github.com/serradura/u-case/blob/v4.x/README.md
 3.1.0     | https://github.com/serradura/u-case/blob/v3.x/README.md
 2.6.0     | https://github.com/serradura/u-case/blob/v2.x/README.md
 1.1.0     | https://github.com/serradura/u-case/blob/v1.x/README.md
@@ -102,7 +102,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
 | u-case         | branch  | ruby     |  activemodel  | u-attributes |
 | -------------- | ------- | -------- | ------------- | ------------ |
 | unreleased     | main    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 2.0 |
-| 4.2.1          | v4.x    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 2.0 |
+| 4.2.2          | v4.x    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 2.0 |
 | 3.1.0          | v3.x    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 1.1 |
 | 2.6.0          | v2.x    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 1.1 |
 | 1.1.0          | v1.x    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 1.1 |
