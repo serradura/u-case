@@ -238,9 +238,12 @@ class Micro::Case::CallTest < Minitest::Test
       count_success = 0
 
       output = use_case.call(input) do |on|
-        on.success { count_success +=1 }
+        on.success do |result|
+          count_success +=1
+          result[:number]
+        end
+        on.success(:ok) { |_| count_success +=1 }
         on.success(:foo) { raise }
-        on.success(:ok) { |result| result[:number] }
       end
 
       assert_equal(1, count_success)

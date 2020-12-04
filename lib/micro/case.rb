@@ -24,7 +24,11 @@ module Micro
 
       return result unless block_given?
 
-      yield Result::Wrapper.new(result)
+      result_wrapper = Result::Wrapper.new(result)
+
+      yield(result_wrapper)
+
+      result_wrapper.output
     end
 
     INVALID_INVOCATION_OF_THE_THEN_METHOD =
