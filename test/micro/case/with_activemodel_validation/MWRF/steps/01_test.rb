@@ -1,6 +1,6 @@
 require 'test_helper'
 
-if ENV.fetch('ACTIVERECORD_VERSION', '6.1') <= '6.0.0'
+if ENV.fetch('ACTIVERECORD_VERSION', '6.2') <= '6.1.0'
   require_relative '../users_entity'
   require_relative '../shared_assertions'
 

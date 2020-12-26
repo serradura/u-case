@@ -2,7 +2,7 @@ source "https://rubygems.org"
 
 git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
 
-activerecord_version = ENV.fetch('ACTIVERECORD_VERSION', '6.1')
+activerecord_version = ENV.fetch('ACTIVERECORD_VERSION', '6.2')
 
 activerecord = case activerecord_version
               when '3.2' then '3.2.22'
@@ -13,6 +13,7 @@ activerecord = case activerecord_version
               when '5.1' then '5.1.7'
               when '5.2' then '5.2.3'
               when '6.0' then '6.0.3'
+              when '6.1' then '6.1.0'
               end
 
 simplecov_version =
@@ -30,7 +31,7 @@ group :test do
   if activerecord
     sqlite3 =
       case activerecord
-      when /\A6\.0/, nil then '~> 1.4.0'
+      when /\A6\.(0|1)/, nil then '~> 1.4.0'
       else '~> 1.3.0'
       end
 
