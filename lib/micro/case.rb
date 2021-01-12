@@ -240,7 +240,7 @@ module Micro
       end
 
 
-      def Check(type = nil, result: nil, on: {})
+      def Check(type = nil, result: nil, on: Kind::Empty::HASH)
         result_key = type || :check
 
         if value
