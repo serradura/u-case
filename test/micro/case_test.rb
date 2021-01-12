@@ -150,4 +150,106 @@ class Micro::CaseTest < Minitest::Test
       Multiply.inspect
     )
   end
+
+  class Bomb < Micro::Case
+    attributes :defused
+
+    def call!
+      Try do
+        if defused
+          :yay
+        else
+          raise 'Boooom!'
+        end
+      end
+    end
+  end
+
+  def test_try
+    result = Bomb.call(defused: true)
+
+    assert_success_result(result, value: { try: :yay }, type: :ok)
+
+    result = Bomb.call(defused: false)
+
+    assert_failure_result(result, type: :exception)
+    assert result.value[:try].is_a? RuntimeError
+  end
+
+  class BombWithType < Micro::Case
+    attributes :defused
+
+    def call!
+      Try(:defused) do
+        if defused
+          :yay
+        else
+          raise 'Boooom!'
+        end
+      end
+    end
+  end
+  
+  def test_try_with_custom_type
+    result = BombWithType.call(defused: true)
+
+    assert_success_result(result, type: :defused, value: { defused: :yay })
+    
+
+    result = BombWithType.call(defused: false)
+
+    assert_failure_result(result, type: :defused)
+    assert(result.value[:defused].is_a? RuntimeError)
+  end
+
+  class Divide2 < Micro::Case
+    attributes :a, :b
+
+    def call!
+      Try(catch: [ZeroDivisionError, TypeError]) do
+        a / b
+      end
+    end
+  end
+
+  def test_try_with_specified_exception
+    result = Divide2.call(a: 4 , b: 2)
+
+    assert_success_result(result, value: { try: 2 })
+
+    result = Divide2.call(a: 1 , b: 0)
+
+    assert_failure_result(result)
+    assert(result.value[:try].is_a? ZeroDivisionError)
+
+    result = Divide2.call(a: 1 , b: '0')
+
+    assert_failure_result(result)
+    assert(result.value[:try].is_a? TypeError)
+
+
+    assert_raises NoMethodError do
+      Divide2.call(a: '1' , b: 0)
+    end
+  end
+
+  class DivideWithCustomData < Micro::Case
+    attributes :a, :b
+
+    def call!
+      Try(on: { success: { division: :succeeded }, failure: { division: :failed } }) do
+        a / b
+      end
+    end
+  end
+
+  def test_try_with_custom_data
+    result = DivideWithCustomData.call(a: 4 , b: 2)
+
+    assert_success_result(result, value: { division: :succeeded })
+
+    result = DivideWithCustomData.call(a: 1 , b: 0)
+
+    assert_failure_result(result, value: { division: :failed })
+  end
 end
