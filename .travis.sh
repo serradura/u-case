@@ -38,6 +38,10 @@ if [[ $ruby_v =~ '2.5.' ]] || [[ $ruby_v =~ '2.6.' ]] || [[ $ruby_v =~ '2.7.' ]]
   ACTIVERECORD_VERSION='6.0' bundle update
   ACTIVERECORD_VERSION='6.0' ENABLE_TRANSITIONS='true' bundle exec rake test
   ACTIVERECORD_VERSION='6.0' ENABLE_TRANSITIONS='false' bundle exec rake test
+
+  ACTIVERECORD_VERSION='6.1' bundle update
+  ACTIVERECORD_VERSION='6.1' ENABLE_TRANSITIONS='true' bundle exec rake test
+  ACTIVERECORD_VERSION='6.1' ENABLE_TRANSITIONS='false' bundle exec rake test
 fi
 
 bundle update

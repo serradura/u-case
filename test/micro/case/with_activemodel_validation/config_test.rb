@@ -22,7 +22,7 @@ module Micro::Case::WithActivemodelValidation
       )
     end
 
-    if ENV.fetch('ACTIVERECORD_VERSION', '6.1') <= '6.0.0'
+    if ENV.fetch('ACTIVERECORD_VERSION', '6.2') <= '6.1.0'
       class Multiply < Micro::Case
         attribute :a
         attribute :b
