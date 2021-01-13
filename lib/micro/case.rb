@@ -240,7 +240,7 @@ module Micro
       end
 
 
-      def Try(type = nil, catch: StandardError, on: {})
+      def Try(type = nil, catch: StandardError, on: Kind::Empty::HASH)
         result_key = type || :try
         block_value = yield
         result = on[:success] || { result_key => block_value }

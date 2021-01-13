@@ -173,7 +173,7 @@ class Micro::CaseTest < Minitest::Test
     result = Bomb.call(defused: false)
 
     assert_failure_result(result, type: :exception)
-    assert result.value[:try].is_a? RuntimeError
+    assert_kind_of(RuntimeError, result[:try])
   end
 
   class BombWithType < Micro::Case
@@ -199,7 +199,7 @@ class Micro::CaseTest < Minitest::Test
     result = BombWithType.call(defused: false)
 
     assert_failure_result(result, type: :defused)
-    assert(result.value[:defused].is_a? RuntimeError)
+    assert_kind_of(RuntimeError, result[:defused])
   end
 
   class Divide2 < Micro::Case
@@ -220,12 +220,12 @@ class Micro::CaseTest < Minitest::Test
     result = Divide2.call(a: 1 , b: 0)
 
     assert_failure_result(result)
-    assert(result.value[:try].is_a? ZeroDivisionError)
+    assert_kind_of(ZeroDivisionError, result[:try])
 
     result = Divide2.call(a: 1 , b: '0')
 
     assert_failure_result(result)
-    assert(result.value[:try].is_a? TypeError)
+    assert_kind_of(TypeError, result[:try])
 
 
     assert_raises NoMethodError do
