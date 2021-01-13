@@ -150,4 +150,67 @@ class Micro::CaseTest < Minitest::Test
       Multiply.inspect
     )
   end
+
+  class IsTruthy < Micro::Case
+    attribute :value
+
+    def call!
+      Check(result: value)
+    end
+  end
+
+  def test_check_with_just_the_value
+    result = IsTruthy.call(value: true)
+
+    assert_success_result(result, value: { check: true })
+
+    result = IsTruthy.call(value: 'true')
+
+    assert_success_result(result, value: { check: true })
+
+    result = IsTruthy.call(value: false)
+    
+    assert_failure_result(result, value: { check: false })
+
+    result = IsTruthy.call(value: nil)
+    
+    assert_failure_result(result, value: { check: false })
+  end
+
+  class IsTruthyWithType < Micro::Case
+    attribute :value
+
+    def call!
+      Check(:is_truthy, result: value)
+    end
+  end
+
+
+  def test_check_with_custom_type
+    result = IsTruthyWithType.call(value: true)
+
+    assert_success_result(result, value: { is_truthy: true })
+
+    result = IsTruthyWithType.call(value: false)
+
+    assert_failure_result(result, value: { is_truthy: false })
+  end
+
+  class IsTruthyWithCustomData < Micro::Case
+    attribute :value
+
+    def call!
+      Check(result: value, on: { success: { result: :yay }, failure: { result: :nay } })
+    end
+  end
+
+  def test_check_with_custom_data
+    result = IsTruthyWithCustomData.call(value: true)
+
+    assert_success_result(result, value: { result: :yay })
+
+    result = IsTruthyWithCustomData.call(value: false)
+
+    assert_failure_result(result, value: { result: :nay })
+  end
 end

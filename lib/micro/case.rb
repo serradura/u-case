@@ -243,6 +243,21 @@ module Micro
         __get_result(false, value, type)
       end
 
+
+      def Check(type = nil, result: nil, on: Kind::Empty::HASH)
+        result_key = type || :check
+
+        if value
+          result = on[:success] || { result_key => true }
+
+          Success(type || :ok, result: result)
+        else
+          result = on[:failure] || { result_key => false }
+
+          Failure(type || :error, result: result)
+        end
+      end
+
       def __get_result(is_success, value, type)
         @__result.__set__(is_success, value, type, self)
       end
