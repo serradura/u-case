@@ -295,7 +295,9 @@ class Micro::Cases::Safe::FlowTest < Minitest::Test
 
     assert results.all?(&:success?)
 
-    results.map(&:value).each do |job:, changes:|
+    results.map(&:value).each do |data|
+      job, changes = data.values_at(:job, :changes)
+
       refute(job.sleeping?)
       assert(changes.changed?(:state, from: 'sleeping', to: 'running'))
     end
