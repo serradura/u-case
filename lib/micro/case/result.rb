@@ -138,32 +138,12 @@ module Micro
           yield_self(&block)
         else
           return yield_self if !use_case && can_yield_self
-          return failure? ? self : __call_proc(use_case, 'then(-> {})'.freeze) if use_case.is_a?(Proc)
-          return failure? ? self : __call_method(use_case, attributes) if use_case.is_a?(Method)
-
-          raise INVALID_INVOCATION_OF_THE_THEN_METHOD unless ::Micro.case_or_flow?(use_case)
-
-          return self if failure?
-
-          input = attributes.is_a?(Hash) ? self.data.merge(attributes) : self.data
-
-          if use_case.is_a?(::Micro::Cases::Flow)
-            use_case.call!(input: input, result: self)
-          else
-            use_case.__new__(self, input).__call__
-          end
+          return failure? ? self : __call_use_case(use_case, attributes)
         end
       end
 
       def |(arg)
-        return self if failure?
-
-        return __call_proc(arg, '| -> {}'.freeze) if arg.is_a?(Proc)
-        return __call_method(arg) if arg.is_a?(Method)
-
-        raise INVALID_INVOCATION_OF_THE_THEN_METHOD unless ::Micro.case_or_flow?(arg)
-
-        failure? ? self : arg.__new__(self, data).__call__
+        failure? ? self : __call_use_case(arg)
       end
 
       def transitions
@@ -219,6 +199,28 @@ module Micro
 
         def __fetch_accessible_attributes
           @__accessible_attributes.dup
+        end
+
+        def __call_use_case(use_case, attributes = nil)
+          case use_case
+          when Proc
+            __call_proc(use_case, 'then(-> {})'.freeze)
+          when Method
+            __call_method(use_case, attributes)
+          when String, Symbol
+            use_case_method = self.use_case.method(use_case)
+            __call_method(use_case_method, attributes)
+          else
+            raise INVALID_INVOCATION_OF_THE_THEN_METHOD unless ::Micro.case_or_flow?(use_case)
+
+            input = attributes.is_a?(Hash) ? self.data.merge(attributes) : self.data
+
+            if use_case.is_a?(::Micro::Cases::Flow)
+              use_case.call!(input: input, result: self)
+            else
+              use_case.__new__(self, input).__call__
+            end
+          end
         end
 
         def __call_proc(fn, expected)
