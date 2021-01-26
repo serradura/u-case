@@ -1053,8 +1053,8 @@ Divide
 # Can't divide a number by 0
 # Oh no, something went wrong!
 
-Divide.
-  .call(a: 2, b: '2').
+Divide
+  .call(a: 2, b: '2')
   .on_success { |result| puts result[:division] }
   .on_exception(TypeError) { puts 'Please, use only numeric attributes.' }
   .on_exception(ZeroDivisionError) { |_error| puts "Can't divide a number by 0." }
