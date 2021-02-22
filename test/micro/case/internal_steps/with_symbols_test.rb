@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class Micro::Case::InternalStepsWithMethodsTest < Minitest::Test
+class Micro::Case::InternalStepsWithSymbolsTest < Minitest::Test
   class SumHalf < Micro::Case
     attribute :sum
 
@@ -91,7 +91,7 @@ class Micro::Case::InternalStepsWithMethodsTest < Minitest::Test
     end
   end
 
-  
+
 
   class MultiplyByTwoUsingThenWithMethods < Micro::Case
     attributes :number
