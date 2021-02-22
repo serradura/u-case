@@ -1,49 +1,46 @@
 #!/bin/bash
 
-ruby_v=$(ruby -v)
+RUBY_V=$(ruby -v)
 
-if [[ $ruby_v =~ '2.2.' ]] || [[ $ruby_v =~ '2.3.' ]]; then
-  ACTIVERECORD_VERSION='3.2' bundle update
-  ACTIVERECORD_VERSION='3.2' ENABLE_TRANSITIONS='true' bundle exec rake test
-  ACTIVERECORD_VERSION='3.2' ENABLE_TRANSITIONS='false' bundle exec rake test
+function run_with_bundler {
+  rm Gemfile.lock
 
-  ACTIVERECORD_VERSION='4.0' bundle update
-  ACTIVERECORD_VERSION='4.0' ENABLE_TRANSITIONS='true' bundle exec rake test
-  ACTIVERECORD_VERSION='4.0' ENABLE_TRANSITIONS='false' bundle exec rake test
+  if [ ! -z "$1" ]; then
+    bundle_cmd="bundle _$1_"
+  else
+    bundle_cmd="bundle"
+  fi
 
-  ACTIVERECORD_VERSION='4.1' bundle update
-  ACTIVERECORD_VERSION='4.1' ENABLE_TRANSITIONS='true' bundle exec rake test
-  ACTIVERECORD_VERSION='4.1' ENABLE_TRANSITIONS='false' bundle exec rake test
+  eval "$2 $bundle_cmd update"
+  eval "$2 ENABLE_TRANSITIONS=true $bundle_cmd exec rake test"
+  eval "$2 ENABLE_TRANSITIONS=false $bundle_cmd exec rake test"
+}
+
+function run_with_ar_version_and_bundler {
+  run_with_bundler "$2" "ACTIVERECORD_VERSION=$1"
+}
+
+RUBY_2_2345="ruby 2.[2345]."
+
+if [[ $RUBY_V =~ $RUBY_2_2345 ]]; then
+  run_with_bundler "$BUNDLER_V1"
+
+  run_with_ar_version_and_bundler "3.2" "$BUNDLER_V1"
+  run_with_ar_version_and_bundler "4.0" "$BUNDLER_V1"
+  run_with_ar_version_and_bundler "4.1" "$BUNDLER_V1"
+  run_with_ar_version_and_bundler "4.2" "$BUNDLER_V1"
+  run_with_ar_version_and_bundler "5.0" "$BUNDLER_V1"
+  run_with_ar_version_and_bundler "5.1" "$BUNDLER_V1"
+  run_with_ar_version_and_bundler "5.2" "$BUNDLER_V1"
 fi
 
-ACTIVERECORD_VERSION='4.2' bundle update
-ACTIVERECORD_VERSION='4.2' ENABLE_TRANSITIONS='true' bundle exec rake test
-ACTIVERECORD_VERSION='4.2' ENABLE_TRANSITIONS='false' bundle exec rake test
+RUBY_2_567="ruby 2.[567]."
+RUBY_3_x_x="ruby 3.0."
 
-ACTIVERECORD_VERSION='5.0' bundle update
-ACTIVERECORD_VERSION='5.0' ENABLE_TRANSITIONS='true' bundle exec rake test
-ACTIVERECORD_VERSION='5.0' ENABLE_TRANSITIONS='false' bundle exec rake test
+if [[ $RUBY_V =~ $RUBY_2_567 ]] || [[ $RUBY_V =~ $RUBY_3_x_x ]]; then
+  gem install bundler -v ">= 2" --no-doc
 
-ACTIVERECORD_VERSION='5.1' bundle update
-ACTIVERECORD_VERSION='5.1' ENABLE_TRANSITIONS='true' bundle exec rake test
-ACTIVERECORD_VERSION='5.1' ENABLE_TRANSITIONS='false' bundle exec rake test
-
-if [[ ! $ruby_v =~ '2.2.0' ]]; then
-  ACTIVERECORD_VERSION='5.2' bundle update
-  ACTIVERECORD_VERSION='5.2' ENABLE_TRANSITIONS='true' bundle exec rake test
-  ACTIVERECORD_VERSION='5.2' ENABLE_TRANSITIONS='false' bundle exec rake test
+  run_with_bundler
+  run_with_ar_version_and_bundler "6.0"
+  run_with_ar_version_and_bundler "6.1"
 fi
-
-if [[ $ruby_v =~ '2.5.' ]] || [[ $ruby_v =~ '2.6.' ]] || [[ $ruby_v =~ '2.7.' ]]; then
-  ACTIVERECORD_VERSION='6.0' bundle update
-  ACTIVERECORD_VERSION='6.0' ENABLE_TRANSITIONS='true' bundle exec rake test
-  ACTIVERECORD_VERSION='6.0' ENABLE_TRANSITIONS='false' bundle exec rake test
-
-  ACTIVERECORD_VERSION='6.1' bundle update
-  ACTIVERECORD_VERSION='6.1' ENABLE_TRANSITIONS='true' bundle exec rake test
-  ACTIVERECORD_VERSION='6.1' ENABLE_TRANSITIONS='false' bundle exec rake test
-fi
-
-bundle update
-ENABLE_TRANSITIONS='true' bundle exec rake test
-ENABLE_TRANSITIONS='false' bundle exec rake test

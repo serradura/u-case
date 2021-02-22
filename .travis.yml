@@ -1,10 +1,12 @@
-
 language: ruby
 
-sudo: false
+cache:
+  bundler: true
+  directories:
+    - /home/travis/.rvm/
 
 rvm:
-- 2.2.0
+- 2.2.2
 - 2.3.0
 - 2.4.0
 - 2.5.0
@@ -12,11 +14,11 @@ rvm:
 - 2.7.0
 - 3.0.0
 
-cache: bundler
+env:
+  - BUNDLER_V1="1.17.3"
 
 before_install:
-  - gem uninstall -v '>= 2' -i $(rvm gemdir)@global -ax bundler || true
-  - gem install bundler -v '< 2'
+  - gem install bundler -v "$BUNDLER_V1"
 
 install: bundle install --jobs=3 --retry=3
 
