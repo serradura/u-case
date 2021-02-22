@@ -1,6 +1,6 @@
 require 'test_helper'
 
-if ENV.fetch('ACTIVERECORD_VERSION', '6.2') <= '6.1.0'
+if ENV.fetch('ACTIVERECORD_VERSION', '7') <= '6.1.0'
   require 'active_record'
   require 'sqlite3'
 

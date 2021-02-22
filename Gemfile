@@ -2,7 +2,7 @@ source "https://rubygems.org"
 
 git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
 
-activerecord_version = ENV.fetch('ACTIVERECORD_VERSION', '6.2')
+activerecord_version = ENV.fetch('ACTIVERECORD_VERSION', '7')
 
 activerecord = case activerecord_version
               when '3.2' then '3.2.22'
@@ -11,9 +11,9 @@ activerecord = case activerecord_version
               when '4.2' then '4.2.11'
               when '5.0' then '5.0.7'
               when '5.1' then '5.1.7'
-              when '5.2' then '5.2.3'
-              when '6.0' then '6.0.3'
-              when '6.1' then '6.1.0'
+              when '5.2' then '5.2.4'
+              when '6.0' then '6.0.3.4'
+              when '6.1' then '6.1.2'
               end
 
 simplecov_version =

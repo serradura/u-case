@@ -9,12 +9,12 @@ module Micro
 
       def enable_transitions=(value)
         Micro::Case::Result.class_variable_set(
-          :@@transitions_enabled, Kind::Of::Boolean(value)
+          :@@transitions_enabled, Kind::Boolean[value]
         )
       end
 
       def enable_activemodel_validation=(value)
-        return unless Kind::Of::Boolean(value)
+        return unless Kind::Boolean[value]
 
         require 'micro/case/with_activemodel_validation'
       end
@@ -22,7 +22,7 @@ module Micro
       def set_activemodel_validation_errors_failure=(value)
         return unless value
 
-        @activemodel_validation_errors_failure = Kind.of(Symbol, value)
+        @activemodel_validation_errors_failure = Kind::Symbol[value]
       end
 
       def activemodel_validation_errors_failure

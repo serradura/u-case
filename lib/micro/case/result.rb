@@ -8,8 +8,6 @@ module Micro
       require 'micro/case/result/wrapper'
       require 'micro/case/result/transitions'
 
-      Kind::Types.add(self)
-
       INVALID_INVOCATION_OF_THE_THEN_METHOD =
         Error::InvalidInvocationOfTheThenMethod.new("#{self.name}#")
 

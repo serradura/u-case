@@ -39,7 +39,7 @@ The main project goals are:
 Version   | Documentation
 --------- | -------------
 unreleased| https://github.com/serradura/u-case/blob/main/README.md
-4.2.2     | https://github.com/serradura/u-case/blob/v4.x/README.md
+4.3.0     | https://github.com/serradura/u-case/blob/v4.x/README.md
 3.1.0     | https://github.com/serradura/u-case/blob/v3.x/README.md
 2.6.0     | https://github.com/serradura/u-case/blob/v2.x/README.md
 1.1.0     | https://github.com/serradura/u-case/blob/v1.x/README.md
@@ -99,13 +99,13 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
 
 ## Compatibility
 
-| u-case         | branch  | ruby     |  activemodel  | u-attributes |
-| -------------- | ------- | -------- | ------------- | ------------ |
-| unreleased     | main    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 2.0 |
-| 4.2.2          | v4.x    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 2.0 |
-| 3.1.0          | v3.x    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 1.1 |
-| 2.6.0          | v2.x    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 1.1 |
-| 1.1.0          | v1.x    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 1.1 |
+| u-case         | branch  | ruby     | activemodel   | u-attributes  |
+| -------------- | ------- | -------- | ------------- | ------------- |
+| unreleased     | main    | >= 2.2.0 | >= 3.2, < 7.0 | >= 2.7, < 3.0 |
+| 4.3.0          | v4.x    | >= 2.2.0 | >= 3.2, < 7.0 | >= 2.7, < 3.0 |
+| 3.1.0          | v3.x    | >= 2.2.0 | >= 3.2, < 6.1 |        ~> 1.1 |
+| 2.6.0          | v2.x    | >= 2.2.0 | >= 3.2, < 6.1 |        ~> 1.1 |
+| 1.1.0          | v1.x    | >= 2.2.0 | >= 3.2, < 6.1 |        ~> 1.1 |
 
 > Note: The activemodel is an optional dependency, this module [can be enabled](#u-casewith_activemodel_validation---how-to-validate-use-case-attributes) to validate the use cases' attributes.
 
@@ -115,7 +115,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
 
     A simple type system (at runtime) for Ruby.
 
-    It is used to validate some internal u-case's methods input. This gem also exposes an  [`ActiveModel validator`](https://github.com/serradura/kind#kindvalidator-activemodelvalidations) when requiring the [`u-case/with_activemodel_validation`](#u-casewith_activemodel_validation---how-to-validate-use-case-attributes) module, or when the [`Micro::Case.config`](#microcaseconfig) was used to enable it. Lastly, two type checkers are available through it: [`Kind::Of::Micro::Case`, `Kind::Of::Micro::Case::Result`](https://github.com/serradura/kind#registering-new-custom-type-checker).
+    It is used to validate some internal u-case's methods input. This gem also exposes an  [`ActiveModel validator`](https://github.com/serradura/kind#kindvalidator-activemodelvalidations) when requiring the [`u-case/with_activemodel_validation`](#u-casewith_activemodel_validation---how-to-validate-use-case-attributes) module, or when the [`Micro::Case.config`](#microcaseconfig) was used to enable it.
 2. [`u-attributes`](https://github.com/serradura/u-attributes) gem.
 
     This gem allows defining read-only attributes, that is, your objects will have only getters to access their attributes data.

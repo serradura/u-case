@@ -39,7 +39,7 @@ Principais objetivos deste projeto:
 Versão    | Documentação
 --------- | -------------
 unreleased| https://github.com/serradura/u-case/blob/main/README.md
-4.2.2     | https://github.com/serradura/u-case/blob/v4.x/README.md
+4.3.0     | https://github.com/serradura/u-case/blob/v4.x/README.md
 3.1.0     | https://github.com/serradura/u-case/blob/v3.x/README.md
 2.6.0     | https://github.com/serradura/u-case/blob/v2.x/README.md
 1.1.0     | https://github.com/serradura/u-case/blob/v1.x/README.md
@@ -97,13 +97,13 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
 
 ## Compatibilidade
 
-| u-case         | branch  | ruby     |  activemodel  | u-attributes |
-| -------------- | ------- | -------- | ------------- | ------------ |
-| unreleased     | main    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 2.0 |
-| 4.2.2          | v4.x    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 2.0 |
-| 3.1.0          | v3.x    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 1.1 |
-| 2.6.0          | v2.x    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 1.1 |
-| 1.1.0          | v1.x    | >= 2.2.0 | >= 3.2, < 6.1 |       ~> 1.1 |
+| u-case         | branch  | ruby     | activemodel   | u-attributes- |
+| -------------- | ------- | -------- | ------------- | ------------- |
+| unreleased     | main    | >= 2.2.0 | >= 3.2, < 7.0 | >= 2.7, < 3.0 |
+| 4.3.0          | v4.x    | >= 2.2.0 | >= 3.2, < 7.0 | >= 2.7, < 3.0 |
+| 3.1.0          | v3.x    | >= 2.2.0 | >= 3.2, < 6.1 |        ~> 1.1 |
+| 2.6.0          | v2.x    | >= 2.2.0 | >= 3.2, < 6.1 |        ~> 1.1 |
+| 1.1.0          | v1.x    | >= 2.2.0 | >= 3.2, < 6.1 |        ~> 1.1 |
 
 > Nota: O activemodel é uma dependência opcional, esse módulo que [pode ser habilitado](#u-casewith_activemodel_validation---como-validar-os-atributos-do-caso-de-uso) para validar os atributos dos casos de uso.
 
@@ -113,7 +113,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
 
     Sistema de tipos simples (em runtime) para Ruby.
 
-    É usado para validar os inputs de alguns métodos do u-case, além de expor um validador de tipos através do [`activemodel validation`](https://github.com/serradura/kind#kindvalidator-activemodelvalidations) ([veja como habilitar]((#u-casewith_activemodel_validation---how-to-validate-use-case-attributes))). Por fim, ele também expõe dois verificadores de tipo: [`Kind::Of::Micro::Case`, `Kind::Of::Micro::Case::Result`](https://github.com/serradura/kind#registering-new-custom-type-checker).
+    É usado para validar os inputs de alguns métodos do u-case, além de expor um validador de tipos através do [`activemodel validation`](https://github.com/serradura/kind#kindvalidator-activemodelvalidations) ([veja como habilitar]((#u-casewith_activemodel_validation---how-to-validate-use-case-attributes))).
 2. [`u-attributes`](https://github.com/serradura/u-attributes) gem.
 
     Essa gem permite definir atributos de leitura (read-only), ou seja, os seus objetos só terão getters para acessar os dados dos seus atributos.

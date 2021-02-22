@@ -5,7 +5,7 @@ module Micro
     class Map
       IsAUseCaseOrFlowWithDefaults = -> arg { arg.is_a?(Array) && Micro.case_or_flow?(arg[0]) && arg[1].is_a?(Hash) }
       IsAUseCaseOrFlow = -> arg { Micro.case_or_flow?(arg) || IsAUseCaseOrFlowWithDefaults[arg] }
-      HasValidArgs = -> (args) { Kind.of(Array, args).all?(&IsAUseCaseOrFlow) }
+      HasValidArgs = -> (args) { Kind::Array[args].all?(&IsAUseCaseOrFlow) }
 
       attr_reader :use_cases
 
@@ -28,7 +28,7 @@ module Micro
       end
 
       def call(arg = {})
-        hash = Kind.of(Hash, arg)
+        hash = Kind::Hash[arg]
 
         use_cases.map(&GetUseCaseResult[hash])
       end

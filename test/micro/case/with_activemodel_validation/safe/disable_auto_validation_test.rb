@@ -1,6 +1,6 @@
 require 'test_helper'
 
-if ENV.fetch('ACTIVERECORD_VERSION', '6.2') <= '6.1.0'
+if ENV.fetch('ACTIVERECORD_VERSION', '7') <= '6.1.0'
 
   module Micro::Case::WithActivemodelValidation::Safe
     class DisableAutoValidationTest < Minitest::Test
