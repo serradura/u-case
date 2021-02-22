@@ -35,7 +35,7 @@ if ENV.fetch('ACTIVERECORD_VERSION', '7') <= '6.1.0'
 
         result2 = Multiply.call(a: 2, b: 'a')
 
-        assert_exception_result(result2, value: { exception: TypeError })
+        assert_exception_result(result2, data: { exception: TypeError })
       end
     end
   end

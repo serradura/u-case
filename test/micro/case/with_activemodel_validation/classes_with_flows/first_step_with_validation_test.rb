@@ -46,7 +46,7 @@ if ENV.fetch('ACTIVERECORD_VERSION', '7') <= '6.1.0'
 
           result = Double.call(text: '4')
 
-          assert_success_result(result, value: { text: '8' })
+          assert_success_result(result, data: { text: '8' })
 
           assert_equal(
             [ConvertTextToNumber, Double::Self, ConvertNumberToText],

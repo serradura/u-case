@@ -84,13 +84,34 @@ module Micro
       end
     end
 
+    private_class_method def self.__new(input)
+      instance = allocate
+      instance.send(:initialize, input)
+      instance
+    end
+
     def self.__new__(result, arg)
       input = result.__set_accessible_attributes__(arg)
 
-      new(input).__set_result__(result)
+      __new(input).__set_result__(result)
     end
 
-    private_class_method :new
+    class WithDefaults
+      def initialize(use_case, defaults)
+        @use_case = use_case
+        @defaults = Kind.of(::Hash, defaults)
+      end
+
+      def call(arg = Kind::Empty::HASH)
+        input = @defaults.merge(Kind.of(::Hash, arg))
+
+        @use_case.send(:__new, input).__call__
+      end
+    end
+
+    def self.new(defaults = Kind::Empty::HASH)
+      WithDefaults.new(self, defaults)
+    end
 
     def self.__flow_builder__
       Cases::Flow

@@ -281,7 +281,7 @@ class Micro::Cases::FlowTest < Minitest::Test
 
   def test_to_proc
     sleeping_jobs =
-      [Jobs::Build, Jobs::Build, Jobs::Build].map(&:call).map(&:value)
+      [Jobs::Build, Jobs::Build, Jobs::Build].map(&:call).map(&:data)
 
     results = sleeping_jobs.map(&Jobs::Run)
 
