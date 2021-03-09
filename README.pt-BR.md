@@ -124,7 +124,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
 Adicione essa linha ao Gemfile da sua aplicação:
 
 ```ruby
-gem 'u-case', '~> 4.1.0'
+gem 'u-case', '~> 4.3.0'
 ```
 
 E então execute:
