@@ -111,7 +111,7 @@ module Micro
       def on_exception(expected_exception = nil)
         return self unless __failure_type?(:exception)
 
-        if !expected_exception || (Kind.is(Exception, expected_exception) && data.fetch(:exception).is_a?(expected_exception))
+        if !expected_exception || (Kind.is?(Exception, expected_exception) && data.fetch(:exception).is_a?(expected_exception))
           yield(data, @use_case)
         end
 
