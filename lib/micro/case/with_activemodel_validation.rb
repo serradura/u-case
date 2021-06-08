@@ -18,14 +18,12 @@ module Micro
 
     def initialize(input)
       __setup_use_case(input)
-
-      run_validations! if respond_to?(:run_validations!, true)
     end
 
     private
 
       def __call_use_case
-        return failure_by_validation_error(self) if !self.class.auto_validation_disabled? && invalid?
+        return failure_by_validation_error(self) if !self.class.auto_validation_disabled? && errors.present?
 
         result = call!
 
