@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'kind/active_model/validation'
+require 'kind/validator'
 
 require 'micro/case'
 
@@ -14,10 +14,6 @@ module Micro
 
     def self.disable_auto_validation
       @disable_auto_validation = true
-    end
-
-    def initialize(input)
-      __setup_use_case(input)
     end
 
     private

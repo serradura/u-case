@@ -61,7 +61,7 @@ if ENV.fetch('ACTIVERECORD_VERSION', '7') <= '6.1.0'
 
           assert_failure_result(result, type: :invalid_attributes)
 
-          assert_match(/must be a kind of:? Integer/, result.value[:errors][:number].join)
+          assert_equal('must be a kind of Integer', result.value[:errors][:number].join)
         end
       end
     end
