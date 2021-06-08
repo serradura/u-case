@@ -112,6 +112,8 @@ module Micro
         return self unless __failure_type?(:exception)
 
         if !expected_exception || (Kind.is?(Exception, expected_exception) && data.fetch(:exception).is_a?(expected_exception))
+          @__is_unknown = false
+
           yield(data, @use_case)
         end
 
