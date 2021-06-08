@@ -253,13 +253,18 @@ class Micro::Case::ResultTest < Minitest::Test
     result1 = failure_result(value: zero_division_error, use_case: use_case_instance)
 
     result1
+      .on_exception { counter1 += 1 }
+      .on_unknown { raise NotImplementedError }
+
+    result1
       .on_success { raise }
       .on_exception(TypeError) { raise }
       .on_failure(:exception) { counter1 += 1 }
       .on_exception { counter1 += 1 }
       .on_exception(ZeroDivisionError) { counter1 += 1 }
+      .on_unknown { raise NotImplementedError }
 
-    assert_equal(3, counter1)
+    assert_equal(4, counter1)
 
     # --
 
@@ -274,6 +279,7 @@ class Micro::Case::ResultTest < Minitest::Test
       .on_failure(:exception) { |value, use_case| assert_equal([zero_division_error, use_case_instance], [value[:exception], use_case]) }
       .on_exception { |value, use_case| assert_equal([zero_division_error, use_case_instance], [value[:exception], use_case]) }
       .on_exception(ZeroDivisionError) { |value, use_case| assert_equal([zero_division_error, use_case_instance], [value[:exception], use_case]) }
+      .on_unknown { raise NotImplementedError }
 
     # ---
 
