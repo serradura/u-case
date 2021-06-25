@@ -27,6 +27,18 @@ module Micro::Case::Utils
 
       hash.select { |key, _value| keys.include?(key) }
     end
+
+    def self.fetch_values(hash, keys, &block)
+      return hash.fetch_values(*keys, &block) if hash_respond_to?(hash, :fetch_values)
+
+      result = []
+
+      keys.each do |key|
+        result << hash.fetch(key, &block)
+      end
+
+      result
+    end
   end
 
 end
