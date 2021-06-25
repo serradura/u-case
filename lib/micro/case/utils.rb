@@ -33,13 +33,9 @@ module Micro::Case::Utils
     def fetch_values(hash, keys, &block)
       return hash.fetch_values(*keys, &block) if respond_to?(hash, :fetch_values)
 
-      result = []
-
-      keys.each do |key|
-        result << hash.fetch(key, &block)
+      keys.each_with_object([]) do |key, values|
+        values << hash.fetch(key, &block)
       end
-
-      result
     end
   end
 
