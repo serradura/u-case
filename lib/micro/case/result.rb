@@ -62,6 +62,18 @@ module Micro
         data.key?(key)
       end
 
+      def keys
+        data.keys
+      end
+
+      def fetch(*args, &block)
+        data.fetch(*args, &block)
+      end
+
+      def fetch_values(*keys, &block)
+        Utils::Hashes.fetch_values(data, keys, &block)
+      end
+
       def value?(value)
         data.value?(value)
       end
