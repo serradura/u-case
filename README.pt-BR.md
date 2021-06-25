@@ -187,6 +187,8 @@ Um `Micro::Case::Result` armazena os dados de output de um caso de uso. Esses s�
 - `#type` retorna um Symbol que dá significado ao resultado, isso é útil para declarar diferentes tipos de falha e sucesso.
 - `#data` os dados do resultado (um `Hash`).
 - `#[]` e `#values_at` são atalhos para acessar as propriedades do `#data`.
+- `#fetch` and `#fetch_values` são outras maneiras de acessar os valores contidos em `#data`, porém se alguma chave não existir, é levantado um `KeyError`.
+- `#keys` retorna uma array com as chaves presentes no resultado.
 - `#key?` retorna `true` se a chave estiver present no `#data`.
 - `#value?` retorna `true` se o valor estiver present no `#data`.
 - `#slice` retorna um novo `Hash` que inclui apenas as chaves fornecidas. Se as chaves fornecidas não existirem, um `Hash` vazio será retornado.
