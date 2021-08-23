@@ -21,9 +21,11 @@ module Micro
 
       GetUseCaseResult = -> (hash) do
         -> (use_case) do
-          return use_case.call(hash) unless use_case.is_a?(Array)
-
-          use_case[0].call(hash.merge(use_case[1]))
+          if use_case.is_a?(Array)
+            use_case[0].call(hash.merge(use_case[1]))
+          else
+            use_case.call(hash)
+          end
         end
       end
 
