@@ -12,8 +12,8 @@
     <img alt="Gem" src="https://img.shields.io/gem/v/u-case.svg?style=flat-square">
   </a>
 
-  <a href="https://travis-ci.com/serradura/u-case">
-    <img alt="Build Status" src="https://travis-ci.com/serradura/u-case.svg?branch=main">
+  <a href="https://github.com/serradura/u-case/actions/workflows/ci.yml">
+    <img alt="Build Status" src="https://github.com/serradura/u-case/actions/workflows/ci.yml/badge.svg">
   </a>
 
   <a href="https://codeclimate.com/github/serradura/u-case/maintainability">
