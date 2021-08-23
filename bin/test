@@ -1,0 +1,49 @@
+#!/bin/bash
+
+set -e
+
+RUBY_V=$(ruby -v)
+
+function reset_gemfile_and_test {
+  rm Gemfile.lock
+
+  eval "$1 bundle update"
+  eval "$1 ENABLE_TRANSITIONS=true bundle exec rake test"
+  eval "$1 ENABLE_TRANSITIONS=false bundle exec rake test"
+}
+
+function test_with_activerecord {
+  reset_gemfile_and_test "ACTIVERECORD_VERSION=$1"
+}
+
+RUBY_2_2345="ruby 2.[2345]."
+RUBY_2_234="ruby 2.[234]."
+RUBY_2_567="ruby 2.[567]."
+RUBY_2_2="ruby 2.2."
+RUBY_3_X="ruby 3.0."
+
+if [[ $RUBY_V =~ $RUBY_2_2345 ]]; then
+  if [[ $RUBY_V =~ $RUBY_2_234 ]]; then
+    reset_gemfile_and_test
+  fi
+
+  if [[ $RUBY_V =~ $RUBY_2_2 ]]; then
+    test_with_activerecord "3.2"
+  fi
+
+  test_with_activerecord "4.0"
+  test_with_activerecord "4.1"
+  test_with_activerecord "4.2"
+  test_with_activerecord "5.0"
+  test_with_activerecord "5.1"
+  test_with_activerecord "5.2"
+fi
+
+if [[ $RUBY_V =~ $RUBY_2_567 ]] || [[ $RUBY_V =~ $RUBY_3_X ]]; then
+  gem install bundler -v ">= 2" --no-doc
+
+  reset_gemfile_and_test
+
+  test_with_activerecord "6.0"
+  test_with_activerecord "6.1"
+fi
