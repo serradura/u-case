@@ -19,6 +19,7 @@ function test_with_activerecord {
 RUBY_2_2345="ruby 2.[2345]."
 RUBY_2_234="ruby 2.[234]."
 RUBY_2_567="ruby 2.[567]."
+RUBY_2_23="ruby 2.[23]."
 RUBY_2_2="ruby 2.2."
 RUBY_3_X="ruby 3.0."
 
@@ -31,9 +32,12 @@ if [[ $RUBY_V =~ $RUBY_2_2345 ]]; then
     test_with_activerecord "3.2"
   fi
 
-  test_with_activerecord "4.0"
-  test_with_activerecord "4.1"
-  test_with_activerecord "4.2"
+  if [[ $RUBY_V =~ $RUBY_2_23 ]]; then
+    test_with_activerecord "4.0"
+    test_with_activerecord "4.1"
+    test_with_activerecord "4.2"
+  fi
+
   test_with_activerecord "5.0"
   test_with_activerecord "5.1"
   test_with_activerecord "5.2"
