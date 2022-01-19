@@ -117,7 +117,7 @@ module Micro
     def self.__call__!
       return const_get(FLOW_STEP) if const_defined?(FLOW_STEP, false)
 
-      class_eval("class #{FLOW_STEP} < #{self.name}; private def __call; __call_use_case; end; end")
+      class_eval("class #{FLOW_STEP} < #{self.name}; private def __call; __call_use_case; end; end; #{FLOW_STEP}")
     end
 
     private_class_method def self.__flow_use_cases
