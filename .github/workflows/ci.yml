@@ -1,27 +1,70 @@
 
-name: build
+name: Test
 on: [push, pull_request]
 jobs:
   test:
+    name: "Ruby ${{ matrix.ruby }} - Rails ${{ matrix.rails }} - Transitions: ${{ matrix.transitions }}"
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        ruby: [2.2, 2.3, 2.4, 2.5, 2.6, 3.0, 3.1]
+        ruby: [2.7, 3.0, 3.1, 3.2, head]
+        rails: ["6.1", "7.0", "7.1", "edge"]
+        transitions: ["true", "false"]
+        include:
+          - ruby: 2.5
+            rails: "5.2"
+            transitions: true
+          - ruby: 2.5
+            rails: "6.0"
+            transitions: true
+          - ruby: 2.5
+            rails: "6.1"
+            transitions: true
+          - ruby: 2.6
+            rails: "5.2"
+            transitions: true
+          - ruby: 2.6
+            rails: "6.0"
+            transitions: true
+          - ruby: 2.6
+            rails: "6.1"
+            transitions: true
+          - ruby: 2.5
+            rails: "5.2"
+            transitions: false
+          - ruby: 2.5
+            rails: "6.0"
+            transitions: false
+          - ruby: 2.5
+            rails: "6.1"
+            transitions: false
+          - ruby: 2.6
+            rails: "5.2"
+            transitions: false
+          - ruby: 2.6
+            rails: "6.0"
+            transitions: false
+          - ruby: 2.6
+            rails: "6.1"
+            transitions: false
+          - ruby: 2.7
+            rails: "6.0"
+            transitions: true
+          - ruby: 2.7
+            rails: "6.0"
+            transitions: false
+    env:
+      BUNDLE_GEMFILE: "gemfiles/rails_${{ matrix.rails }}/Gemfile"
+      ENABLE_TRANSITIONS: ${{ matrix.transitions }}
+      ACTIVERECORD_VERSION: ${{ matrix.rails }}
+      CC_TEST_REPORTER_ID: 0377ece62be9c7042557d76e4e38b867e51c51b2a42d10ef5102b613ac077eab
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
       - name: Test and generate coverage
-        run: bin/test
-      - name: Format coverage
-        if: ${{ matrix.ruby >= 3 }}
-        run: bin/prepare_coverage
-      - uses: paambaati/codeclimate-action@v2.7.5
-        if: ${{ matrix.ruby >= 3 }}
-        env:
-          CC_TEST_REPORTER_ID: 0377ece62be9c7042557d76e4e38b867e51c51b2a42d10ef5102b613ac077eab
-        with:
-          debug: true
-          coverageLocations: coverage/.resultset.json:simplecov
+        run: bundle exec rake test
+      - uses: paambaati/codeclimate-action@v5
+        if: ${{ matrix.ruby == 3.2 && matrix.rails == '7.1' && matrix.transitions == 'true' }}
