@@ -11,6 +11,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     name: Ruby ${{ matrix.ruby }} (transitions=${{ matrix.transitions }})
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -20,6 +22,8 @@ jobs:
       ENABLE_TRANSITIONS: ${{ matrix.transitions }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
