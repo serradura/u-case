@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/ruby->%3D%202.2.0-ruby.svg?colorA=99004d&colorB=cc0066" alt="Ruby">
+  <img src="https://img.shields.io/badge/ruby->%3D%202.7-ruby.svg?colorA=99004d&colorB=cc0066" alt="Ruby">
 
   <a href="https://rubygems.org/gems/u-case">
     <img alt="Gem" src="https://img.shields.io/gem/v/u-case.svg?style=flat-square">
@@ -101,8 +101,8 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
 
 | u-case         | branch  | ruby     | activemodel   | u-attributes  |
 | -------------- | ------- | -------- | ------------- | ------------- |
-| unreleased     | main    | >= 2.2.0 | >= 3.2, < 7.0 | >= 2.7, < 3.0 |
-| 4.5.1          | v4.x    | >= 2.2.0 | >= 3.2, < 7.0 | >= 2.7, < 3.0 |
+| unreleased     | main    | >= 2.7   | >= 6.0        | >= 2.7, < 3.0 |
+| 4.5.2          | v4.x    | >= 2.2.0 | >= 3.2, < 7.0 | >= 2.7, < 3.0 |
 | 3.1.0          | v3.x    | >= 2.2.0 | >= 3.2, < 6.1 |        ~> 1.1 |
 | 2.6.0          | v2.x    | >= 2.2.0 | >= 3.2, < 6.1 |        ~> 1.1 |
 | 1.1.0          | v1.x    | >= 2.2.0 | >= 3.2, < 6.1 |        ~> 1.1 |
