@@ -1,13 +1,9 @@
-require 'pry-byebug'
+require 'simplecov'
 
-if RUBY_VERSION >= '2.4.0'
-  require 'simplecov'
+SimpleCov.start do
+  add_filter '/test/'
 
-  SimpleCov.start do
-    add_filter '/test/'
-
-    enable_coverage :branch if RUBY_VERSION >= '2.5.0'
-  end
+  enable_coverage :branch
 end
 
 if ENV.fetch('ACTIVERECORD_VERSION', '7') < '4.1'

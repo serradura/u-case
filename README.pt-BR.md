@@ -16,12 +16,12 @@
     <img alt="Build Status" src="https://github.com/serradura/u-case/actions/workflows/ci.yml/badge.svg">
   </a>
 
-  <a href="https://codeclimate.com/github/serradura/u-case/maintainability">
-    <img alt="Maintainability" src="https://api.codeclimate.com/v1/badges/5c3c8ad1b0b943f88efd/maintainability">
+  <a href="https://qlty.sh/gh/serradura/projects/u-case">
+    <img alt="Maintainability" src="https://qlty.sh/gh/serradura/projects/u-case/maintainability.svg">
   </a>
 
-  <a href="https://codeclimate.com/github/serradura/u-case/test_coverage">
-    <img alt="Test Coverage" src="https://api.codeclimate.com/v1/badges/5c3c8ad1b0b943f88efd/test_coverage">
+  <a href="https://qlty.sh/gh/serradura/projects/u-case">
+    <img alt="Code Coverage" src="https://qlty.sh/gh/serradura/projects/u-case/coverage.svg">
   </a>
 </p>
 
