@@ -1,28 +1,16 @@
 <p align="center">
-  <img src="./assets/ucase_logo_v1.png" alt="u-case - Represent use cases in a simple and powerful way while writing modular, expressive and sequentially logical code.">
-
+  <h1 align="center" id="-case"><img src="./assets/ucase_logo_v1.png" alt="μ-case" height="150"></h1>
   <p align="center"><i>Represent use cases in a simple and powerful way while writing modular, expressive and sequentially logical code.</i></p>
-  <br>
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/ruby->%3D%202.2.0-ruby.svg?colorA=99004d&colorB=cc0066" alt="Ruby">
-
-  <a href="https://rubygems.org/gems/u-case">
-    <img alt="Gem" src="https://img.shields.io/gem/v/u-case.svg?style=flat-square">
-  </a>
-
-  <a href="https://github.com/serradura/u-case/actions/workflows/ci.yml">
-    <img alt="Build Status" src="https://github.com/serradura/u-case/actions/workflows/ci.yml/badge.svg">
-  </a>
-
-  <a href="https://qlty.sh/gh/serradura/projects/u-case">
-    <img alt="Maintainability" src="https://qlty.sh/gh/serradura/projects/u-case/maintainability.svg">
-  </a>
-
-  <a href="https://qlty.sh/gh/serradura/projects/u-case">
-    <img alt="Code Coverage" src="https://qlty.sh/gh/serradura/projects/u-case/coverage.svg">
-  </a>
+  <p align="center">
+    <a href="https://badge.fury.io/rb/u-case"><img src="https://badge.fury.io/rb/u-case.svg" alt="Gem Version" height="18"></a>
+    <a href="https://github.com/serradura/u-case/actions/workflows/ci.yml"><img alt="Build Status" src="https://github.com/serradura/u-case/actions/workflows/ci.yml/badge.svg"></a>
+    <br/>
+    <a href="https://qlty.sh/gh/serradura/projects/u-case"><img src="https://qlty.sh/gh/serradura/projects/u-case/maintainability.svg" alt="Maintainability" /></a>
+    <a href="https://qlty.sh/gh/serradura/projects/u-case"><img src="https://qlty.sh/gh/serradura/projects/u-case/coverage.svg" alt="Code Coverage" /></a>
+    <br/>
+    <img src="https://img.shields.io/badge/Ruby%20%3E%3D%202.7%2C%20%3C%3D%20Head-ruby.svg?colorA=444&colorB=333" alt="Ruby">
+    <img src="https://img.shields.io/badge/Rails%20%3E%3D%206.0%2C%20%3C%3D%20Edge-rails.svg?colorA=444&colorB=333" alt="Rails">
+  </p>
 </p>
 
 The main project goals are:
@@ -39,10 +27,8 @@ The main project goals are:
 Version   | Documentation
 --------- | -------------
 unreleased| https://github.com/serradura/u-case/blob/main/README.md
+5.0.0     | https://github.com/serradura/u-case/blob/v5.x/README.md
 4.5.1     | https://github.com/serradura/u-case/blob/v4.x/README.md
-3.1.0     | https://github.com/serradura/u-case/blob/v3.x/README.md
-2.6.0     | https://github.com/serradura/u-case/blob/v2.x/README.md
-1.1.0     | https://github.com/serradura/u-case/blob/v1.x/README.md
 
 > **Note:** Você entende português? 🇧🇷&nbsp;🇵🇹 Verifique o [README traduzido em pt-BR](https://github.com/serradura/u-case/blob/main/README.pt-BR.md).
 
@@ -99,13 +85,24 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
 
 ## Compatibility
 
-| u-case         | branch  | ruby     | activemodel   | u-attributes  |
-| -------------- | ------- | -------- | ------------- | ------------- |
-| unreleased     | main    | >= 2.2.0 | >= 3.2, < 7.0 | >= 2.7, < 3.0 |
-| 4.5.1          | v4.x    | >= 2.2.0 | >= 3.2, < 7.0 | >= 2.7, < 3.0 |
-| 3.1.0          | v3.x    | >= 2.2.0 | >= 3.2, < 6.1 |        ~> 1.1 |
-| 2.6.0          | v2.x    | >= 2.2.0 | >= 3.2, < 6.1 |        ~> 1.1 |
-| 1.1.0          | v1.x    | >= 2.2.0 | >= 3.2, < 6.1 |        ~> 1.1 |
+| u-case           | branch | ruby     | activemodel    | u-attributes   |
+| ---------------- | ------ | -------- | -------------- | -------------- |
+| unreleased       | main   | >= 2.7   | >= 6.0         | >= 2.7, < 4.0  |
+| 5.0.0            | v5.x   | >= 2.7   | >= 6.0         | >= 2.7, < 4.0  |
+| 4.5.1            | v4.x   | >= 2.2.0 | >= 3.2, <= 8.1 | >= 2.7, < 3.0  |
+
+This library is tested (CI matrix) against:
+
+| Ruby / Rails | 6.0 | 6.1 | 7.0 | 7.1 | 7.2 | 8.0 | 8.1 | Edge |
+|--------------|-----|-----|-----|-----|-----|-----|-----|------|
+| 2.7          | ✅  | ✅  | ✅  | ✅  |     |     |     |      |
+| 3.0          | ✅  | ✅  | ✅  | ✅  |     |     |     |      |
+| 3.1          |     |     | ✅  | ✅  | ✅  |     |     |      |
+| 3.2          |     |     | ✅  | ✅  | ✅  | ✅  |     |      |
+| 3.3          |     |     | ✅  | ✅  | ✅  | ✅  | ✅  | ✅   |
+| 3.4          |     |     |     |     | ✅  | ✅  | ✅  | ✅   |
+| 4.x          |     |     |     |     |     |     | ✅  | ✅   |
+| Head         |     |     |     |     |     |     | ✅  | ✅   |
 
 > Note: The activemodel is an optional dependency, this module [can be enabled](#u-casewith_activemodel_validation---how-to-validate-use-case-attributes) to validate the use cases' attributes.
 
@@ -126,7 +123,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'u-case', '~> 4.5.1'
+gem 'u-case', '~> 5.0'
 ```
 
 And then execute:
