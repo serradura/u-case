@@ -3,10 +3,14 @@ set -euo pipefail
 IFS=$'\n\t'
 set -vx
 
+ruby -v
+
 rm -f Gemfile.lock
 
 bundle install
 
-bundle exec appraisal install
+bundle exec appraisal update
 
-# Do any other automated setup that you need to do here
+bundle exec rake matrix
+
+ruby -v

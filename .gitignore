@@ -1,3 +1,5 @@
+.DS_Store
+
 /.bundle/
 /.yardoc
 /_yardoc/
@@ -6,5 +8,10 @@
 /pkg/
 /spec/reports/
 /tmp/
+
 Gemfile.lock
+
+gemfiles/*.lock
+gemfiles/.bundle/
+
 tags

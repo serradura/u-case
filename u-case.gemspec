@@ -28,6 +28,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'kind', '>= 5.6', '< 6.0'
   spec.add_runtime_dependency 'u-attributes', '>= 2.7', '< 3.0'
 
+  spec.add_development_dependency 'appraisal', '~> 2.5'
   spec.add_development_dependency 'bundler'
   spec.add_development_dependency 'rake', '~> 13.0'
 end
