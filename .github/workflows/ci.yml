@@ -11,6 +11,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     name: Ruby ${{ matrix.ruby }} (transitions=${{ matrix.transitions }})
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -55,3 +58,9 @@ jobs:
       - name: Run tests for Rails edge
         run: bundle exec appraisal rails-edge rake test
         if: ${{ matrix.ruby == '4.0' || matrix.ruby == 'head' }}
+      - name: Upload coverage to Qlty
+        uses: qltysh/qlty-action/coverage@v2
+        if: ${{ matrix.ruby == '3.4' && matrix.transitions == 'true' && !github.base_ref }}
+        with:
+          oidc: true
+          files: coverage/.resultset.json
