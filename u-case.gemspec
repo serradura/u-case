@@ -16,6 +16,10 @@ Gem::Specification.new do |spec|
 
   raise 'RubyGems 2.0 or newer is required to protect against public gem pushes.' unless spec.respond_to?(:metadata)
 
+  spec.metadata['changelog_uri'] = "#{spec.homepage}/blob/v#{spec.version}/CHANGELOG.md"
+  spec.metadata['source_code_uri'] = spec.homepage
+  spec.metadata['bug_tracker_uri'] = "#{spec.homepage}/issues"
+
   spec.files         = Dir.chdir(File.expand_path('..', __FILE__)) do
     `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features|assets|benchmarks|comparisons|examples)/}) }
   end
