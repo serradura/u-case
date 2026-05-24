@@ -19,7 +19,10 @@ module Micro
     private
 
       def __call_use_case
-        return failure_by_validation_error(self) if !self.class.auto_validation_disabled? && errors.present?
+        unless self.class.auto_validation_disabled?
+          return failure_by_validation_error(self) if errors.present?
+          return __failure_from_attributes_errors if __attributes_errors_present?
+        end
 
         result = call!
 

@@ -19,6 +19,16 @@ module Micro
         require 'micro/case/with_activemodel_validation'
       end
 
+      def enable_attributes_accept=(value)
+        @enable_attributes_accept = Kind::Boolean[value]
+      end
+
+      def enable_attributes_accept
+        return @enable_attributes_accept if defined?(@enable_attributes_accept)
+
+        @enable_attributes_accept = true
+      end
+
       def set_activemodel_validation_errors_failure=(value)
         return unless value
 

@@ -18,6 +18,7 @@ module Micro
     require 'micro/cases'
 
     include Micro::Attributes
+    include Micro::Attributes::Features::Accept if Config.instance.enable_attributes_accept
 
     def self.call(input = Kind::Empty::HASH)
       result = __new__(Result.new, input).__call__
@@ -206,11 +207,25 @@ module Micro
       end
 
       def __call_use_case
+        return __failure_from_attributes_errors if __attributes_errors_present?
+
         result = call!
 
         return result if result.is_a?(Result)
 
         raise Error::UnexpectedResult.new("#{self.class.name}#call!")
+      end
+
+      def __attributes_errors_present?
+        Config.instance.enable_attributes_accept &&
+          respond_to?(:attributes_errors?) && attributes_errors?
+      end
+
+      def __failure_from_attributes_errors
+        Failure(
+          Config.instance.activemodel_validation_errors_failure,
+          result: { errors: attributes_errors }
+        )
       end
 
       def __call_the_use_case_flow?
