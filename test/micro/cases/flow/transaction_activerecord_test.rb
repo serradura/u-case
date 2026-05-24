@@ -1,20 +1,7 @@
 require 'test_helper'
 
 if Gem.loaded_specs.key?('activerecord')
-  require 'active_record'
-  require 'sqlite3'
-
-  ActiveRecord::Base.establish_connection(
-    host: 'localhost',
-    adapter: 'sqlite3',
-    database: ':memory:'
-  )
-
-  ActiveRecord::Schema.define do
-    create_table :flow_transaction_widgets, force: true do |t|
-      t.column :name, :string
-    end
-  end
+  require 'support/activerecord_setup'
 
   class Micro::Cases::Flow::TransactionActiverecordTest < Minitest::Test
     class Widget < ActiveRecord::Base
