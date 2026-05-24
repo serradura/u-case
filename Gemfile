@@ -9,7 +9,7 @@ gem "rake", "~> 13.0"
 
 group :test do
   gem "simplecov", "~> 0.22.0", require: false
-  gem "minitest", "~> 5.27"
+  gem "minitest", (RUBY_VERSION >= "4.0") ? "~> 6.0" : "~> 5.27" if RUBY_VERSION >= "3.1"
   gem "ostruct", "~> 0.6.3" if RUBY_VERSION >= "3.5"
 end
 
