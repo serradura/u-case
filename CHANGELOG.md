@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This gem was originally published as `u-service` (versions 0.1.0 – 1.0.0) and renamed to `u-case` starting with `u-case 1.0.0` on 2019-09-15.
 
+## [Unreleased]
+### Added
+- `Micro::Case.config.disable_runtime_checks` config (default `false`) to skip the gem's internal argument/contract checks for better performance in production. All checks are consolidated in `Micro::Case::Check::Enabled` (the default) and `Micro::Case::Check::Disabled` (no-ops with the same signature); the active module is swapped via `Micro::Case.check` so disabled checks have no per-call overhead beyond a method dispatch (closes #45).
+
 ## [5.3.1] - 2026-05-23
 ### Added
 - This `CHANGELOG.md`, covering the full history of the gem (from `u-service 0.1.0` through `u-case 5.3.1`) following the [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/) spec.
@@ -463,6 +467,7 @@ First release under the `u-case` name (renamed from `u-service`).
 - `Micro::Service::Result` with `Success`/`Failure` factories and helper methods for returning typed results from services.
 - Runtime dependency on `u-attributes` for service input declaration.
 
+[Unreleased]: https://github.com/serradura/u-case/compare/v5.3.1...HEAD
 [5.3.1]: https://github.com/serradura/u-case/compare/v5.3.0...v5.3.1
 [5.3.0]: https://github.com/serradura/u-case/compare/v5.2.1...v5.3.0
 [5.2.1]: https://github.com/serradura/u-case/compare/v5.2.0...v5.2.1

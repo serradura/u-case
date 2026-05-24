@@ -23,6 +23,18 @@ module Micro
         @disable_safe_features = false
       end
 
+      def disable_runtime_checks=(value)
+        @disable_runtime_checks = Kind::Boolean[value]
+
+        ::Micro::Case.check = @disable_runtime_checks ? ::Micro::Case::Check::Disabled : ::Micro::Case::Check::Enabled
+      end
+
+      def disable_runtime_checks
+        return @disable_runtime_checks if defined?(@disable_runtime_checks)
+
+        @disable_runtime_checks = false
+      end
+
       def enable_activemodel_validation=(value)
         return unless Kind::Boolean[value]
 

@@ -1256,8 +1256,21 @@ Micro::Case.config do |config|
   #   - Calling `Micro::Cases.safe_flow(...)`
   #   - Calling `Micro::Case::Result#on_exception`
   config.disable_safe_features = false
+
+  # Use to skip the gem's internal argument/contract checks (e.g., "is this a
+  # Micro::Case?", "is the result type a Symbol?", "is the use case a kind of
+  # Micro::Case?"). Set to `true` in production for a small performance boost
+  # once your code paths are exercised by your test suite. The trade-off is that
+  # incorrect usage will surface as confusing downstream errors instead of the
+  # gem's curated ones (e.g. `Micro::Case::Error::InvalidUseCase`).
+  config.disable_runtime_checks = false
 end
 ```
+
+All checks are consolidated in `Micro::Case::Check::Enabled` (the default).
+Toggling `disable_runtime_checks = true` swaps `Micro::Case.check` to
+`Micro::Case::Check::Disabled` — a module with the same signature whose
+methods are no-ops — so the validations themselves are not run on each call.
 
 [⬆️ Back to Top](#table-of-contents-)
 

@@ -174,14 +174,14 @@ module Micro
       end
 
       def __set__(is_success, data, type, use_case)
-        raise Error::InvalidResultType unless type.is_a?(Symbol)
-        raise Error::InvalidUseCase unless use_case.is_a?(::Micro::Case)
+        ::Micro::Case.check.result_type!(type)
+        ::Micro::Case.check.micro_case_instance!(use_case)
 
         @__success, @type, @use_case = is_success, type, use_case
 
         @data = FetchData.call(data).freeze
 
-        raise Micro::Case::Error::InvalidResult.new(is_success, type, use_case) unless @data
+        ::Micro::Case.check.result_data!(@data, is_success, type, use_case)
 
         @__accumulated_data.merge!(@data)
 
@@ -227,7 +227,7 @@ module Micro
             use_case_method = self.use_case.method(use_case)
             __call_method(use_case_method, attributes)
           else
-            raise INVALID_INVOCATION_OF_THE_THEN_METHOD unless ::Micro.case_or_flow?(use_case)
+            ::Micro::Case.check.then_use_case_or_flow!(use_case, 'Micro::Case::Result#')
 
             input = attributes.is_a?(Hash) ? self.data.merge(attributes) : self.data
 
@@ -244,9 +244,9 @@ module Micro
 
           result = fn.arity.zero? ? fn.call : fn.call(__fetch_accessible_attributes)
 
-          return self if result === self
+          ::Micro::Case.check.expected_self_result!(result, self, "#{Result.name}##{expected}")
 
-          raise Error::UnexpectedResult.new("#{Result.name}##{expected}")
+          self
         end
 
         def __call_method(methd, attributes = nil)
@@ -254,9 +254,9 @@ module Micro
 
           result = methd.arity.zero? ? methd.call : methd.call(**__fetch_accessible_attributes)
 
-          return self if result === self
+          ::Micro::Case.check.expected_self_result!(result, self, "#{use_case.class.name}#method(:#{methd.name})")
 
-          raise Error::UnexpectedResult.new("#{use_case.class.name}#method(:#{methd.name})")
+          self
         end
 
         def __success_type?(expected_type)

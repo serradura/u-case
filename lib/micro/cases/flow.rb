@@ -11,7 +11,7 @@ module Micro
       def self.build(args)
         use_cases = Utils.map_use_cases(args)
 
-        raise Error::InvalidUseCases if use_cases.none?(&IsAValidUseCase)
+        ::Micro::Case.check.flow_use_cases!(use_cases)
 
         new(use_cases)
       end
@@ -63,7 +63,7 @@ module Micro
         else
           return yield_self if !use_case && can_yield_self
 
-          raise_invalid_invocation_of_the_then_method unless ::Micro.case_or_flow?(use_case)
+          ::Micro::Case.check.then_use_case_or_flow!(use_case, "#{self.class.name}#")
 
           self.call.then(use_case)
         end

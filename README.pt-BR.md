@@ -1257,8 +1257,23 @@ Micro::Case.config do |config|
   #   - Chamar `Micro::Cases.safe_flow(...)`
   #   - Chamar `Micro::Case::Result#on_exception`
   config.disable_safe_features = false
+
+  # Use para pular as verificações internas de argumento/contrato da gem (por
+  # exemplo, "isto é um Micro::Case?", "o tipo do resultado é um Symbol?",
+  # "o use case é um tipo de Micro::Case?"). Defina `true` em produção para
+  # um pequeno ganho de performance depois que seus caminhos de código já
+  # estiverem cobertos pela sua suíte de testes. O custo é que usos
+  # incorretos vão aparecer como erros confusos mais à frente, em vez dos
+  # erros curados pela gem (ex.: `Micro::Case::Error::InvalidUseCase`).
+  config.disable_runtime_checks = false
 end
 ```
+
+Todas as verificações estão consolidadas em `Micro::Case::Check::Enabled` (o
+padrão). Definir `disable_runtime_checks = true` troca `Micro::Case.check` por
+`Micro::Case::Check::Disabled` — um módulo com a mesma assinatura cujos
+métodos não fazem nada — de forma que as validações não são executadas a
+cada chamada.
 
 [⬆️ Voltar para o índice](#índice-)
 

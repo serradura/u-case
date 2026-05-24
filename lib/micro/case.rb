@@ -11,11 +11,17 @@ module Micro
     require 'micro/case/utils'
     require 'micro/case/error'
     require 'micro/case/result'
+    require 'micro/case/check'
     require 'micro/case/config'
     require 'micro/case/safe'
     require 'micro/case/strict'
 
     require 'micro/cases'
+
+    class << self
+      attr_accessor :check
+    end
+    self.check = Check::Enabled
 
     include Micro::Attributes
     include Micro::Attributes::Features::Accept
@@ -46,7 +52,7 @@ module Micro
       else
         return yield_self if !use_case && can_yield_self
 
-        raise INVALID_INVOCATION_OF_THE_THEN_METHOD unless ::Micro.case_or_flow?(use_case)
+        ::Micro::Case.check.then_use_case_or_flow!(use_case, 'Micro::Case.')
 
         self.call.then(use_case)
       end
@@ -169,8 +175,8 @@ module Micro
     end
 
     def __set_result__(result)
-      raise Error::InvalidResultInstance unless result.is_a?(Result)
-      raise Error::ResultIsAlreadyDefined if defined?(@__result)
+      ::Micro::Case.check.result_instance!(result)
+      ::Micro::Case.check.result_not_defined!(defined?(@__result))
 
       @__result = result
 
@@ -180,7 +186,7 @@ module Micro
     private
 
       def call(use_case, defaults = Kind::Empty::HASH)
-        raise Error::InvalidUseCase unless ::Micro.case_or_flow?(use_case)
+        ::Micro::Case.check.use_case_or_flow!(use_case)
 
         input =
           defaults.empty? ? attributes : attributes.merge(Utils::Hashes.stringify_keys(defaults))
@@ -211,9 +217,9 @@ module Micro
 
         result = call!
 
-        return result if result.is_a?(Result)
+        ::Micro::Case.check.expected_result!(result, "#{self.class.name}#call!")
 
-        raise Error::UnexpectedResult.new("#{self.class.name}#call!")
+        result
       end
 
       def __attributes_errors_present?
