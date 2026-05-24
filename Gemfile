@@ -16,3 +16,7 @@ end
 group :development, :test do
   gem "awesome_print"
 end
+
+group :development do
+  gem "ruby-lsp", require: false if RUBY_VERSION >= "3.0"
+end
