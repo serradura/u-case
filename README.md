@@ -42,6 +42,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
     - [What are the default result types?](#what-are-the-default-result-types)
     - [How to define custom result types?](#how-to-define-custom-result-types)
     - [Is it possible to define a custom type without a result data?](#is-it-possible-to-define-a-custom-type-without-a-result-data)
+    - [How to declare a results contract?](#how-to-declare-a-results-contract)
     - [How to use the result hooks?](#how-to-use-the-result-hooks)
     - [Why the hook usage without a defined type exposes the result itself?](#why-the-hook-usage-without-a-defined-type-exposes-the-result-itself)
       - [Using decomposition to access the result data and type](#using-decomposition-to-access-the-result-data-and-type)
@@ -332,6 +333,58 @@ result.use_case.attributes # {"a"=>2, "b"=>"2"}
 # This feature is handy to handle failures in a flow
 # (this topic will be covered ahead).
 ```
+
+[⬆️ Back to Top](#table-of-contents-)
+
+#### How to declare a results contract?
+
+Answer: Use the `results do |on| ... end` macro to declare which result types your use case can return, and which keys each one requires. When a contract is declared, `Success(...)` / `Failure(...)` calls that use an undeclared type raise `Micro::Case::Error::UnexpectedResultType`, and calls that omit a declared required key raise `Micro::Case::Error::MissingResultKeys`.
+
+```ruby
+class Divide < Micro::Case
+  attributes :a, :b
+
+  results do |on|
+    on.failure(:attributes_must_be_numbers)
+    on.failure(:division_by_zero)
+
+    on.success(result: [:division])
+  end
+
+  def call!
+    return Failure(:attributes_must_be_numbers) unless Kind.of?(Numeric, a, b)
+    return Failure(:division_by_zero) if b == 0
+
+    Success result: { division: a / b }
+  end
+end
+
+Divide.call(a: 10, b: 2).data # => { division: 5 }
+Divide.call(a: 10, b: 0).type # => :division_by_zero
+Divide.call(a: 'x', b: 2).type # => :attributes_must_be_numbers
+```
+
+A type passed to `on.success` / `on.failure` without a `result:` argument declares the type with no required keys (any payload — including the implicit `{ type => true }` from `Failure(:my_type)` — is accepted). When `result: [:key1, :key2]` is given, those keys must be present in the result hash; extra keys are allowed.
+
+```ruby
+class Wrong < Micro::Case
+  results do |on|
+    on.success(result: [:value])
+    on.failure(:known)
+  end
+
+  def call!
+    Success(:other, result: { value: 1 })   # raises Micro::Case::Error::UnexpectedResultType
+    # Success(result: { wrong: 1 })         # raises Micro::Case::Error::MissingResultKeys
+    # Failure(:other)                       # raises Micro::Case::Error::UnexpectedResultType
+  end
+end
+```
+
+Notes:
+- Use cases without a `results` block keep their previous unrestricted behavior — the contract is opt-in.
+- Subclasses inherit the parent's contract.
+- Rescued exceptions in `Micro::Case::Safe` (which produce `Failure(result: exception)` automatically) bypass the contract.
 
 [⬆️ Back to Top](#table-of-contents-)
 
