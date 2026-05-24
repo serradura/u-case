@@ -60,9 +60,32 @@ module Micro
         end
       end
 
+      class UnexpectedResultType < TypeError
+        def initialize(use_case_class, kind, type, declared_types)
+          declared_list = declared_types.map { |t| ":#{t}" }.join(', ')
+          declared_list = '(none)' if declared_list.empty?
+
+          super(
+            "#{use_case_class.name} declared a results contract — " \
+            "#{kind} type :#{type} is not declared. Declared #{kind} types: #{declared_list}."
+          )
+        end
+      end
+
+      class MissingResultKeys < ArgumentError
+        def initialize(use_case_class, kind, type, missing_keys)
+          missing_list = missing_keys.map { |k| ":#{k}" }.join(', ')
+
+          super(
+            "#{use_case_class.name} declared a results contract — " \
+            "#{kind} :#{type} is missing required result keys: #{missing_list}."
+          )
+        end
+      end
+
       def self.by_wrong_usage?(exception)
         case exception
-        when Kind::Error, ArgumentError, InvalidResult, UnexpectedResult then true
+        when Kind::Error, ArgumentError, InvalidResult, UnexpectedResult, UnexpectedResultType then true
         else false
         end
       end

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This gem was originally published as `u-service` (versions 0.1.0 – 1.0.0) and renamed to `u-case` starting with `u-case 1.0.0` on 2019-09-15.
 
+## [5.5.0] - 2026-05-24
+### Added
+- `Micro::Case.results { |on| ... }` macro to declare a results contract — the allowed `Success`/`Failure` types and the result keys each one requires. `Success(...)` / `Failure(...)` calls that use an undeclared type now raise `Micro::Case::Error::UnexpectedResultType`; calls missing a declared required key raise `Micro::Case::Error::MissingResultKeys`. Use cases without a `results` block keep their previous unrestricted behavior. The check routes through `Micro::Case::Check#results_contract!`, so it is also bypassed when `config.disable_runtime_checks = true` (closes #22). Carve-outs so contracts don't break neighbouring features:
+  - Framework-generated `__failure_from_attributes_errors` (the auto-failure produced when `accept:`/`reject:` or ActiveModel validation rejects an input) bypasses the contract — it goes directly to `__set__` rather than through `Failure(...)` — so combining `results` with attribute validation no longer requires declaring `:invalid_attributes`.
+  - Rescued exceptions in `Micro::Case::Safe` (which produce `Failure(result: exception)`) bypass the contract.
+  - Result hashes with `String` keys are matched against the contract's symbolised required keys — `Success(result: { 'value' => 1 })` satisfies `result: [:value]`, mirroring `Result`'s own tolerance for either key type.
+  - Non-`Hash` / non-`Symbol` `result:` arguments fall through to the existing `Micro::Case::Error::InvalidResult` ("must be a Hash") instead of being misreported as missing keys.
+  - Non-`Symbol` `type` arguments fall through to `Micro::Case::Error::InvalidResultType` instead of being misreported as undeclared.
+  - `Micro::Case.results` raises `ArgumentError` when called on the abstract base class itself, so a stray declaration cannot leak a contract to every subclass in the process.
+
 ## [5.4.0] - 2026-05-24
 ### Added
 - `Micro::Case.config.disable_runtime_checks` config (default `false`) to skip the gem's internal argument/contract checks for better performance in production. All checks are consolidated in `Micro::Case::Check::Enabled` (the default) and `Micro::Case::Check::Disabled` (no-ops with the same signature); the active module is swapped via `Micro::Case.check`. Measured throughput win is JIT-dependent: within noise on stock Ruby (no JIT), ~3–5% on Ruby 3.2 +YJIT, ~4–7% on Ruby 4.0 +PRISM (see `benchmarks/perfomance/runtime_checks/compare.rb`). Closes #45.
@@ -468,6 +478,7 @@ First release under the `u-case` name (renamed from `u-service`).
 - `Micro::Service::Result` with `Success`/`Failure` factories and helper methods for returning typed results from services.
 - Runtime dependency on `u-attributes` for service input declaration.
 
+[5.5.0]: https://github.com/serradura/u-case/compare/v5.4.0...v5.5.0
 [5.4.0]: https://github.com/serradura/u-case/compare/v5.3.1...v5.4.0
 [5.3.1]: https://github.com/serradura/u-case/compare/v5.3.0...v5.3.1
 [5.3.0]: https://github.com/serradura/u-case/compare/v5.2.1...v5.3.0

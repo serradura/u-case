@@ -27,7 +27,7 @@ Principais objetivos deste projeto:
 Versão    | Documentação
 --------- | -------------
 unreleased| https://github.com/serradura/u-case/blob/main/README.md
-5.4.0     | https://github.com/serradura/u-case/blob/v5.x/README.md
+5.5.0     | https://github.com/serradura/u-case/blob/v5.x/README.md
 4.5.1     | https://github.com/serradura/u-case/blob/v4.x/README.md
 
 ## Índice <!-- omit in toc -->
@@ -40,6 +40,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
     - [O que são os tipos de resultados?](#o-que-são-os-tipos-de-resultados)
     - [Como definir tipos customizados de resultados?](#como-definir-tipos-customizados-de-resultados)
     - [É possível definir um tipo sem definir os dados do resultado?](#é-possível-definir-um-tipo-sem-definir-os-dados-do-resultado)
+    - [Como declarar um contrato de resultados?](#como-declarar-um-contrato-de-resultados)
     - [Como utilizar os hooks dos resultados?](#como-utilizar-os-hooks-dos-resultados)
     - [Por que o hook sem um tipo definido expõe o próprio resultado?](#por-que-o-hook-sem-um-tipo-definido-expõe-o-próprio-resultado)
       - [Usando decomposição para acessar os dados e tipo do resultado](#usando-decomposição-para-acessar-os-dados-e-tipo-do-resultado)
@@ -88,7 +89,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
 | u-case           | branch | ruby     | activemodel    | u-attributes   |
 | ---------------- | ------ | -------- | -------------- | -------------- |
 | unreleased       | main   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0  |
-| 5.4.0            | v5.x   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0  |
+| 5.5.0            | v5.x   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0  |
 | 5.1.0            | v5.x   | >= 2.7   | >= 6.0         | >= 2.7, < 4.0  |
 | 4.5.1            | v4.x   | >= 2.2.0 | >= 3.2, <= 8.1 | >= 2.7, < 3.0  |
 
@@ -330,6 +331,58 @@ result.use_case.attributes # {"a"=>2, "b"=>"2"}
 # Essa funcionalidade será muito útil para lidar com resultados de falha de um Flow
 # (este tópico será coberto em breve).
 ```
+
+[⬆️ Voltar para o índice](#índice-)
+
+#### Como declarar um contrato de resultados?
+
+Resposta: Utilize a macro `results do |on| ... end` para declarar quais tipos de resultado o caso de uso pode retornar e quais chaves cada um exige. Quando há um contrato declarado, chamadas a `Success(...)` / `Failure(...)` que usem um tipo não declarado levantam `Micro::Case::Error::UnexpectedResultType`, e chamadas que omitam uma chave obrigatória declarada levantam `Micro::Case::Error::MissingResultKeys`.
+
+```ruby
+class Divide < Micro::Case
+  attributes :a, :b
+
+  results do |on|
+    on.failure(:attributes_must_be_numbers)
+    on.failure(:division_by_zero)
+
+    on.success(result: [:division])
+  end
+
+  def call!
+    return Failure(:attributes_must_be_numbers) unless Kind.of?(Numeric, a, b)
+    return Failure(:division_by_zero) if b == 0
+
+    Success result: { division: a / b }
+  end
+end
+
+Divide.call(a: 10, b: 2).data # => { division: 5 }
+Divide.call(a: 10, b: 0).type # => :division_by_zero
+Divide.call(a: 'x', b: 2).type # => :attributes_must_be_numbers
+```
+
+Um tipo declarado em `on.success` / `on.failure` sem o argumento `result:` é aceito sem chaves obrigatórias (qualquer payload — inclusive o implícito `{ tipo => true }` de `Failure(:meu_tipo)` — é aceito). Quando `result: [:chave_1, :chave_2]` é informado, essas chaves precisam estar presentes no hash de resultado; chaves extras são permitidas.
+
+```ruby
+class Wrong < Micro::Case
+  results do |on|
+    on.success(result: [:value])
+    on.failure(:known)
+  end
+
+  def call!
+    Success(:other, result: { value: 1 })   # levanta Micro::Case::Error::UnexpectedResultType
+    # Success(result: { wrong: 1 })         # levanta Micro::Case::Error::MissingResultKeys
+    # Failure(:other)                       # levanta Micro::Case::Error::UnexpectedResultType
+  end
+end
+```
+
+Notas:
+- Casos de uso sem o bloco `results` mantêm o comportamento anterior sem restrições — o contrato é opt-in.
+- Subclasses herdam o contrato declarado na classe pai.
+- Exceções capturadas em `Micro::Case::Safe` (que geram `Failure(result: exception)` automaticamente) são exemptas do contrato.
 
 [⬆️ Voltar para o índice](#índice-)
 

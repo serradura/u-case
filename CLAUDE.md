@@ -90,8 +90,17 @@ Both files are user-facing — keep them in sync with the code:
 - **`README.md` and `README.pt-BR.md`**: the **Documentation** table and the
   **Compatibility** table at the top reference the latest released version
   and its dependency bounds. Update both files together — they are
-  translations of each other and must stay in lockstep. If you change a
-  documented API, update both READMEs in the same commit.
+  translations of each other and must stay in lockstep. Any user-visible
+  API change requires a README update in the same commit:
+  - **New public API** (new macro, new module-level method, new public
+    instance method, new error class users can rescue, new config option) —
+    add or extend the relevant section in both READMEs with an example.
+  - **Changed documented API** — update the existing section in both
+    READMEs to match the new behavior.
+  - **Removed/deprecated API** — remove or mark the section in both
+    READMEs.
+  - Pure internal refactors, CI tweaks, and test-only changes don't need
+    README updates.
 
 ## Internal argument checks live in `Micro::Case::Check`
 

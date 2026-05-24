@@ -145,4 +145,32 @@ class Micro::Case::DisableRuntimeChecksTest < Minitest::Test
     assert_predicate(result, :success?)
     assert_equal({ v: 6 }, result.value)
   end
+
+  class UseCaseWithBadContract < Micro::Case
+    results do |on|
+      on.success(result: [:value])
+      on.failure(:known)
+    end
+
+    def call!
+      Success(:undeclared, result: { value: 1 })
+    end
+  end
+
+  def test_disabling_skips_the_results_contract_check
+    Micro::Case.config do |config|
+      config.disable_runtime_checks = true
+    end
+
+    result = UseCaseWithBadContract.call
+
+    assert_predicate(result, :success?)
+    assert_equal(:undeclared, result.type)
+  end
+
+  def test_enabled_raises_for_the_results_contract_check
+    assert_raises(Micro::Case::Error::UnexpectedResultType) do
+      UseCaseWithBadContract.call
+    end
+  end
 end
