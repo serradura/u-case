@@ -3,6 +3,14 @@
 module Micro
   class Case
     class Safe < ::Micro::Case
+      def self.inherited(subclass)
+        if Config.instance.disable_safe_features
+          raise Error::SafeFeaturesDisabled.new('Micro::Case::Safe')
+        end
+
+        super
+      end
+
       def self.__flow_builder__
         Cases::Safe::Flow
       end

@@ -13,6 +13,10 @@ module Micro
     end
 
     def self.safe_flow(args)
+      if Case::Config.instance.disable_safe_features
+        raise Case::Error::SafeFeaturesDisabled.new('Micro::Cases.safe_flow')
+      end
+
       Safe::Flow.build(args)
     end
 

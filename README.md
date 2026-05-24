@@ -60,6 +60,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
   - [`Micro::Case::Safe` - Is there some feature to auto handle exceptions inside of a use case or flow?](#microcasesafe---is-there-some-feature-to-auto-handle-exceptions-inside-of-a-use-case-or-flow)
     - [`Micro::Cases::Safe::Flow`](#microcasessafeflow)
     - [`Micro::Case::Result#on_exception`](#microcaseresulton_exception)
+    - [Opting out of the safe mechanism](#opting-out-of-the-safe-mechanism)
   - [Validating attributes with `accept:` / `reject:`](#validating-attributes-with-accept--reject)
   - [`u-case/with_activemodel_validation` - How to validate the use case attributes?](#u-casewith_activemodel_validation---how-to-validate-the-use-case-attributes)
     - [If I enabled the auto validation, is it possible to disable it only in specific use cases?](#if-i-enabled-the-auto-validation-is-it-possible-to-disable-it-only-in-specific-use-cases)
@@ -1070,6 +1071,28 @@ As you can see, this hook has the same behavior of `result.on_failure(:exception
 
 [⬆️ Back to Top](#table-of-contents-)
 
+#### Opting out of the safe mechanism
+
+The "safe" mechanism is opinionated: it converts any unhandled exception inside a use case (or any step of a flow) into a failure result with `type: :exception`. That is powerful, but it can also produce a **fragmented codebase**, where some exceptions are handled with `rescue` inside `call!` and others are handled later via `on_exception` / `on_failure(:exception)` — making the control flow hard to reason about.
+
+If you prefer a single, explicit convention for exception handling — namely, plain `rescue` statements inside your use cases — you can disable the safe APIs entirely:
+
+```ruby
+Micro::Case.config do |config|
+  config.disable_safe_features = true
+end
+```
+
+Once enabled, the following will raise `Micro::Case::Error::SafeFeaturesDisabled`, ensuring no one in the codebase can reintroduce the safe path by accident:
+
+- Subclassing `Micro::Case::Safe`
+- Calling `Micro::Cases.safe_flow(...)`
+- Calling `Micro::Case::Result#on_exception`
+
+See [`Micro::Case.config`](#microcaseconfig) for the full list of available toggles.
+
+[⬆️ Back to Top](#table-of-contents-)
+
 ### Validating attributes with `accept:` / `reject:`
 
 Since `u-case 5.2.0`, every use case includes the [`accept` extension](https://github.com/serradura/u-attributes#accept-extension) from [`u-attributes`](https://github.com/serradura/u-attributes) (requires `u-attributes >= 2.8`). You can declare type expectations (or any other check) directly on the attribute, and the use case will fail automatically with the `:invalid_attributes` type when any attribute is rejected — no need to validate inside `call!`.
@@ -1225,6 +1248,14 @@ Micro::Case.config do |config|
 
   # Use to enable/disable the `Micro::Case::Results#transitions`.
   config.enable_transitions = true
+
+  # Use to forbid the "safe" features and ensure a single way to handle exceptions
+  # (via standard `rescue` statements). When set to `true`, the following will raise
+  # `Micro::Case::Error::SafeFeaturesDisabled`:
+  #   - Subclassing `Micro::Case::Safe`
+  #   - Calling `Micro::Cases.safe_flow(...)`
+  #   - Calling `Micro::Case::Result#on_exception`
+  config.disable_safe_features = false
 end
 ```
 

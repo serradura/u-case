@@ -58,6 +58,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
   - [`Micro::Case::Safe` - Existe algum recurso para lidar automaticamente com exceções dentro de um caso de uso ou fluxo?](#microcasesafe---existe-algum-recurso-para-lidar-automaticamente-com-exceções-dentro-de-um-caso-de-uso-ou-fluxo)
     - [`Micro::Cases::Safe::Flow`](#microcasessafeflow)
     - [`Micro::Case::Result#on_exception`](#microcaseresulton_exception)
+    - [Desabilitando o mecanismo "safe"](#desabilitando-o-mecanismo-safe)
   - [Validando atributos com `accept:` / `reject:`](#validando-atributos-com-accept--reject)
   - [`u-case/with_activemodel_validation` - Como validar os atributos do caso de uso?](#u-casewith_activemodel_validation---como-validar-os-atributos-do-caso-de-uso)
     - [Se eu habilitei a validação automática, é possível desabilitá-la apenas em casos de uso específicos?](#se-eu-habilitei-a-validação-automática-é-possível-desabilitá-la-apenas-em-casos-de-uso-específicos)
@@ -1071,6 +1072,28 @@ Como você pode ver, este hook tem o mesmo comportamento de `result.on_failure(:
 
 [⬆️ Voltar para o índice](#índice-)
 
+#### Desabilitando o mecanismo "safe"
+
+O mecanismo "safe" é opinativo: ele converte qualquer exceção não tratada dentro de um caso de uso (ou em qualquer passo de um fluxo) em um resultado de falha com `type: :exception`. Isso é poderoso, mas também pode gerar uma **base de código fragmentada**, onde algumas exceções são tratadas com `rescue` dentro do `call!` e outras só são tratadas mais tarde via `on_exception` / `on_failure(:exception)` — tornando o fluxo de controle difícil de acompanhar.
+
+Se você prefere uma única convenção explícita para o tratamento de exceções — `rescue` padrão dentro dos seus casos de uso — é possível desabilitar as APIs "safe" por completo:
+
+```ruby
+Micro::Case.config do |config|
+  config.disable_safe_features = true
+end
+```
+
+Com isso ativo, os usos abaixo levantarão `Micro::Case::Error::SafeFeaturesDisabled`, garantindo que ninguém na base de código reintroduza o caminho "safe" sem querer:
+
+- Herdar de `Micro::Case::Safe`
+- Chamar `Micro::Cases.safe_flow(...)`
+- Chamar `Micro::Case::Result#on_exception`
+
+Veja [`Micro::Case.config`](#microcaseconfig) para a lista completa de configurações disponíveis.
+
+[⬆️ Voltar para o índice](#índice-)
+
 ### Validando atributos com `accept:` / `reject:`
 
 Desde a versão `5.2.0` do `u-case`, todo caso de uso já inclui a [extensão `accept`](https://github.com/serradura/u-attributes#accept-extension) do [`u-attributes`](https://github.com/serradura/u-attributes) (requer `u-attributes >= 2.8`). Você pode declarar a expectativa de tipo (ou qualquer outra verificação) diretamente no atributo, e o caso de uso falhará automaticamente com o tipo `:invalid_attributes` quando algum atributo for rejeitado — sem precisar validar dentro do `call!`.
@@ -1226,6 +1249,14 @@ Micro::Case.config do |config|
 
   # Use para habilitar/desabilitar o `Micro::Case::Results#transitions`.
   config.enable_transitions = true
+
+  # Use para proibir as funcionalidades "safe" e garantir uma única forma de tratar
+  # exceções (via `rescue` padrão). Quando `true`, os itens abaixo levantarão
+  # `Micro::Case::Error::SafeFeaturesDisabled`:
+  #   - Herdar de `Micro::Case::Safe`
+  #   - Chamar `Micro::Cases.safe_flow(...)`
+  #   - Chamar `Micro::Case::Result#on_exception`
+  config.disable_safe_features = false
 end
 ```
 

@@ -13,6 +13,16 @@ module Micro
         )
       end
 
+      def disable_safe_features=(value)
+        @disable_safe_features = Kind::Boolean[value]
+      end
+
+      def disable_safe_features
+        return @disable_safe_features if defined?(@disable_safe_features)
+
+        @disable_safe_features = false
+      end
+
       def enable_activemodel_validation=(value)
         return unless Kind::Boolean[value]
 
