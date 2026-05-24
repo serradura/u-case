@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This gem was originally published as `u-service` (versions 0.1.0 – 1.0.0) and renamed to `u-case` starting with `u-case 1.0.0` on 2019-09-15.
 
+## [5.3.1] - 2026-05-23
+### Added
+- This `CHANGELOG.md`, covering the full history of the gem (from `u-service 0.1.0` through `u-case 5.3.1`) following the [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/) spec.
+- `changelog_uri`, `source_code_uri` and `bug_tracker_uri` entries in `spec.metadata` so RubyGems.org surfaces direct links from the gem page and tools like `bundle outdated` can deep-link to the changelog.
+
 ## [5.3.0] - 2026-05-23
 ### Added
 - `Micro::Case.config.disable_safe_features` config (default `false`) to forbid `Safe` usage so a codebase can standardize on plain `rescue` for exception handling. When enabled, subclassing `Micro::Case::Safe`, calling `Micro::Cases.safe_flow(...)` or `Micro::Case::Result#on_exception` raise `Micro::Case::Error::SafeFeaturesDisabled` (closes #47, #141).
@@ -458,6 +463,7 @@ First release under the `u-case` name (renamed from `u-service`).
 - `Micro::Service::Result` with `Success`/`Failure` factories and helper methods for returning typed results from services.
 - Runtime dependency on `u-attributes` for service input declaration.
 
+[5.3.1]: https://github.com/serradura/u-case/compare/v5.3.0...v5.3.1
 [5.3.0]: https://github.com/serradura/u-case/compare/v5.2.1...v5.3.0
 [5.2.1]: https://github.com/serradura/u-case/compare/v5.2.0...v5.2.1
 [5.2.0]: https://github.com/serradura/u-case/compare/v5.1.0...v5.2.0
