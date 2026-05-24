@@ -11,6 +11,7 @@ module Micro
     require 'micro/case/utils'
     require 'micro/case/error'
     require 'micro/case/result'
+    require 'micro/case/result/contract'
     require 'micro/case/check'
     require 'micro/case/config'
     require 'micro/case/safe'
@@ -64,6 +65,19 @@ module Micro
 
     def self.flow(*args)
       @__flow_use_cases = Cases::Utils.map_use_cases(args)
+    end
+
+    def self.results(&block)
+      raise ArgumentError, 'a block is required'.freeze unless block
+
+      @__results_contract = Result::Contract.define(&block)
+    end
+
+    def self.__results_contract__
+      return @__results_contract if defined?(@__results_contract)
+
+      parent = superclass
+      parent.respond_to?(:__results_contract__) ? parent.__results_contract__ : nil
     end
 
     class << self
@@ -244,6 +258,8 @@ module Micro
       def Success(type = :ok, result: nil)
         value = result || type
 
+        ::Micro::Case.check.results_contract!(self.class, :success, type, value)
+
         __get_result(true, value, type)
       end
 
@@ -260,9 +276,10 @@ module Micro
 
         type = MapFailureType.call(value, type)
 
+        ::Micro::Case.check.results_contract!(self.class, :failure, type, value)
+
         __get_result(false, value, type)
       end
-
 
       def Check(type = nil, result: nil, on: Kind::Empty::HASH)
         result_key = type || :check

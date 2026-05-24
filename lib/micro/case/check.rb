@@ -59,6 +59,30 @@ module Micro
         def hash!(arg)
           Kind::Hash[arg]
         end
+
+        def results_contract!(use_case_class, kind, type, value)
+          contract = use_case_class.__results_contract__
+          return unless contract
+          return if value.is_a?(Exception)
+
+          if kind == :success
+            declared = contract.success_declared?(type)
+            declared_types = contract.successes.keys
+            required = contract.success_keys(type) if declared
+          else
+            declared = contract.failure_declared?(type)
+            declared_types = contract.failures.keys
+            required = contract.failure_keys(type) if declared
+          end
+
+          raise Error::UnexpectedResultType.new(use_case_class, kind, type, declared_types) unless declared
+          return if required.nil? || required.empty?
+
+          data = value.is_a?(Hash) ? value : { type => true }
+          missing = required - data.keys
+
+          raise Error::MissingResultKeys.new(use_case_class, kind, type, missing) unless missing.empty?
+        end
       end
 
       module Disabled
@@ -76,6 +100,7 @@ module Micro
         def flow_use_cases!(_use_cases); end
         def map_args!(_args); end
         def hash!(arg); arg; end
+        def results_contract!(_use_case_class, _kind, _type, _value); end
       end
     end
   end
