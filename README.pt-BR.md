@@ -635,28 +635,44 @@ Todo::FindAllForUser
 
 #### Steps internos — construindo um flow inline dentro do `call!`
 
-`Result#then` (e seu alias `|`) também é a terceira forma da gem de
-**compor um flow**, lado a lado com `Micro::Cases.flow(...)` e a macro
+`Result#then` (e seu alias `|`) é a **terceira forma de compor um
+flow** no u-case, lado a lado com `Micro::Cases.flow(...)` e a macro
 de nível de classe `flow ...`. Em vez de ligar casos de uso entre si,
-você mantém o encadeamento dentro do `call!` de um único caso de uso:
-cada elo é um método (ou lambda) que retorna um resultado `Success` /
-`Failure`, e os dados de cada elo alimentam o próximo. Cada elo é
-registrado como uma transição separada, exatamente como se fosse um
+você mantém o encadeamento *dentro* do `call!` de um único caso de
+uso: cada elo é um método, lambda ou outra classe de caso de uso;
+cada elo retorna um `Micro::Case::Result`; os dados do `Success` de
+cada elo viram os argumentos nomeados do próximo; e cada elo
+contribui com uma linha em `result.transitions` — exatamente como um
 step em um flow de nível superior.
 
-`Result#then` (ou `|`) aceita:
+##### O que `Result#then` (e `|`) aceitam
 
-- Um **`Symbol`** — o nome de um método de instância do caso de uso.
-- Um objeto **`Method` ligado** — `method(:nome)`.
-- Uma **lambda / proc**.
-- Outra **classe de caso de uso** (o uso padrão já documentado acima).
+| Formato | Exemplo |
+| --- | --- |
+| `Symbol` (nome de método) | `result.then(:sum_a_and_b)` |
+| Objeto `Method` ligado | `result.then(method(:sum_a_and_b))` |
+| `Lambda` / `Proc` | `result.then(-> data { sum_a_and_b(**data) })` |
+| Classe de caso de uso | `result.then(SumHalf)` |
+| `Symbol` + Hash de defaults | `result.then(:add, number: 3)` |
+| Bloco | `result.then { \|r\| r.success? ? r[:sum] : 0 }` |
 
-O método conectado recebe os dados do resultado anterior como argumentos
-nomeados (`keyword arguments`) e deve retornar um
-`Micro::Case::Result` (`Success(...)` ou `Failure(...)`). Retornar
-qualquer outra coisa levanta `Micro::Case::Error::UnexpectedResult`.
+O método conectado **precisa** retornar um `Micro::Case::Result`.
+Qualquer outro retorno levanta `Micro::Case::Error::UnexpectedResult`
+— por exemplo um método que devolve um `Hash` será rejeitado com uma
+mensagem do tipo `MeuCase#method(:foo) must return an instance of
+Micro::Case::Result`.
+
+##### Um exemplo mínimo
 
 ```ruby
+class SumHalf < Micro::Case
+  attribute :sum
+
+  def call!
+    Success :third_sum, result: { sum: sum + 0.5 }
+  end
+end
+
 class DoSomeSum < Micro::Case
   attributes :a, :b
 
@@ -682,16 +698,45 @@ class DoSomeSum < Micro::Case
   end
 end
 
-DoSomeSum.call(a: 1, b: 2)
-# success? == true, result.data == { sum: 6.5 }
-# transitions registra 4 entradas:
-#   1. validate_numbers      -> Success(:valid)
-#   2. :sum_a_and_b          -> Success(:first_sum,  sum: 3)
-#   3. :add  (com number: 3) -> Success(:second_sum, sum: 6)
-#   4. SumHalf               -> Success(:third_sum,  sum: 6.5)
+result = DoSomeSum.call(a: 1, b: 2)
+
+result.success?    # true
+result.data        # { sum: 6.5 }
+result.transitions # 4 entradas — veja abaixo
 ```
 
-O operador `|` é equivalente a `.then(...)`:
+`result.transitions` para a chamada acima:
+
+```ruby
+[
+  { use_case: { class: DoSomeSum, attributes: { a: 1, b: 2 } },
+    success: { type: :valid,       result: { valid: true } },
+    accessible_attributes: [:a, :b] },
+
+  { use_case: { class: DoSomeSum, attributes: { a: 1, b: 2 } },
+    success: { type: :first_sum,   result: { sum: 3 } },
+    accessible_attributes: [:a, :b, :valid] },
+
+  { use_case: { class: DoSomeSum, attributes: { a: 1, b: 2 } },
+    success: { type: :second_sum,  result: { sum: 6 } },
+    accessible_attributes: [:a, :b, :valid, :number, :sum] },
+
+  { use_case: { class: SumHalf,   attributes: { sum: 6 } },
+    success: { type: :third_sum,  result: { sum: 6.5 } },
+    accessible_attributes: [:a, :b, :valid, :number, :sum] }
+]
+```
+
+Elos baseados em `Symbol`, `Method` e `lambda` rodam **como o caso de
+uso hospedeiro**, portanto as três primeiras transições reportam
+`class: DoSomeSum`. Apenas o elo `SumHalf`, que é outra classe de
+caso de uso, contribui com uma transição com `use_case.class`
+diferente. O `accessible_attributes` cresce conforme o `Success` de
+cada elo é mesclado nos dados acumulados.
+
+##### O alias `|` (pipe)
+
+`|` é açúcar para `.then(...)`. O exemplo anterior fica:
 
 ```ruby
 def call!
@@ -699,8 +744,13 @@ def call!
 end
 ```
 
-As variantes com lambda e `Method` recebem os dados acumulados
-posicionalmente:
+Ambas as formas produzem `result.data` e `result.transitions`
+idênticos.
+
+##### Formas lambda / `Method`
+
+Lambdas (e objetos `Method` ligados) recebem os dados acumulados
+**posicionalmente** como um único `Hash`:
 
 ```ruby
 def call!
@@ -711,21 +761,151 @@ def call!
 end
 ```
 
-> **Paridade comportamental:** um caso de uso que usa steps internos
-> pode ser colocado em qualquer `Micro::Cases.flow(...)`, `safe_flow`,
-> `flow ...` de nível de classe ou flow com `transaction: true` — suas
-> transições internas se intercalam com as transições dos steps
-> externos na ordem de execução, e a classe hospedeira aparece como
-> `use_case.class` para cada transição interna. Sob `transaction:
-> true`, um `Failure` retornado por um step interno reverte as
-> escritas de banco feitas por steps internos anteriores, da mesma
-> forma que uma falha em um step externo.
+##### Uma falha interrompe a cadeia
+
+Retornar `Failure(...)` em qualquer elo interrompe o restante da
+cadeia imediatamente — exatamente como um step de um flow de nível
+superior retornando uma falha. Os demais elos `.then(...)` / `|` não
+são invocados, e o `result` final é a falha:
+
+```ruby
+DoSomeSum.call(a: 1, b: '2')
+
+# validate_numbers retorna Failure() → :sum_a_and_b, :add e SumHalf
+# nunca rodam. result.failure? == true, result.transitions tem 1
+# entrada.
+```
+
+##### Usando um caso com steps internos dentro de um flow externo
+
+Um caso de uso que compõe internamente com `.then(...)` continua
+sendo apenas um caso de uso, portanto pode ser colocado em qualquer
+construtor de flow:
+
+```ruby
+SignUp = Micro::Cases.flow([
+  NormalizeParams,
+  DoSomeSum,          # ← usa .then(:method) internamente
+  EnqueueIndexingJob
+])
+```
+
+As transições internas da classe hospedeira são intercaladas com as
+transições dos steps externos na ordem de execução. Se `DoSomeSum`
+produz 4 transições internas e o flow externo tem 2 outros steps,
+`result.transitions` final tem 6 entradas.
+
+##### Steps internos **sem** transações
+
+Por padrão — isto é, quando nem a classe hospedeira nem o flow
+externo usam `transaction: true` — os steps internos se comportam
+como qualquer outro código em `call!`: efeitos colaterais feitos por
+elos anteriores **persistem** mesmo se um elo posterior retornar
+`Failure`. A cadeia é interrompida, mas tudo que já foi escrito no
+banco permanece escrito:
+
+```ruby
+class CreateUserWithProfileInline < Micro::Case
+  attributes :name, :info
+
+  def call!
+    create_user
+      .then(:create_profile)
+  end
+
+  private
+
+  def create_user
+    user = User.create(name: name)
+    Success result: { user: user }
+  end
+
+  def create_profile(user:, **)
+    profile = UserProfile.create(user_id: user.id, info: info)
+    return Failure(:invalid_profile) if profile.errors.any?
+
+    Success result: { user: user, profile: profile }
+  end
+end
+
+CreateUserWithProfileInline.call(name: 'Rodrigo', info: '')
+# create_user já INSERIU a linha do user; create_profile falhou.
+# user está persistido; profile não. Não há rollback automático.
+```
+
+Se você precisar que os efeitos colaterais parciais sejam desfeitos,
+é preciso envolver a cadeia em uma transação — usando o helper
+`transaction { ... }` inline (veja a próxima seção) ou colocando o
+caso hospedeiro dentro de um flow com `transaction: true`.
+
+##### Steps internos **com** transações
+
+Existem duas formas naturais de dar rollback transacional aos steps
+internos:
+
+**1. Envolver o caso hospedeiro em um flow com `transaction: true`.**
+Esta é a forma recomendada assim que você tem mais de um step. A
+transação cobre a chamada inteira, então um `Failure` *em qualquer
+ponto* — incluindo de qualquer elo `.then(:método)` interno —
+reverte todas as escritas de banco feitas na mesma chamada:
+
+```ruby
+SignUp = Micro::Cases.flow(transaction: true, steps: [
+  NormalizeParams,
+  CreateUserWithProfileInline,   # ← falha interna agora reverte
+  EnqueueIndexingJob
+])
+
+# Ou no nível de classe:
+class SignUp < Micro::Case
+  flow(transaction: true, steps: [
+    NormalizeParams,
+    CreateUserWithProfileInline,
+    EnqueueIndexingJob
+  ])
+end
+```
+
+Se `create_profile` (o elo `.then(:create_profile)` interno) retornar
+`Failure(:invalid_profile)`, a linha de `User` inserida antes por
+`create_user` é revertida como parte da mesma
+`ActiveRecord::Base.transaction`. O resultado ainda expõe o tipo da
+falha e as transições parciais, mas nenhuma linha permanece no banco.
+
+**2. Usar o helper inline `Micro::Case#transaction`** para escopar o
+rollback a um único `call!` sem envolver um flow:
+
+```ruby
+class CreateUserWithProfileInline < Micro::Case
+  def call!
+    transaction {
+      create_user
+        .then(:create_profile)
+    }
+  end
+end
+```
+
+Útil quando o caso hospedeiro é invocado isoladamente (não dentro de
+um flow) e você ainda quer que a cadeia interna seja atômica. O bloco
+`transaction` retorna o `Result` da cadeia como está, então você pode
+continuar compondo com `Result#then` depois dele.
+
+As duas abordagens **se compõem**. Se você colocar
+`CreateUserWithProfileInline` (que já usa `transaction { ... }`
+inline) dentro de um flow externo com `transaction: true`, o
+ActiveRecord junta a transação interna à externa por padrão — uma
+falha externa reverte também as escritas internas. Veja as
+**Observações de comportamento** na
+[seção de transações abaixo](#como-executar-um-caso-de-uso-ou-flow-dentro-de-uma-transação-de-banco-de-dados)
+para as regras completas de aninhamento / achatamento.
 
 > **Nota:** Veja `test/micro/case/internal_steps/with_symbols_test.rb`,
 > `with_methods_test.rb` e `with_lambdas_test.rb` para exemplos
 > completos de cada forma, e
 > `test/micro/cases/flow/internal_steps_in_flows_test.rb` para a
-> interação com flows e transações.
+> interação com flows e transações (acumulação, transições e
+> rollback em todos os níveis de aninhamento).
 
 [⬆️ Voltar para o índice](#índice-)
 

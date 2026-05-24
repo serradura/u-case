@@ -636,28 +636,42 @@ Todo::FindAllForUser
 
 #### Internal steps — building a flow inline inside `call!`
 
-`Result#then` (and its `|` pipe alias) is also the gem's third way of
-**composing a flow**, side by side with `Micro::Cases.flow(...)` and the
+`Result#then` (and its `|` pipe alias) is u-case's **third way of
+composing a flow**, side by side with `Micro::Cases.flow(...)` and the
 class-level `flow ...` macro. Instead of wiring sibling use cases
-together, you can keep the chain inside a single use case's `call!`:
-each link is a method (or lambda) that returns a `Success` / `Failure`
-result, and each link's data feeds the next one. Every link is
-recorded as a separate transition, exactly as if it were a step in a
-top-level flow.
+together, you keep the chain *inside* a single use case's `call!`:
+each link is a method, lambda or another use case class; each link
+returns a `Micro::Case::Result`; each link's `Success` data becomes
+the next link's keyword arguments; and each link contributes a row to
+`result.transitions` — just like a step in a top-level flow.
 
-`Result#then` (or `|`) accepts:
+##### What `Result#then` (and `|`) accept
 
-- A **`Symbol`** — the name of an instance method on the host use case.
-- A **bound `Method` object** — `method(:some_method)`.
-- A **lambda / proc**.
-- Another **use case class** (the standard case already documented above).
+| Argument shape | Example |
+| --- | --- |
+| `Symbol` (method name) | `result.then(:sum_a_and_b)` |
+| Bound `Method` object | `result.then(method(:sum_a_and_b))` |
+| `Lambda` / `Proc` | `result.then(-> data { sum_a_and_b(**data) })` |
+| Use case class | `result.then(SumHalf)` |
+| `Symbol` + Hash defaults | `result.then(:add, number: 3)` |
+| Block | `result.then { \|r\| r.success? ? r[:sum] : 0 }` |
 
-The connecting method receives the previous result's data as keyword
-arguments and must return a `Micro::Case::Result` (`Success(...)` or
-`Failure(...)`). Returning anything else raises
-`Micro::Case::Error::UnexpectedResult`.
+The connecting method **must** return a `Micro::Case::Result`. Anything
+else raises `Micro::Case::Error::UnexpectedResult` — for example a
+method that returns a plain `Hash` will be rejected with a message like
+`MyCase#method(:foo) must return an instance of Micro::Case::Result`.
+
+##### A minimal example
 
 ```ruby
+class SumHalf < Micro::Case
+  attribute :sum
+
+  def call!
+    Success :third_sum, result: { sum: sum + 0.5 }
+  end
+end
+
 class DoSomeSum < Micro::Case
   attributes :a, :b
 
@@ -683,16 +697,44 @@ class DoSomeSum < Micro::Case
   end
 end
 
-DoSomeSum.call(a: 1, b: 2)
-# success? == true, result.data == { sum: 6.5 }
-# transitions records 4 entries:
-#   1. validate_numbers     -> Success(:valid)
-#   2. :sum_a_and_b         -> Success(:first_sum,  sum: 3)
-#   3. :add  (with number:3) -> Success(:second_sum, sum: 6)
-#   4. SumHalf              -> Success(:third_sum,  sum: 6.5)
+result = DoSomeSum.call(a: 1, b: 2)
+
+result.success?    # true
+result.data        # { sum: 6.5 }
+result.transitions # 4 entries — see below
 ```
 
-The `|` operator is equivalent to `.then(...)`:
+`result.transitions` for the call above:
+
+```ruby
+[
+  { use_case: { class: DoSomeSum, attributes: { a: 1, b: 2 } },
+    success: { type: :valid,       result: { valid: true } },
+    accessible_attributes: [:a, :b] },
+
+  { use_case: { class: DoSomeSum, attributes: { a: 1, b: 2 } },
+    success: { type: :first_sum,   result: { sum: 3 } },
+    accessible_attributes: [:a, :b, :valid] },
+
+  { use_case: { class: DoSomeSum, attributes: { a: 1, b: 2 } },
+    success: { type: :second_sum,  result: { sum: 6 } },
+    accessible_attributes: [:a, :b, :valid, :number, :sum] },
+
+  { use_case: { class: SumHalf,   attributes: { sum: 6 } },
+    success: { type: :third_sum,  result: { sum: 6.5 } },
+    accessible_attributes: [:a, :b, :valid, :number, :sum] }
+]
+```
+
+Symbol-, method- and lambda-based links all run **as the host use
+case**, so the first three transitions report `class: DoSomeSum`. Only
+the `SumHalf` link, which is another use case class, contributes a
+transition with a different `use_case.class`. The `accessible_attributes`
+grows as each link's `Success` output is merged into the running data.
+
+##### The `|` (pipe) alias
+
+`|` is sugar for `.then(...)`. The previous example becomes:
 
 ```ruby
 def call!
@@ -700,7 +742,12 @@ def call!
 end
 ```
 
-Lambda and `Method` variants take the accumulated data positionally:
+Both forms produce identical `result.data` and `result.transitions`.
+
+##### Lambda / `Method` forms
+
+Lambdas (and bound `Method` objects) receive the accumulated data
+**positionally** as a single Hash:
 
 ```ruby
 def call!
@@ -711,20 +758,147 @@ def call!
 end
 ```
 
-> **Behavioral parity:** a use case that uses internal steps can be
-> dropped into any `Micro::Cases.flow(...)`, `safe_flow`, class-level
-> `flow ...`, or `transaction: true` flow — its internal transitions
-> interleave with the outer flow's leaf transitions in execution order,
-> and the host class shows up as the `use_case.class` for every
-> internal transition. Under `transaction: true`, a `Failure` returned
-> from an internal step rolls back database writes made by earlier
-> internal steps just like a leaf failure would.
+##### Failure short-circuits the chain
+
+Returning `Failure(...)` from any link halts the rest of the chain
+immediately — exactly like a step in a top-level flow returning a
+failure. The remaining `.then(...)` / `|` links are not invoked, and
+the final `result` is the failure:
+
+```ruby
+DoSomeSum.call(a: 1, b: '2')
+
+# validate_numbers returns Failure() → :sum_a_and_b, :add and SumHalf
+# never run. result.failure? == true, result.transitions has 1 entry.
+```
+
+##### Using an internal-step case inside an outer flow
+
+A use case that composes internally with `.then(...)` is just a use
+case, so you can drop it into any flow constructor:
+
+```ruby
+SignUp = Micro::Cases.flow([
+  NormalizeParams,
+  DoSomeSum,          # ← uses .then(:method) internally
+  EnqueueIndexingJob
+])
+```
+
+The host class's internal transitions are interleaved with the outer
+flow's leaf transitions in execution order. If `DoSomeSum` produces 4
+internal transitions and the outer flow has 2 other leaf steps, the
+final `result.transitions` has 6 entries.
+
+##### Internal steps **without** transactions
+
+By default — i.e. when neither the host class nor the outer flow uses
+`transaction: true` — internal steps behave like any other code in
+`call!`: side-effects made by earlier links **persist** even if a
+later link returns `Failure`. The chain is interrupted, but anything
+already written to the database stays written:
+
+```ruby
+class CreateUserWithProfileInline < Micro::Case
+  attributes :name, :info
+
+  def call!
+    create_user
+      .then(:create_profile)
+  end
+
+  private
+
+  def create_user
+    user = User.create(name: name)
+    Success result: { user: user }
+  end
+
+  def create_profile(user:, **)
+    profile = UserProfile.create(user_id: user.id, info: info)
+    return Failure(:invalid_profile) if profile.errors.any?
+
+    Success result: { user: user, profile: profile }
+  end
+end
+
+CreateUserWithProfileInline.call(name: 'Rodrigo', info: '')
+# create_user already INSERTed the user row; create_profile failed.
+# user is persisted; profile is not. No automatic rollback.
+```
+
+If you need the partial side-effects to be undone, you must wrap the
+chain in a transaction — either using the inline `transaction { ... }`
+helper (see the next section) or by putting the host case inside a
+`transaction: true` flow.
+
+##### Internal steps **with** transactions
+
+There are two natural ways to give internal steps transactional
+rollback:
+
+**1. Wrap the host case in a `transaction: true` flow.** This is the
+recommended way once you have more than one step. The transaction
+spans the whole call, so a `Failure` *anywhere* — including from any
+internal `.then(:method)` link — rolls back every database write
+performed by the same call:
+
+```ruby
+SignUp = Micro::Cases.flow(transaction: true, steps: [
+  NormalizeParams,
+  CreateUserWithProfileInline,   # ← internal failure now rolls back
+  EnqueueIndexingJob
+])
+
+# Or class-level:
+class SignUp < Micro::Case
+  flow(transaction: true, steps: [
+    NormalizeParams,
+    CreateUserWithProfileInline,
+    EnqueueIndexingJob
+  ])
+end
+```
+
+If `create_profile` (the internal `.then(:create_profile)` link)
+returns `Failure(:invalid_profile)`, the `User` row inserted earlier
+by `create_user` is rolled back as part of the same
+`ActiveRecord::Base.transaction`. The result still surfaces the
+failure type and the partial transitions, but no row is left behind.
+
+**2. Use the inline `Micro::Case#transaction` helper** to scope the
+rollback to a single `call!` without involving a flow:
+
+```ruby
+class CreateUserWithProfileInline < Micro::Case
+  def call!
+    transaction {
+      create_user
+        .then(:create_profile)
+    }
+  end
+end
+```
+
+This is appropriate when the host case is invoked on its own (not
+inside a flow) and you still want the internal chain to be atomic.
+The `transaction` block returns the chain's `Result` as-is, so you
+can keep composing with `Result#then` after it.
+
+The two approaches **compose**. If you put `CreateUserWithProfileInline`
+(already using inline `transaction { ... }`) inside an outer
+`transaction: true` flow, ActiveRecord joins the inner transaction
+into the outer one by default — an outer failure rolls back the
+inner's writes too. See the **Behavior notes** of the
+[transaction section below](#how-to-run-a-use-case-or-flow-inside-a-database-transaction)
+for the full nesting / flatten rules.
 
 > **Note:** See `test/micro/case/internal_steps/with_symbols_test.rb`,
 > `with_methods_test.rb` and `with_lambdas_test.rb` for full examples
-> of each form, plus
+> of each form, and
 > `test/micro/cases/flow/internal_steps_in_flows_test.rb` for the
-> interaction with flows and transactions.
+> interaction with flows and transactions (accumulation, transitions,
+> rollback at every nesting level).
 
 [⬆️ Back to Top](#table-of-contents-)
 
