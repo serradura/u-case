@@ -58,6 +58,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
   - [`Micro::Case::Safe` - Existe algum recurso para lidar automaticamente com exceções dentro de um caso de uso ou fluxo?](#microcasesafe---existe-algum-recurso-para-lidar-automaticamente-com-exceções-dentro-de-um-caso-de-uso-ou-fluxo)
     - [`Micro::Cases::Safe::Flow`](#microcasessafeflow)
     - [`Micro::Case::Result#on_exception`](#microcaseresulton_exception)
+    - [Desabilitando o mecanismo "safe"](#desabilitando-o-mecanismo-safe)
   - [Validando atributos com `accept:` / `reject:`](#validando-atributos-com-accept--reject)
   - [`u-case/with_activemodel_validation` - Como validar os atributos do caso de uso?](#u-casewith_activemodel_validation---como-validar-os-atributos-do-caso-de-uso)
     - [Se eu habilitei a validação automática, é possível desabilitá-la apenas em casos de uso específicos?](#se-eu-habilitei-a-validação-automática-é-possível-desabilitá-la-apenas-em-casos-de-uso-específicos)
@@ -1068,6 +1069,28 @@ Divide
 ```
 
 Como você pode ver, este hook tem o mesmo comportamento de `result.on_failure(:exception)`, mas, a ideia aqui é ter uma melhor comunicação no código, fazendo uma referência explícita quando alguma falha acontecer por causa de uma exceção.
+
+[⬆️ Voltar para o índice](#índice-)
+
+#### Desabilitando o mecanismo "safe"
+
+O mecanismo "safe" é opinativo: ele converte qualquer exceção não tratada dentro de um caso de uso (ou em qualquer passo de um fluxo) em um resultado de falha com `type: :exception`. Isso é poderoso, mas também pode gerar uma **base de código fragmentada**, onde algumas exceções são tratadas com `rescue` dentro do `call!` e outras só são tratadas mais tarde via `on_exception` / `on_failure(:exception)` — tornando o fluxo de controle difícil de acompanhar.
+
+Se você prefere uma única convenção explícita para o tratamento de exceções — `rescue` padrão dentro dos seus casos de uso — é possível desabilitar as APIs "safe" por completo:
+
+```ruby
+Micro::Case.config do |config|
+  config.disable_safe_features = true
+end
+```
+
+Com isso ativo, os usos abaixo levantarão `Micro::Case::Error::SafeFeaturesDisabled`, garantindo que ninguém na base de código reintroduza o caminho "safe" sem querer:
+
+- Herdar de `Micro::Case::Safe`
+- Chamar `Micro::Cases.safe_flow(...)`
+- Chamar `Micro::Case::Result#on_exception`
+
+Veja [`Micro::Case.config`](#microcaseconfig) para a lista completa de configurações disponíveis.
 
 [⬆️ Voltar para o índice](#índice-)
 
