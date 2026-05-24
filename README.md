@@ -1055,6 +1055,32 @@ If `transaction: true` is used while `ActiveRecord::Base` is not loaded the
 flow raises `Micro::Cases::Error::TransactionAdapterMissing` on the first
 call so the misconfiguration surfaces immediately.
 
+##### Behavior notes
+
+- **Result is unaffected.** `transaction: true` only affects database
+  side-effects. `result.data`, `result.type`, `result.transitions` and
+  `result.accessible_attributes` are identical to those of an equivalent
+  non-transactional flow.
+- **`Flow` instances get flattened.** `Micro::Cases.flow([inner_flow,
+  Other])` flattens `inner_flow` into its leaf steps, which means a
+  transactional `Flow` instance passed this way **loses its
+  transaction**. Wrap reusable transactional flows in a use case class
+  (the snippet above) to preserve their transaction when nested.
+- **Nested transactions join the outer one.** When a transactional flow
+  is nested inside another transactional flow, ActiveRecord joins them
+  by default (no `requires_new: true`). A failure anywhere in the chain
+  rolls back **everything** written inside the outermost transaction —
+  including writes performed by the inner flow.
+- **A non-transactional outer commits the inner.** If the outer flow is
+  not transactional and the inner transactional flow succeeds, the
+  inner's writes are committed at the end of the inner step. A failure
+  in a later (non-transactional) step **does not** undo those writes.
+- **Plain `Micro::Cases.flow(transaction: true, ...)` re-raises
+  exceptions.** The transaction still rolls back, but the caller has to
+  rescue. Use `Micro::Cases.safe_flow(transaction: true, ...)` (or the
+  class-level form with `Micro::Case::Safe`) to capture the exception
+  as a `:exception` failure result.
+
 [⬆️ Back to Top](#table-of-contents-)
 
 ### `Micro::Case::Strict` - What is a strict use case?

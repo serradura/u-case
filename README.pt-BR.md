@@ -1056,6 +1056,35 @@ Se `transaction: true` for usado sem que `ActiveRecord::Base` esteja
 carregado, o flow levantará `Micro::Cases::Error::TransactionAdapterMissing`
 na primeira chamada, sinalizando a configuração incorreta imediatamente.
 
+##### Observações de comportamento
+
+- **O resultado não é afetado.** `transaction: true` afeta apenas os
+  efeitos colaterais no banco. `result.data`, `result.type`,
+  `result.transitions` e `result.accessible_attributes` são idênticos
+  aos de um flow equivalente sem transação.
+- **Instâncias de `Flow` são achatadas.** `Micro::Cases.flow([flow_interno,
+  Outro])` achata `flow_interno` em seus steps internos, o que faz com
+  que uma instância de `Flow` transacional passada dessa forma **perca
+  sua transação**. Envolva flows transacionais reutilizáveis em uma
+  classe de caso de uso (como no snippet acima) para preservar a
+  transação ao aninhar.
+- **Transações aninhadas se unem à transação externa.** Quando um flow
+  transacional é aninhado dentro de outro flow transacional, o
+  ActiveRecord as une por padrão (sem `requires_new: true`). Uma falha
+  em qualquer ponto da cadeia reverte **tudo** que foi escrito dentro
+  da transação mais externa — incluindo escritas feitas pelo flow
+  interno.
+- **Um externo não-transacional comita o interno.** Se o flow externo
+  não for transacional e o flow transacional interno tiver sucesso, as
+  escritas do interno são comitadas ao final daquele step. Uma falha
+  em um step posterior (não-transacional) **não** desfaz essas
+  escritas.
+- **`Micro::Cases.flow(transaction: true, ...)` simples re-lança
+  exceções.** A transação ainda é revertida, mas o chamador precisa
+  fazer rescue. Use `Micro::Cases.safe_flow(transaction: true, ...)`
+  (ou a forma de classe com `Micro::Case::Safe`) para capturar a
+  exceção como uma falha do tipo `:exception`.
+
 [⬆️ Voltar para o índice](#índice-)
 
 ### `Micro::Case::Strict` - O que é um caso de uso estrito?
