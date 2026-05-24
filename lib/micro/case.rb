@@ -69,6 +69,7 @@ module Micro
 
     def self.results(&block)
       raise ArgumentError, 'a block is required'.freeze unless block
+      raise ArgumentError, 'must be called on a Micro::Case subclass, not on Micro::Case itself'.freeze if self == ::Micro::Case
 
       @__results_contract = Result::Contract.define(&block)
     end
@@ -241,9 +242,10 @@ module Micro
       end
 
       def __failure_from_attributes_errors
-        Failure(
-          Config.instance.activemodel_validation_errors_failure,
-          result: { errors: attributes_errors }
+        __get_result(
+          false,
+          { errors: attributes_errors },
+          Config.instance.activemodel_validation_errors_failure
         )
       end
 

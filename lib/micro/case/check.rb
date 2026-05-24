@@ -63,6 +63,7 @@ module Micro
         def results_contract!(use_case_class, kind, type, value)
           contract = use_case_class.__results_contract__
           return unless contract
+          return unless type.is_a?(Symbol)
           return if value.is_a?(Exception)
 
           if kind == :success
@@ -78,8 +79,15 @@ module Micro
           raise Error::UnexpectedResultType.new(use_case_class, kind, type, declared_types) unless declared
           return if required.nil? || required.empty?
 
-          data = value.is_a?(Hash) ? value : { type => true }
-          missing = required - data.keys
+          if value.is_a?(Hash)
+            data_keys = value.keys.map { |k| k.is_a?(String) ? k.to_sym : k }
+          elsif value.is_a?(Symbol)
+            data_keys = [type]
+          else
+            return
+          end
+
+          missing = required - data_keys
 
           raise Error::MissingResultKeys.new(use_case_class, kind, type, missing) unless missing.empty?
         end

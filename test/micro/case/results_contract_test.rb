@@ -191,4 +191,72 @@ class Micro::Case::ResultsContractTest < Minitest::Test
     assert_equal(:exception, result.type)
     assert_kind_of(RuntimeError, result[:exception])
   end
+
+  class AcceptAndContract < Micro::Case
+    attribute :name, accept: ->(v) { v.is_a?(String) }
+
+    results do |on|
+      on.success(result: [:greeting])
+      on.failure(:bad)
+    end
+
+    def call!
+      Success(result: { greeting: "hi #{name}" })
+    end
+  end
+
+  def test_attribute_validation_failure_bypasses_the_contract
+    result = AcceptAndContract.call(name: 123)
+    assert_predicate(result, :failure?)
+    assert_equal(Micro::Case::Config.instance.activemodel_validation_errors_failure, result.type)
+    refute_nil(result[:errors])
+  end
+
+  class StringKeyedResult < Micro::Case
+    results do |on|
+      on.success(result: [:value])
+    end
+
+    def call!
+      Success(result: { 'value' => 1 })
+    end
+  end
+
+  def test_string_keyed_result_satisfies_a_symbol_keyed_required
+    result = StringKeyedResult.call
+    assert_predicate(result, :success?)
+  end
+
+  class NonHashResultWithContract < Micro::Case
+    results do |on|
+      on.success(result: [:value])
+    end
+
+    def call!
+      Success(result: 'oops')
+    end
+  end
+
+  def test_non_hash_result_defers_to_invalid_result
+    assert_raises(Micro::Case::Error::InvalidResult) { NonHashResultWithContract.call }
+  end
+
+  def test_results_macro_is_rejected_on_micro_case_base_class
+    err = assert_raises(ArgumentError) { Micro::Case.results { |on| on.success(:ok) } }
+    assert_match(/Micro::Case itself/, err.message)
+  end
+
+  class NonSymbolType < Micro::Case
+    results do |on|
+      on.success(:ok, result: [:value])
+    end
+
+    def call!
+      Success('ok', result: { value: 1 })
+    end
+  end
+
+  def test_non_symbol_type_defers_to_invalid_result_type
+    assert_raises(Micro::Case::Error::InvalidResultType) { NonSymbolType.call }
+  end
 end
