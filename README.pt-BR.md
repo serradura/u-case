@@ -834,71 +834,13 @@ CreateUserWithProfileInline.call(name: 'Rodrigo', info: '')
 ```
 
 Se você precisar que os efeitos colaterais parciais sejam desfeitos,
-é preciso envolver a cadeia em uma transação — usando o helper
-`transaction { ... }` inline (veja a próxima seção) ou colocando o
-caso hospedeiro dentro de um flow com `transaction: true`.
-
-##### Steps internos **com** transações
-
-Existem duas formas naturais de dar rollback transacional aos steps
-internos:
-
-**1. Envolver o caso hospedeiro em um flow com `transaction: true`.**
-Esta é a forma recomendada assim que você tem mais de um step. A
-transação cobre a chamada inteira, então um `Failure` *em qualquer
-ponto* — incluindo de qualquer elo `.then(:método)` interno —
-reverte todas as escritas de banco feitas na mesma chamada:
-
-```ruby
-SignUp = Micro::Cases.flow(transaction: true, steps: [
-  NormalizeParams,
-  CreateUserWithProfileInline,   # ← falha interna agora reverte
-  EnqueueIndexingJob
-])
-
-# Ou no nível de classe:
-class SignUp < Micro::Case
-  flow(transaction: true, steps: [
-    NormalizeParams,
-    CreateUserWithProfileInline,
-    EnqueueIndexingJob
-  ])
-end
-```
-
-Se `create_profile` (o elo `.then(:create_profile)` interno) retornar
-`Failure(:invalid_profile)`, a linha de `User` inserida antes por
-`create_user` é revertida como parte da mesma
-`ActiveRecord::Base.transaction`. O resultado ainda expõe o tipo da
-falha e as transições parciais, mas nenhuma linha permanece no banco.
-
-**2. Usar o helper inline `Micro::Case#transaction`** para escopar o
-rollback a um único `call!` sem envolver um flow:
-
-```ruby
-class CreateUserWithProfileInline < Micro::Case
-  def call!
-    transaction {
-      create_user
-        .then(:create_profile)
-    }
-  end
-end
-```
-
-Útil quando o caso hospedeiro é invocado isoladamente (não dentro de
-um flow) e você ainda quer que a cadeia interna seja atômica. O bloco
-`transaction` retorna o `Result` da cadeia como está, então você pode
-continuar compondo com `Result#then` depois dele.
-
-As duas abordagens **se compõem**. Se você colocar
-`CreateUserWithProfileInline` (que já usa `transaction { ... }`
-inline) dentro de um flow externo com `transaction: true`, o
-ActiveRecord junta a transação interna à externa por padrão — uma
-falha externa reverte também as escritas internas. Veja as
-**Observações de comportamento** na
-[seção de transações abaixo](#como-executar-um-caso-de-uso-ou-flow-dentro-de-uma-transação-de-banco-de-dados)
-para as regras completas de aninhamento / achatamento.
+envolva a cadeia em uma transação. Como steps internos são apenas
+outra forma de expressar um flow (um flow *interno*), a história
+transacional é exatamente a que já está documentada em
+[Como executar um caso de uso ou flow dentro de uma transação de banco de dados?](#como-executar-um-caso-de-uso-ou-flow-dentro-de-uma-transação-de-banco-de-dados)
+abaixo — a subseção "Flows com steps internos sob transações" lá
+percorre tanto a forma inline `transaction { ... }` quanto a forma
+com `transaction: true` para um caso hospedeiro de steps internos.
 
 > **Nota:** Veja `test/micro/case/internal_steps/with_symbols_test.rb`,
 > `with_methods_test.rb` e `with_lambdas_test.rb` para exemplos
@@ -1332,6 +1274,99 @@ SignUpFlow = Micro::Cases.flow([
 Se `transaction: true` for usado sem que `ActiveRecord::Base` esteja
 carregado, o flow levantará `Micro::Cases::Error::TransactionAdapterMissing`
 na primeira chamada, sinalizando a configuração incorreta imediatamente.
+
+##### Flows com steps internos sob transações
+
+Os [steps internos](#steps-internos--construindo-um-flow-inline-dentro-do-call)
+(a forma `Result#then(:symbol)` / `|` construída inline dentro de um
+único `call!`) são a terceira forma do u-case de compor um flow —
+um flow *interno*. Por padrão, um flow interno **não tem rollback
+transacional**: efeitos colaterais de elos `.then(:método)`
+anteriores persistem mesmo quando um elo posterior retorna
+`Failure`.
+
+Existem duas formas naturais de dar rollback transacional a um flow
+interno. Ambas reutilizam os helpers já documentados acima:
+
+**1. Envolver o caso hospedeiro em um flow com `transaction: true`.**
+Esta é a forma recomendada assim que o caso hospedeiro é composto
+com o resto do pipeline. A transação cobre a chamada inteira do flow,
+então um `Failure` *em qualquer ponto* — incluindo de qualquer elo
+`.then(:método)` interno — reverte todas as escritas de banco feitas
+durante a chamada:
+
+```ruby
+class CreateUserWithProfileInline < Micro::Case
+  attributes :name, :info
+
+  def call!
+    create_user
+      .then(:create_profile)
+  end
+
+  private
+
+  def create_user
+    user = User.create(name: name)
+    Success result: { user: user }
+  end
+
+  def create_profile(user:, **)
+    profile = UserProfile.create(user_id: user.id, info: info)
+    return Failure(:invalid_profile) if profile.errors.any?
+
+    Success result: { user: user, profile: profile }
+  end
+end
+
+SignUp = Micro::Cases.flow(transaction: true, steps: [
+  NormalizeParams,
+  CreateUserWithProfileInline,   # ← falha interna agora reverte
+  EnqueueIndexingJob
+])
+
+# Ou no nível de classe:
+class SignUp < Micro::Case
+  flow(transaction: true, steps: [
+    NormalizeParams,
+    CreateUserWithProfileInline,
+    EnqueueIndexingJob
+  ])
+end
+```
+
+Se `create_profile` (o elo `.then(:create_profile)` interno) retornar
+`Failure(:invalid_profile)`, a linha de `User` inserida antes por
+`create_user` é revertida como parte da mesma
+`ActiveRecord::Base.transaction`. O resultado ainda expõe o tipo da
+falha e as transições parciais, mas nenhuma linha permanece no banco.
+
+**2. Usar o helper inline `Micro::Case#transaction`** para escopar o
+rollback a um único `call!` sem envolver um flow externo:
+
+```ruby
+class CreateUserWithProfileInline < Micro::Case
+  def call!
+    transaction {
+      create_user
+        .then(:create_profile)
+    }
+  end
+end
+```
+
+Útil quando o caso hospedeiro é invocado isoladamente (não dentro de
+um flow) e você ainda quer que o flow interno seja atômico. O bloco
+`transaction` retorna o `Result` da cadeia como está, então você pode
+continuar compondo com `Result#then` depois dele.
+
+As duas abordagens **se compõem**. Se você colocar
+`CreateUserWithProfileInline` (que já usa `transaction { ... }`
+inline) dentro de um flow externo com `transaction: true`, o
+ActiveRecord junta a transação interna à externa por padrão — uma
+falha externa reverte também as escritas internas. Veja as
+**Observações de comportamento** abaixo para as regras completas de
+aninhamento / achatamento.
 
 ##### Observações de comportamento
 

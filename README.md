@@ -827,71 +827,14 @@ CreateUserWithProfileInline.call(name: 'Rodrigo', info: '')
 # user is persisted; profile is not. No automatic rollback.
 ```
 
-If you need the partial side-effects to be undone, you must wrap the
-chain in a transaction — either using the inline `transaction { ... }`
-helper (see the next section) or by putting the host case inside a
-`transaction: true` flow.
-
-##### Internal steps **with** transactions
-
-There are two natural ways to give internal steps transactional
-rollback:
-
-**1. Wrap the host case in a `transaction: true` flow.** This is the
-recommended way once you have more than one step. The transaction
-spans the whole call, so a `Failure` *anywhere* — including from any
-internal `.then(:method)` link — rolls back every database write
-performed by the same call:
-
-```ruby
-SignUp = Micro::Cases.flow(transaction: true, steps: [
-  NormalizeParams,
-  CreateUserWithProfileInline,   # ← internal failure now rolls back
-  EnqueueIndexingJob
-])
-
-# Or class-level:
-class SignUp < Micro::Case
-  flow(transaction: true, steps: [
-    NormalizeParams,
-    CreateUserWithProfileInline,
-    EnqueueIndexingJob
-  ])
-end
-```
-
-If `create_profile` (the internal `.then(:create_profile)` link)
-returns `Failure(:invalid_profile)`, the `User` row inserted earlier
-by `create_user` is rolled back as part of the same
-`ActiveRecord::Base.transaction`. The result still surfaces the
-failure type and the partial transitions, but no row is left behind.
-
-**2. Use the inline `Micro::Case#transaction` helper** to scope the
-rollback to a single `call!` without involving a flow:
-
-```ruby
-class CreateUserWithProfileInline < Micro::Case
-  def call!
-    transaction {
-      create_user
-        .then(:create_profile)
-    }
-  end
-end
-```
-
-This is appropriate when the host case is invoked on its own (not
-inside a flow) and you still want the internal chain to be atomic.
-The `transaction` block returns the chain's `Result` as-is, so you
-can keep composing with `Result#then` after it.
-
-The two approaches **compose**. If you put `CreateUserWithProfileInline`
-(already using inline `transaction { ... }`) inside an outer
-`transaction: true` flow, ActiveRecord joins the inner transaction
-into the outer one by default — an outer failure rolls back the
-inner's writes too. See the **Behavior notes** of the
-[transaction section below](#how-to-run-a-use-case-or-flow-inside-a-database-transaction)
-for the full nesting / flatten rules.
+If you need the partial side-effects to be undone, wrap the chain in
+a transaction. Because internal steps are just another way of
+expressing a flow (an *internal* flow), the transactional story is
+exactly the one already documented in
+[How to run a use case or flow inside a database transaction?](#how-to-run-a-use-case-or-flow-inside-a-database-transaction)
+below — the "Internal-step flows under transactions" subsection
+there walks through both the inline `transaction { ... }` form and
+the `transaction: true` flow form for an internal-step host case.
 
 > **Note:** See `test/micro/case/internal_steps/with_symbols_test.rb`,
 > `with_methods_test.rb` and `with_lambdas_test.rb` for full examples
@@ -1323,6 +1266,96 @@ SignUpFlow = Micro::Cases.flow([
 If `transaction: true` is used while `ActiveRecord::Base` is not loaded the
 flow raises `Micro::Cases::Error::TransactionAdapterMissing` on the first
 call so the misconfiguration surfaces immediately.
+
+##### Internal-step flows under transactions
+
+[Internal steps](#internal-steps--building-a-flow-inline-inside-call)
+(the `Result#then(:symbol)` / `|` form built inline inside a single
+`call!`) are u-case's third way of composing a flow — an *internal*
+flow. By default an internal flow has **no transactional rollback**:
+side-effects from earlier `.then(:method)` links persist even when a
+later link returns `Failure`.
+
+There are two natural ways to give an internal flow transactional
+rollback. Both reuse the helpers already covered above:
+
+**1. Wrap the host case in a `transaction: true` flow.** This is the
+recommended way once the host case is composed with the rest of the
+pipeline. The transaction spans the whole flow call, so a `Failure`
+*anywhere* — including from any internal `.then(:method)` link — rolls
+back every database write performed during that call:
+
+```ruby
+class CreateUserWithProfileInline < Micro::Case
+  attributes :name, :info
+
+  def call!
+    create_user
+      .then(:create_profile)
+  end
+
+  private
+
+  def create_user
+    user = User.create(name: name)
+    Success result: { user: user }
+  end
+
+  def create_profile(user:, **)
+    profile = UserProfile.create(user_id: user.id, info: info)
+    return Failure(:invalid_profile) if profile.errors.any?
+
+    Success result: { user: user, profile: profile }
+  end
+end
+
+SignUp = Micro::Cases.flow(transaction: true, steps: [
+  NormalizeParams,
+  CreateUserWithProfileInline,   # ← internal failure now rolls back
+  EnqueueIndexingJob
+])
+
+# Or class-level:
+class SignUp < Micro::Case
+  flow(transaction: true, steps: [
+    NormalizeParams,
+    CreateUserWithProfileInline,
+    EnqueueIndexingJob
+  ])
+end
+```
+
+If `create_profile` (the internal `.then(:create_profile)` link)
+returns `Failure(:invalid_profile)`, the `User` row inserted earlier
+by `create_user` is rolled back as part of the same
+`ActiveRecord::Base.transaction`. The result still surfaces the
+failure type and the partial transitions, but no row is left behind.
+
+**2. Use the inline `Micro::Case#transaction` helper** to scope the
+rollback to a single `call!` without involving an outer flow:
+
+```ruby
+class CreateUserWithProfileInline < Micro::Case
+  def call!
+    transaction {
+      create_user
+        .then(:create_profile)
+    }
+  end
+end
+```
+
+This is appropriate when the host case is invoked on its own (not
+inside a flow) and you still want the internal flow to be atomic. The
+`transaction` block returns the chain's `Result` as-is, so you can
+keep composing with `Result#then` after it.
+
+The two approaches **compose**. If you put `CreateUserWithProfileInline`
+(already using inline `transaction { ... }`) inside an outer
+`transaction: true` flow, ActiveRecord joins the inner transaction
+into the outer one by default — an outer failure rolls back the
+inner's writes too. See the **Behavior notes** below for the full
+nesting / flatten rules.
 
 ##### Behavior notes
 
