@@ -27,7 +27,7 @@ Principais objetivos deste projeto:
 Versão    | Documentação
 --------- | -------------
 unreleased| https://github.com/serradura/u-case/blob/main/README.md
-5.1.0     | https://github.com/serradura/u-case/blob/v5.x/README.md
+5.2.0     | https://github.com/serradura/u-case/blob/v5.x/README.md
 4.5.1     | https://github.com/serradura/u-case/blob/v4.x/README.md
 
 ## Índice <!-- omit in toc -->
@@ -87,6 +87,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
 | u-case           | branch | ruby     | activemodel    | u-attributes   |
 | ---------------- | ------ | -------- | -------------- | -------------- |
 | unreleased       | main   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0  |
+| 5.2.0            | v5.x   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0  |
 | 5.1.0            | v5.x   | >= 2.7   | >= 6.0         | >= 2.7, < 4.0  |
 | 4.5.1            | v4.x   | >= 2.2.0 | >= 3.2, <= 8.1 | >= 2.7, < 3.0  |
 
@@ -1072,7 +1073,7 @@ Como você pode ver, este hook tem o mesmo comportamento de `result.on_failure(:
 
 ### Validando atributos com `accept:` / `reject:`
 
-Desde a versão `5.2.0` do `u-case`, todo caso de uso já inclui a [extensão `accept`](https://github.com/serradura/u-attributes#accept-extension) do [`u-attributes`](https://github.com/serradura/u-attributes) (requer `u-attributes >= 3.0`). Você pode declarar a expectativa de tipo (ou qualquer outra verificação) diretamente no atributo, e o caso de uso falhará automaticamente com o tipo `:invalid_attributes` quando algum atributo for rejeitado — sem precisar validar dentro do `call!`.
+Desde a versão `5.2.0` do `u-case`, todo caso de uso já inclui a [extensão `accept`](https://github.com/serradura/u-attributes#accept-extension) do [`u-attributes`](https://github.com/serradura/u-attributes) (requer `u-attributes >= 2.8`). Você pode declarar a expectativa de tipo (ou qualquer outra verificação) diretamente no atributo, e o caso de uso falhará automaticamente com o tipo `:invalid_attributes` quando algum atributo for rejeitado — sem precisar validar dentro do `call!`.
 
 ```ruby
 class CreateUser < Micro::Case

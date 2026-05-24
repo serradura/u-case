@@ -18,7 +18,7 @@ module Micro
     require 'micro/cases'
 
     include Micro::Attributes
-    include Micro::Attributes::Features::Accept if defined?(Micro::Attributes::Features::Accept)
+    include Micro::Attributes::Features::Accept
 
     def self.call(input = Kind::Empty::HASH)
       result = __new__(Result.new, input).__call__
@@ -217,7 +217,7 @@ module Micro
       end
 
       def __attributes_errors_present?
-        respond_to?(:attributes_errors?) && attributes_errors?
+        attributes_errors?
       end
 
       def __failure_from_attributes_errors
