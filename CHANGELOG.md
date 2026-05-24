@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This gem was originally published as `u-service` (versions 0.1.0 – 1.0.0) and renamed to `u-case` starting with `u-case 1.0.0` on 2019-09-15.
 
-## [Unreleased]
+## [5.5.0] - 2026-05-24
 ### Added
 - `Micro::Case.results { |on| ... }` macro to declare a results contract — the allowed `Success`/`Failure` types and the result keys each one requires. `Success(...)` / `Failure(...)` calls that use an undeclared type now raise `Micro::Case::Error::UnexpectedResultType`; calls missing a declared required key raise `Micro::Case::Error::MissingResultKeys`. Use cases without a `results` block keep their previous unrestricted behavior. The check routes through `Micro::Case::Check#results_contract!`, so it is also bypassed when `config.disable_runtime_checks = true` (closes #22). Carve-outs so contracts don't break neighbouring features:
   - Framework-generated `__failure_from_attributes_errors` (the auto-failure produced when `accept:`/`reject:` or ActiveModel validation rejects an input) bypasses the contract — it goes directly to `__set__` rather than through `Failure(...)` — so combining `results` with attribute validation no longer requires declaring `:invalid_attributes`.
@@ -478,7 +478,7 @@ First release under the `u-case` name (renamed from `u-service`).
 - `Micro::Service::Result` with `Success`/`Failure` factories and helper methods for returning typed results from services.
 - Runtime dependency on `u-attributes` for service input declaration.
 
-[Unreleased]: https://github.com/serradura/u-case/compare/v5.4.0...HEAD
+[5.5.0]: https://github.com/serradura/u-case/compare/v5.4.0...v5.5.0
 [5.4.0]: https://github.com/serradura/u-case/compare/v5.3.1...v5.4.0
 [5.3.1]: https://github.com/serradura/u-case/compare/v5.3.0...v5.3.1
 [5.3.0]: https://github.com/serradura/u-case/compare/v5.2.1...v5.3.0

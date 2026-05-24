@@ -27,7 +27,7 @@ Principais objetivos deste projeto:
 Versão    | Documentação
 --------- | -------------
 unreleased| https://github.com/serradura/u-case/blob/main/README.md
-5.4.0     | https://github.com/serradura/u-case/blob/v5.x/README.md
+5.5.0     | https://github.com/serradura/u-case/blob/v5.x/README.md
 4.5.1     | https://github.com/serradura/u-case/blob/v4.x/README.md
 
 ## Índice <!-- omit in toc -->
@@ -89,7 +89,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
 | u-case           | branch | ruby     | activemodel    | u-attributes   |
 | ---------------- | ------ | -------- | -------------- | -------------- |
 | unreleased       | main   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0  |
-| 5.4.0            | v5.x   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0  |
+| 5.5.0            | v5.x   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0  |
 | 5.1.0            | v5.x   | >= 2.7   | >= 6.0         | >= 2.7, < 4.0  |
 | 4.5.1            | v4.x   | >= 2.2.0 | >= 3.2, <= 8.1 | >= 2.7, < 3.0  |
 
