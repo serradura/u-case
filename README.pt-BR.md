@@ -27,7 +27,7 @@ Principais objetivos deste projeto:
 Versão    | Documentação
 --------- | -------------
 unreleased| https://github.com/serradura/u-case/blob/main/README.md
-5.3.1     | https://github.com/serradura/u-case/blob/v5.x/README.md
+5.4.0     | https://github.com/serradura/u-case/blob/v5.x/README.md
 4.5.1     | https://github.com/serradura/u-case/blob/v4.x/README.md
 
 ## Índice <!-- omit in toc -->
@@ -88,7 +88,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
 | u-case           | branch | ruby     | activemodel    | u-attributes   |
 | ---------------- | ------ | -------- | -------------- | -------------- |
 | unreleased       | main   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0  |
-| 5.3.1            | v5.x   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0  |
+| 5.4.0            | v5.x   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0  |
 | 5.1.0            | v5.x   | >= 2.7   | >= 6.0         | >= 2.7, < 4.0  |
 | 4.5.1            | v4.x   | >= 2.2.0 | >= 3.2, <= 8.1 | >= 2.7, < 3.0  |
 
@@ -1257,8 +1257,23 @@ Micro::Case.config do |config|
   #   - Chamar `Micro::Cases.safe_flow(...)`
   #   - Chamar `Micro::Case::Result#on_exception`
   config.disable_safe_features = false
+
+  # Use para pular as verificações internas de argumento/contrato da gem (por
+  # exemplo, "isto é um Micro::Case?", "o tipo do resultado é um Symbol?",
+  # "o use case é um tipo de Micro::Case?"). Defina `true` em produção para
+  # um pequeno ganho de performance depois que seus caminhos de código já
+  # estiverem cobertos pela sua suíte de testes. O custo é que usos
+  # incorretos vão aparecer como erros confusos mais à frente, em vez dos
+  # erros curados pela gem (ex.: `Micro::Case::Error::InvalidUseCase`).
+  config.disable_runtime_checks = false
 end
 ```
+
+Todas as verificações estão consolidadas em `Micro::Case::Check::Enabled` (o
+padrão). Definir `disable_runtime_checks = true` troca `Micro::Case.check` por
+`Micro::Case::Check::Disabled` — um módulo com a mesma assinatura cujos
+métodos não fazem nada — de forma que as validações não são executadas a
+cada chamada.
 
 [⬆️ Voltar para o índice](#índice-)
 

@@ -10,7 +10,7 @@ module Micro
       attr_reader :use_cases
 
       def self.build(args)
-        raise Error::InvalidUseCases unless HasValidArgs[args]
+        ::Micro::Case.check.map_args!(args)
 
         new(args)
       end
@@ -30,7 +30,7 @@ module Micro
       end
 
       def call(arg = {})
-        hash = Kind::Hash[arg]
+        hash = ::Micro::Case.check.hash!(arg)
 
         use_cases.map(&GetUseCaseResult[hash])
       end

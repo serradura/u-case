@@ -93,6 +93,44 @@ Both files are user-facing — keep them in sync with the code:
   translations of each other and must stay in lockstep. If you change a
   documented API, update both READMEs in the same commit.
 
+## Internal argument checks live in `Micro::Case::Check`
+
+Every internal argument/contract check that runs inside the gem (type
+guards, "is this a `Micro::Case`?", "is this a `Symbol`?", "are these
+flow args valid?", etc.) lives in `lib/micro/case/check.rb`, split across
+two modules with **identical method signatures**:
+
+- `Micro::Case::Check::Enabled` — the default; raises the curated
+  `Micro::Case::Error::*` exceptions.
+- `Micro::Case::Check::Disabled` — no-ops (the matching method just
+  `return`s; passthrough methods return their input unchanged).
+
+The active one is referenced as `Micro::Case.check`, swapped by
+`config.disable_runtime_checks = true/false` (see PR #145 / issue #45).
+
+### When you add a new internal check, you must:
+
+1. **Add the method to BOTH modules.** Keep the signature identical.
+   The `Enabled` side does the real work; the `Disabled` side is a
+   no-op (or passthrough for `hash!`-style coercions).
+2. **Route the call site through `Micro::Case.check.<method>!(...)`.**
+   Don't `raise ... unless ...` inline — that bypasses the toggle and
+   leaks the check into the disabled-path performance budget.
+3. **Cover both modes in a test.** Mirror the pattern in
+   `test/micro/case/disable_runtime_checks_test.rb`: one test that the
+   `Enabled` side raises, one that the `Disabled` side does not.
+4. **Avoid extra allocation on the call site.** If the curated
+   exception needs dynamic params (a class name, a context string),
+   pass the raw strings/values into the check method and construct the
+   exception inside `Enabled` (only on the raise path). Don't build the
+   exception before calling — that defeats the perf rationale of the
+   `Disabled` side.
+
+This is the only place where new gem-internal checks belong. Inline
+`raise … unless …` inside the runtime call path is a regression of
+this design — flag it during review and move the check into
+`Micro::Case::Check`.
+
 ## Bumping the version
 
 1. Edit `lib/micro/case/version.rb` — change `Micro::Case::VERSION`. Follow

@@ -27,7 +27,7 @@ The main project goals are:
 Version   | Documentation
 --------- | -------------
 unreleased| https://github.com/serradura/u-case/blob/main/README.md
-5.3.1     | https://github.com/serradura/u-case/blob/v5.x/README.md
+5.4.0     | https://github.com/serradura/u-case/blob/v5.x/README.md
 4.5.1     | https://github.com/serradura/u-case/blob/v4.x/README.md
 
 > **Note:** Você entende português? 🇧🇷&nbsp;🇵🇹 Verifique o [README traduzido em pt-BR](https://github.com/serradura/u-case/blob/main/README.pt-BR.md).
@@ -90,7 +90,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
 | u-case           | branch | ruby     | activemodel    | u-attributes   |
 | ---------------- | ------ | -------- | -------------- | -------------- |
 | unreleased       | main   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0  |
-| 5.3.1            | v5.x   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0  |
+| 5.4.0            | v5.x   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0  |
 | 5.1.0            | v5.x   | >= 2.7   | >= 6.0         | >= 2.7, < 4.0  |
 | 4.5.1            | v4.x   | >= 2.2.0 | >= 3.2, <= 8.1 | >= 2.7, < 3.0  |
 
@@ -1256,8 +1256,21 @@ Micro::Case.config do |config|
   #   - Calling `Micro::Cases.safe_flow(...)`
   #   - Calling `Micro::Case::Result#on_exception`
   config.disable_safe_features = false
+
+  # Use to skip the gem's internal argument/contract checks (e.g., "is this a
+  # Micro::Case?", "is the result type a Symbol?", "is the use case a kind of
+  # Micro::Case?"). Set to `true` in production for a small performance boost
+  # once your code paths are exercised by your test suite. The trade-off is that
+  # incorrect usage will surface as confusing downstream errors instead of the
+  # gem's curated ones (e.g. `Micro::Case::Error::InvalidUseCase`).
+  config.disable_runtime_checks = false
 end
 ```
+
+All checks are consolidated in `Micro::Case::Check::Enabled` (the default).
+Toggling `disable_runtime_checks = true` swaps `Micro::Case.check` to
+`Micro::Case::Check::Disabled` — a module with the same signature whose
+methods are no-ops — so the validations themselves are not run on each call.
 
 [⬆️ Back to Top](#table-of-contents-)
 
