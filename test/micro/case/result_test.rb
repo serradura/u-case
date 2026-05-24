@@ -78,6 +78,32 @@ class Micro::Case::ResultTest < Minitest::Test
 
     assert_equal({ a: 1, b: 2 }, result.slice(:a, :b, :c))
     assert_equal({}, result.slice(:c))
+
+    # ---
+
+    assert_equal([:a, :b], result.keys)
+
+    # ---
+
+    assert_equal(2, result.fetch(:b))
+
+    assert_equal('default', result.fetch(:invalid_key, 'default'))
+
+    assert_equal('C', result.fetch(:c) { |key| key.to_s.upcase })
+
+    assert_raises(KeyError) do
+      result.fetch(:invalid_key)
+    end
+
+    # ---
+
+    assert_equal([2, 1], result.fetch_values(:b, :a))
+
+    assert_equal([1, 2, 'C'], result.fetch_values(:a, :b, :c) { |key| key.to_s.upcase } )
+
+    assert_raises(KeyError) do
+      result.fetch_values(:a, :b, :invalid_key)
+    end
   end
 
   def test_failure_result
