@@ -27,7 +27,7 @@ Principais objetivos deste projeto:
 Versão    | Documentação
 --------- | -------------
 unreleased| https://github.com/serradura/u-case/blob/main/README.md
-5.1.0     | https://github.com/serradura/u-case/blob/v5.x/README.md
+5.2.0     | https://github.com/serradura/u-case/blob/v5.x/README.md
 4.5.1     | https://github.com/serradura/u-case/blob/v4.x/README.md
 
 ## Índice <!-- omit in toc -->
@@ -58,6 +58,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
   - [`Micro::Case::Safe` - Existe algum recurso para lidar automaticamente com exceções dentro de um caso de uso ou fluxo?](#microcasesafe---existe-algum-recurso-para-lidar-automaticamente-com-exceções-dentro-de-um-caso-de-uso-ou-fluxo)
     - [`Micro::Cases::Safe::Flow`](#microcasessafeflow)
     - [`Micro::Case::Result#on_exception`](#microcaseresulton_exception)
+  - [Validando atributos com `accept:` / `reject:`](#validando-atributos-com-accept--reject)
   - [`u-case/with_activemodel_validation` - Como validar os atributos do caso de uso?](#u-casewith_activemodel_validation---como-validar-os-atributos-do-caso-de-uso)
     - [Se eu habilitei a validação automática, é possível desabilitá-la apenas em casos de uso específicos?](#se-eu-habilitei-a-validação-automática-é-possível-desabilitá-la-apenas-em-casos-de-uso-específicos)
     - [`Kind::Validator`](#kindvalidator)
@@ -85,7 +86,8 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
 
 | u-case           | branch | ruby     | activemodel    | u-attributes   |
 | ---------------- | ------ | -------- | -------------- | -------------- |
-| unreleased       | main   | >= 2.7   | >= 6.0         | >= 2.7, < 4.0  |
+| unreleased       | main   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0  |
+| 5.2.0            | v5.x   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0  |
 | 5.1.0            | v5.x   | >= 2.7   | >= 6.0         | >= 2.7, < 4.0  |
 | 4.5.1            | v4.x   | >= 2.2.0 | >= 3.2, <= 8.1 | >= 2.7, < 3.0  |
 
@@ -1066,6 +1068,43 @@ Divide
 ```
 
 Como você pode ver, este hook tem o mesmo comportamento de `result.on_failure(:exception)`, mas, a ideia aqui é ter uma melhor comunicação no código, fazendo uma referência explícita quando alguma falha acontecer por causa de uma exceção.
+
+[⬆️ Voltar para o índice](#índice-)
+
+### Validando atributos com `accept:` / `reject:`
+
+Desde a versão `5.2.0` do `u-case`, todo caso de uso já inclui a [extensão `accept`](https://github.com/serradura/u-attributes#accept-extension) do [`u-attributes`](https://github.com/serradura/u-attributes) (requer `u-attributes >= 2.8`). Você pode declarar a expectativa de tipo (ou qualquer outra verificação) diretamente no atributo, e o caso de uso falhará automaticamente com o tipo `:invalid_attributes` quando algum atributo for rejeitado — sem precisar validar dentro do `call!`.
+
+```ruby
+class CreateUser < Micro::Case
+  attribute :name,  accept: String
+  attribute :email, accept: ->(value) { value.is_a?(String) && value.include?('@') }
+  attribute :age,   accept: Integer, allow_nil: true
+
+  def call!
+    Success result: { user: User.create!(attributes) }
+  end
+end
+
+CreateUser.call(name: 'Bob', email: 'bob@example.com')
+# => #<Success type=:ok ...>
+
+CreateUser.call(name: 42, email: 'not-an-email')
+# => #<Failure type=:invalid_attributes data={
+#       errors: {
+#         "name"  => "expected to be a kind of String",
+#         "email" => "is invalid"
+#       }
+#     }>
+```
+
+O tipo da falha segue a mesma configuração usada pela integração com `ActiveModel` — veja [`Micro::Case.config`](#microcaseconfig) e `set_activemodel_validation_errors_failure`.
+
+Quando combinado com [`u-case/with_activemodel_validation`](#u-casewith_activemodel_validation---como-validar-os-atributos-do-caso-de-uso), a ordem de execução é:
+
+1. O `u-attributes` resolve o valor padrão de cada atributo.
+2. O `u-attributes` executa as verificações de `accept:` / `reject:`.
+3. O `u-case` executa as validações do `ActiveModel` **apenas se** todos os atributos forem aceitos.
 
 [⬆️ Voltar para o índice](#índice-)
 

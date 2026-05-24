@@ -27,7 +27,7 @@ The main project goals are:
 Version   | Documentation
 --------- | -------------
 unreleased| https://github.com/serradura/u-case/blob/main/README.md
-5.1.0     | https://github.com/serradura/u-case/blob/v5.x/README.md
+5.2.0     | https://github.com/serradura/u-case/blob/v5.x/README.md
 4.5.1     | https://github.com/serradura/u-case/blob/v4.x/README.md
 
 > **Note:** Você entende português? 🇧🇷&nbsp;🇵🇹 Verifique o [README traduzido em pt-BR](https://github.com/serradura/u-case/blob/main/README.pt-BR.md).
@@ -60,6 +60,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
   - [`Micro::Case::Safe` - Is there some feature to auto handle exceptions inside of a use case or flow?](#microcasesafe---is-there-some-feature-to-auto-handle-exceptions-inside-of-a-use-case-or-flow)
     - [`Micro::Cases::Safe::Flow`](#microcasessafeflow)
     - [`Micro::Case::Result#on_exception`](#microcaseresulton_exception)
+  - [Validating attributes with `accept:` / `reject:`](#validating-attributes-with-accept--reject)
   - [`u-case/with_activemodel_validation` - How to validate the use case attributes?](#u-casewith_activemodel_validation---how-to-validate-the-use-case-attributes)
     - [If I enabled the auto validation, is it possible to disable it only in specific use cases?](#if-i-enabled-the-auto-validation-is-it-possible-to-disable-it-only-in-specific-use-cases)
     - [`Kind::Validator`](#kindvalidator)
@@ -87,7 +88,8 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
 
 | u-case           | branch | ruby     | activemodel    | u-attributes   |
 | ---------------- | ------ | -------- | -------------- | -------------- |
-| unreleased       | main   | >= 2.7   | >= 6.0         | >= 2.7, < 4.0  |
+| unreleased       | main   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0  |
+| 5.2.0            | v5.x   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0  |
 | 5.1.0            | v5.x   | >= 2.7   | >= 6.0         | >= 2.7, < 4.0  |
 | 4.5.1            | v4.x   | >= 2.2.0 | >= 3.2, <= 8.1 | >= 2.7, < 3.0  |
 
@@ -1065,6 +1067,43 @@ Divide
 ```
 
 As you can see, this hook has the same behavior of `result.on_failure(:exception)`, but, the idea here is to have a better communication in the code, making an explicit reference when some failure happened because of an exception.
+
+[⬆️ Back to Top](#table-of-contents-)
+
+### Validating attributes with `accept:` / `reject:`
+
+Since `u-case 5.2.0`, every use case includes the [`accept` extension](https://github.com/serradura/u-attributes#accept-extension) from [`u-attributes`](https://github.com/serradura/u-attributes) (requires `u-attributes >= 2.8`). You can declare type expectations (or any other check) directly on the attribute, and the use case will fail automatically with the `:invalid_attributes` type when any attribute is rejected — no need to validate inside `call!`.
+
+```ruby
+class CreateUser < Micro::Case
+  attribute :name,  accept: String
+  attribute :email, accept: ->(value) { value.is_a?(String) && value.include?('@') }
+  attribute :age,   accept: Integer, allow_nil: true
+
+  def call!
+    Success result: { user: User.create!(attributes) }
+  end
+end
+
+CreateUser.call(name: 'Bob', email: 'bob@example.com')
+# => #<Success type=:ok ...>
+
+CreateUser.call(name: 42, email: 'not-an-email')
+# => #<Failure type=:invalid_attributes data={
+#       errors: {
+#         "name"  => "expected to be a kind of String",
+#         "email" => "is invalid"
+#       }
+#     }>
+```
+
+The failure type follows the same setting used by the ActiveModel validation integration — see [`Micro::Case.config`](#microcaseconfig) and `set_activemodel_validation_errors_failure`.
+
+When combined with [`u-case/with_activemodel_validation`](#u-casewith_activemodel_validation---how-to-validate-the-use-case-attributes), the execution order is:
+
+1. `u-attributes` resolves the default value of each attribute.
+2. `u-attributes` runs the `accept:` / `reject:` checks.
+3. `u-case` runs the `ActiveModel` validations **only if** every attribute was accepted.
 
 [⬆️ Back to Top](#table-of-contents-)
 
