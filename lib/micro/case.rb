@@ -18,10 +18,7 @@ module Micro
     require 'micro/cases'
 
     include Micro::Attributes
-
-    if Config.instance.enable_attributes_accept && defined?(Micro::Attributes::Features::Accept)
-      include Micro::Attributes::Features::Accept
-    end
+    include Micro::Attributes::Features::Accept if defined?(Micro::Attributes::Features::Accept)
 
     def self.call(input = Kind::Empty::HASH)
       result = __new__(Result.new, input).__call__
