@@ -11,9 +11,9 @@ module Micro
     require 'micro/case/utils'
     require 'micro/case/error'
     require 'micro/case/result'
+    require 'micro/case/config'
     require 'micro/case/safe'
     require 'micro/case/strict'
-    require 'micro/case/config'
 
     require 'micro/cases'
 

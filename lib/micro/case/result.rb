@@ -121,6 +121,10 @@ module Micro
       end
 
       def on_exception(expected_exception = nil)
+        if Config.instance.disable_safe_features
+          raise Error::SafeFeaturesDisabled.new('Micro::Case::Result#on_exception')
+        end
+
         return self unless __failure_type?(:exception)
 
         if !expected_exception || (Kind.is?(Exception, expected_exception) && data.fetch(:exception).is_a?(expected_exception))

@@ -1226,6 +1226,14 @@ Micro::Case.config do |config|
 
   # Use para habilitar/desabilitar o `Micro::Case::Results#transitions`.
   config.enable_transitions = true
+
+  # Use para proibir as funcionalidades "safe" e garantir uma única forma de tratar
+  # exceções (via `rescue` padrão). Quando `true`, os itens abaixo levantarão
+  # `Micro::Case::Error::SafeFeaturesDisabled`:
+  #   - Herdar de `Micro::Case::Safe`
+  #   - Chamar `Micro::Cases.safe_flow(...)`
+  #   - Chamar `Micro::Case::Result#on_exception`
+  config.disable_safe_features = false
 end
 ```
 

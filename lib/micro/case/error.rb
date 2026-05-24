@@ -51,6 +51,15 @@ module Micro
         end
       end
 
+      class SafeFeaturesDisabled < StandardError
+        def initialize(context)
+          super(
+            "#{context} can't be used because the safe features are disabled. " \
+            "To re-enable them, set `config.disable_safe_features = false`."
+          )
+        end
+      end
+
       def self.by_wrong_usage?(exception)
         case exception
         when Kind::Error, ArgumentError, InvalidResult, UnexpectedResult then true
