@@ -217,8 +217,7 @@ module Micro
       end
 
       def __attributes_errors_present?
-        Config.instance.enable_attributes_accept &&
-          respond_to?(:attributes_errors?) && attributes_errors?
+        respond_to?(:attributes_errors?) && attributes_errors?
       end
 
       def __failure_from_attributes_errors

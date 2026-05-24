@@ -10,10 +10,6 @@ class Micro::Case::AttributesAcceptTest < Minitest::Test
     end
   end
 
-  def test_enable_attributes_accept_is_true_by_default
-    assert_equal(true, Micro::Case::Config.instance.enable_attributes_accept)
-  end
-
   def test_accept_feature_is_included_in_micro_case
     assert_includes(Micro::Case.ancestors, Micro::Attributes::Features::Accept)
   end
@@ -49,23 +45,5 @@ class Micro::Case::AttributesAcceptTest < Minitest::Test
 
   def test_no_failure_when_attributes_are_accepted_and_call_runs
     refute_predicate(Greet.call(name: 'Bob'), :failure?)
-  end
-
-  class ResetConfigAfterTest
-    def self.with(value)
-      Micro::Case::Config.instance.enable_attributes_accept = value
-      yield
-    ensure
-      Micro::Case::Config.instance.enable_attributes_accept = true
-    end
-  end
-
-  def test_when_enable_attributes_accept_is_false_use_case_does_not_auto_fail
-    ResetConfigAfterTest.with(false) do
-      # Errors are still collected by u-attributes, but the use case is not auto-failed
-      result = Greet.call(name: 42)
-
-      assert_predicate(result, :success?)
-    end
   end
 end
