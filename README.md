@@ -50,6 +50,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
     - [How to use the `Micro::Case::Result#then` method?](#how-to-use-the-microcaseresultthen-method)
       - [What does happens when a `Micro::Case::Result#then` receives a block?](#what-does-happens-when-a-microcaseresultthen-receives-a-block)
       - [How to make attributes data injection using this feature?](#how-to-make-attributes-data-injection-using-this-feature)
+    - [Internal steps — building a flow inline inside `call!`](#internal-steps--building-a-flow-inline-inside-call)
   - [`Micro::Cases::Flow` - How to compose use cases?](#microcasesflow---how-to-compose-use-cases)
     - [Is it possible to compose a flow with other flows?](#is-it-possible-to-compose-a-flow-with-other-flows)
     - [Is it possible a flow accumulates its input and merges each success result to use as the argument of the next use cases?](#is-it-possible-a-flow-accumulates-its-input-and-merges-each-success-result-to-use-as-the-argument-of-the-next-use-cases)
@@ -630,6 +631,100 @@ Todo::FindAllForUser
   .then(Serialize::PaginatedRelationAsJson, serializer: Todo::Serializer)
   .on_success { |result| render_json(200, data: result[:todos]) }
 ```
+
+[⬆️ Back to Top](#table-of-contents-)
+
+#### Internal steps — building a flow inline inside `call!`
+
+`Result#then` (and its `|` pipe alias) is also the gem's third way of
+**composing a flow**, side by side with `Micro::Cases.flow(...)` and the
+class-level `flow ...` macro. Instead of wiring sibling use cases
+together, you can keep the chain inside a single use case's `call!`:
+each link is a method (or lambda) that returns a `Success` / `Failure`
+result, and each link's data feeds the next one. Every link is
+recorded as a separate transition, exactly as if it were a step in a
+top-level flow.
+
+`Result#then` (or `|`) accepts:
+
+- A **`Symbol`** — the name of an instance method on the host use case.
+- A **bound `Method` object** — `method(:some_method)`.
+- A **lambda / proc**.
+- Another **use case class** (the standard case already documented above).
+
+The connecting method receives the previous result's data as keyword
+arguments and must return a `Micro::Case::Result` (`Success(...)` or
+`Failure(...)`). Returning anything else raises
+`Micro::Case::Error::UnexpectedResult`.
+
+```ruby
+class DoSomeSum < Micro::Case
+  attributes :a, :b
+
+  def call!
+    validate_numbers
+      .then(:sum_a_and_b)
+      .then(:add, number: 3)
+      .then(SumHalf)
+  end
+
+  private
+
+  def validate_numbers
+    Kind.of?(Numeric, a, b) ? Success(:valid) : Failure()
+  end
+
+  def sum_a_and_b
+    Success :first_sum, result: { sum: a + b }
+  end
+
+  def add(sum:, number:, **)
+    Success :second_sum, result: { sum: sum + number }
+  end
+end
+
+DoSomeSum.call(a: 1, b: 2)
+# success? == true, result.data == { sum: 6.5 }
+# transitions records 4 entries:
+#   1. validate_numbers     -> Success(:valid)
+#   2. :sum_a_and_b         -> Success(:first_sum,  sum: 3)
+#   3. :add  (with number:3) -> Success(:second_sum, sum: 6)
+#   4. SumHalf              -> Success(:third_sum,  sum: 6.5)
+```
+
+The `|` operator is equivalent to `.then(...)`:
+
+```ruby
+def call!
+  validate_numbers | :sum_a_and_b | :add | SumHalf
+end
+```
+
+Lambda and `Method` variants take the accumulated data positionally:
+
+```ruby
+def call!
+  validate_numbers
+    .then(method(:sum_a_and_b))
+    .then(->(data) { add(**data, number: 3) })
+    .then(SumHalf)
+end
+```
+
+> **Behavioral parity:** a use case that uses internal steps can be
+> dropped into any `Micro::Cases.flow(...)`, `safe_flow`, class-level
+> `flow ...`, or `transaction: true` flow — its internal transitions
+> interleave with the outer flow's leaf transitions in execution order,
+> and the host class shows up as the `use_case.class` for every
+> internal transition. Under `transaction: true`, a `Failure` returned
+> from an internal step rolls back database writes made by earlier
+> internal steps just like a leaf failure would.
+
+> **Note:** See `test/micro/case/internal_steps/with_symbols_test.rb`,
+> `with_methods_test.rb` and `with_lambdas_test.rb` for full examples
+> of each form, plus
+> `test/micro/cases/flow/internal_steps_in_flows_test.rb` for the
+> interaction with flows and transactions.
 
 [⬆️ Back to Top](#table-of-contents-)
 

@@ -48,6 +48,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
     - [Como usar o método `Micro::Case::Result#then`?](#como-usar-o-método-microcaseresultthen)
       - [O que acontece quando um `Micro::Case::Result#then` recebe um bloco?](#o-que-acontece-quando-um-microcaseresultthen-recebe-um-bloco)
       - [Como fazer injeção de dependência usando este recurso?](#como-fazer-injeção-de-dependência-usando-este-recurso)
+    - [Steps internos — construindo um flow inline dentro do `call!`](#steps-internos--construindo-um-flow-inline-dentro-do-call)
   - [`Micro::Cases::Flow` - Como compor casos de uso?](#microcasesflow---como-compor-casos-de-uso)
     - [É possível compor um fluxo com outros fluxos?](#é-possível-compor-um-fluxo-com-outros-fluxos)
     - [É possível que um fluxo acumule sua entrada e mescle cada resultado de sucesso para usar como argumento dos próximos casos de uso?](#é-possível-que-um-fluxo-acumule-sua-entrada-e-mescle-cada-resultado-de-sucesso-para-usar-como-argumento-dos-próximos-casos-de-uso)
@@ -629,6 +630,102 @@ Todo::FindAllForUser
   .then(Serialize::PaginatedRelationAsJson, serializer: Todo::Serializer)
   .on_success { |result| render_json(200, data: result[:todos]) }
 ```
+
+[⬆️ Voltar para o índice](#índice-)
+
+#### Steps internos — construindo um flow inline dentro do `call!`
+
+`Result#then` (e seu alias `|`) também é a terceira forma da gem de
+**compor um flow**, lado a lado com `Micro::Cases.flow(...)` e a macro
+de nível de classe `flow ...`. Em vez de ligar casos de uso entre si,
+você mantém o encadeamento dentro do `call!` de um único caso de uso:
+cada elo é um método (ou lambda) que retorna um resultado `Success` /
+`Failure`, e os dados de cada elo alimentam o próximo. Cada elo é
+registrado como uma transição separada, exatamente como se fosse um
+step em um flow de nível superior.
+
+`Result#then` (ou `|`) aceita:
+
+- Um **`Symbol`** — o nome de um método de instância do caso de uso.
+- Um objeto **`Method` ligado** — `method(:nome)`.
+- Uma **lambda / proc**.
+- Outra **classe de caso de uso** (o uso padrão já documentado acima).
+
+O método conectado recebe os dados do resultado anterior como argumentos
+nomeados (`keyword arguments`) e deve retornar um
+`Micro::Case::Result` (`Success(...)` ou `Failure(...)`). Retornar
+qualquer outra coisa levanta `Micro::Case::Error::UnexpectedResult`.
+
+```ruby
+class DoSomeSum < Micro::Case
+  attributes :a, :b
+
+  def call!
+    validate_numbers
+      .then(:sum_a_and_b)
+      .then(:add, number: 3)
+      .then(SumHalf)
+  end
+
+  private
+
+  def validate_numbers
+    Kind.of?(Numeric, a, b) ? Success(:valid) : Failure()
+  end
+
+  def sum_a_and_b
+    Success :first_sum, result: { sum: a + b }
+  end
+
+  def add(sum:, number:, **)
+    Success :second_sum, result: { sum: sum + number }
+  end
+end
+
+DoSomeSum.call(a: 1, b: 2)
+# success? == true, result.data == { sum: 6.5 }
+# transitions registra 4 entradas:
+#   1. validate_numbers      -> Success(:valid)
+#   2. :sum_a_and_b          -> Success(:first_sum,  sum: 3)
+#   3. :add  (com number: 3) -> Success(:second_sum, sum: 6)
+#   4. SumHalf               -> Success(:third_sum,  sum: 6.5)
+```
+
+O operador `|` é equivalente a `.then(...)`:
+
+```ruby
+def call!
+  validate_numbers | :sum_a_and_b | :add | SumHalf
+end
+```
+
+As variantes com lambda e `Method` recebem os dados acumulados
+posicionalmente:
+
+```ruby
+def call!
+  validate_numbers
+    .then(method(:sum_a_and_b))
+    .then(->(data) { add(**data, number: 3) })
+    .then(SumHalf)
+end
+```
+
+> **Paridade comportamental:** um caso de uso que usa steps internos
+> pode ser colocado em qualquer `Micro::Cases.flow(...)`, `safe_flow`,
+> `flow ...` de nível de classe ou flow com `transaction: true` — suas
+> transições internas se intercalam com as transições dos steps
+> externos na ordem de execução, e a classe hospedeira aparece como
+> `use_case.class` para cada transição interna. Sob `transaction:
+> true`, um `Failure` retornado por um step interno reverte as
+> escritas de banco feitas por steps internos anteriores, da mesma
+> forma que uma falha em um step externo.
+
+> **Nota:** Veja `test/micro/case/internal_steps/with_symbols_test.rb`,
+> `with_methods_test.rb` e `with_lambdas_test.rb` para exemplos
+> completos de cada forma, e
+> `test/micro/cases/flow/internal_steps_in_flows_test.rb` para a
+> interação com flows e transações.
 
 [⬆️ Voltar para o índice](#índice-)
 
