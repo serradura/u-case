@@ -72,25 +72,33 @@ puts '-' * 92
 puts '* delta exceeds combined ±stddev — likely a real effect, not noise.'
 puts '  (no marker = within combined noise; treat as no measurable difference.)'
 
-# Sample runs on Apple Silicon (M-series), 3×(2s warmup + 5s measure):
+# Sample runs on Apple Silicon (M-series), 3×(2s warmup + 5s measure).
+# Δ column = (disabled - enabled) / enabled. * = delta exceeds combined ±stddev.
 #
-# Ruby 4.0.1 +PRISM
-#   single_use_case                   178k ±4.9%   192k ±1.9%   +7.41% *
-#   use_case_calling_another         90.6k ±3.1%  96.1k ±1.6%   +5.99% *
-#   flow_3_steps                     59.8k ±1.5%  62.4k ±2.8%   +4.32% *
+#                              single_use_case   use_case→use_case   flow_3_steps
+# Ruby 2.7.8     (no JIT)        +2.80%             +1.37%             +2.80% *
+# Ruby 3.2.11    (no YJIT)       -0.15%             +1.02%             +2.19%
+# Ruby 3.2.11    +YJIT           +3.22% *           +3.64%             +5.15% *
+# Ruby 4.0.1     +PRISM          +7.41% *           +5.99% *           +4.32% *
 #
-# Ruby 2.7.8 (no JIT)
-#   single_use_case                   185k ±2.7%   190k ±1.6%   +2.80%
-#   use_case_calling_another         98.6k ±1.2%  99.9k ±7.0%   +1.37%
-#   flow_3_steps                     64.3k ±1.0%  66.1k ±1.3%   +2.80% *
+# Reading:
+#   - Without a JIT (Ruby 2.7, Ruby 3.2-default — the typical Rails setup),
+#     the toggle's effect is within noise. There is no perf reason for a
+#     stock-Rails app to flip it on.
+#   - With YJIT (Ruby 3.2 --yjit, which Rails 7.2+ exposes as
+#     `config.yjit = true` but ships disabled), the toggle is worth
+#     3–5% on hot paths.
+#   - With PRISM (Ruby 4.0+, the default parser/bytecode), the gap widens
+#     further (4–7%): PRISM appears to inline the no-op methods to
+#     near-zero cost while the `is_a?` chain on the enabled side stays as
+#     real work.
 #
-# Reading: each scenario is faster with checks disabled. The win is larger
-# on modern Ruby (PRISM inlines the no-op methods to near-zero cost while
-# the `is_a?` chain on the enabled side stays as real work) and smaller on
-# Ruby 2.7 where there's no JIT to widen the gap.
+# JIT throughput effect (independent of this toggle): enabling YJIT on
+# Ruby 3.2 roughly +54% on `single_use_case` (187k → 287k i/s).
 #
-# The in-process toggle approach hid this entirely (every comparison
-# returned "same-ish") because swapping `Micro::Case.check` mid-process
-# invalidated inline caches and the second mode measured ran with caches
+# Methodology note: the first iteration of this benchmark toggled
+# `Micro::Case.check` mid-process and every comparison came back
+# "same-ish". That was an artifact — swapping the reference invalidates
+# Ruby's inline caches, so the second mode measured ran with caches
 # re-warming during the measurement window. Hence the per-mode subprocess
 # split: each mode boots fresh with its own caches.
