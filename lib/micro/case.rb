@@ -63,8 +63,14 @@ module Micro
       Proc.new { |arg| call(arg) }
     end
 
-    def self.flow(*args)
+    def self.flow(*args, transaction: nil, steps: nil)
+      if steps
+        raise ArgumentError, "#{self.name}.flow accepts positional steps OR `steps:`, not both" unless args.empty?
+        args = steps
+      end
+
       @__flow_use_cases = Cases::Utils.map_use_cases(args)
+      @__flow_transaction = transaction
     end
 
     def self.results(&block)
@@ -129,7 +135,11 @@ module Micro
 
       self.class_eval('def use_cases; self.class.use_cases; end')
 
-      @__flow = __flow_builder__.build(args)
+      @__flow = __flow_builder__.build(args, transaction: __flow_transaction)
+    end
+
+    private_class_method def self.__flow_transaction
+      return @__flow_transaction if defined?(@__flow_transaction)
     end
 
     FLOW_STEP = 'Self'.freeze

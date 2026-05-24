@@ -8,20 +8,29 @@ require 'micro/cases/map'
 
 module Micro
   module Cases
-    def self.flow(args)
-      Flow.build(args)
+    def self.flow(args = nil, transaction: nil, steps: nil)
+      Flow.build(__flow_steps(args, steps, 'Micro::Cases.flow'), transaction: transaction)
     end
 
-    def self.safe_flow(args)
+    def self.safe_flow(args = nil, transaction: nil, steps: nil)
       if Case::Config.instance.disable_safe_features
         raise Case::Error::SafeFeaturesDisabled.new('Micro::Cases.safe_flow')
       end
 
-      Safe::Flow.build(args)
+      Safe::Flow.build(__flow_steps(args, steps, 'Micro::Cases.safe_flow'), transaction: transaction)
     end
 
     def self.map(args)
       Map.build(args)
     end
+
+    def self.__flow_steps(args, steps, method)
+      return args if steps.nil?
+
+      raise ArgumentError, "#{method} accepts a positional collection OR `steps:`, not both" if args
+      steps
+    end
+
+    private_class_method :__flow_steps
   end
 end

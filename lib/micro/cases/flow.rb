@@ -8,30 +8,31 @@ module Micro
 
       attr_reader :use_cases
 
-      def self.build(args)
+      def self.build(args, transaction: nil)
         use_cases = Utils.map_use_cases(args)
 
         ::Micro::Case.check.flow_use_cases!(use_cases)
 
-        new(use_cases)
+        new(use_cases, transaction: transaction)
       end
 
-      def initialize(use_cases)
+      def initialize(use_cases, transaction: nil)
         @use_cases = use_cases.dup.freeze
         @next_ones = use_cases.dup
         @first = @next_ones.shift
+        @transaction = __coerce_transaction(transaction)
       end
 
       def inspect
-        '#<(%s) use_cases=%s>' % [self.class, @use_cases]
+        return '#<(%s) use_cases=%s>' % [self.class, @use_cases] unless @transaction
+
+        '#<(%s) transaction=%p use_cases=%s>' % [self.class, @transaction, @use_cases]
       end
 
       def call!(input:, result:)
-        first_result = __call_use_case(@first, result, input)
+        return __call_steps(input, result) unless @transaction
 
-        return first_result if @next_ones.empty?
-
-        __call_next_use_cases(first_result)
+        __wrap_in_transaction { __call_steps(input, result) }
       end
 
       def call(input = Kind::Empty::HASH)
@@ -73,6 +74,38 @@ module Micro
 
         def raise_invalid_invocation_of_the_then_method
           raise Case::Error::InvalidInvocationOfTheThenMethod.new("#{self.class.name}#")
+        end
+
+        def __call_steps(input, result)
+          first_result = __call_use_case(@first, result, input)
+
+          return first_result if @next_ones.empty?
+
+          __call_next_use_cases(first_result)
+        end
+
+        def __wrap_in_transaction
+          unless defined?(::ActiveRecord::Base)
+            raise Error::TransactionAdapterMissing
+          end
+
+          result = nil
+
+          ::ActiveRecord::Base.transaction do
+            result = yield
+
+            raise ::ActiveRecord::Rollback if result.failure?
+          end
+
+          result
+        end
+
+        def __coerce_transaction(value)
+          return nil if value.nil? || value == false
+          return true if value == true
+
+          raise ArgumentError,
+            "transaction: #{value.inspect} is not supported (only `true` is allowed today)"
         end
 
         def __call_use_case(use_case, result, input)
