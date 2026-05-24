@@ -7,9 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This gem was originally published as `u-service` (versions 0.1.0 – 1.0.0) and renamed to `u-case` starting with `u-case 1.0.0` on 2019-09-15.
 
-## [Unreleased]
+## [5.4.0] - 2026-05-24
 ### Added
-- `Micro::Case.config.disable_runtime_checks` config (default `false`) to skip the gem's internal argument/contract checks for better performance in production. All checks are consolidated in `Micro::Case::Check::Enabled` (the default) and `Micro::Case::Check::Disabled` (no-ops with the same signature); the active module is swapped via `Micro::Case.check` so disabled checks have no per-call overhead beyond a method dispatch (closes #45).
+- `Micro::Case.config.disable_runtime_checks` config (default `false`) to skip the gem's internal argument/contract checks for better performance in production. All checks are consolidated in `Micro::Case::Check::Enabled` (the default) and `Micro::Case::Check::Disabled` (no-ops with the same signature); the active module is swapped via `Micro::Case.check`. Measured throughput win is JIT-dependent: within noise on stock Ruby (no JIT), ~3–5% on Ruby 3.2 +YJIT, ~4–7% on Ruby 4.0 +PRISM (see `benchmarks/perfomance/runtime_checks/compare.rb`). Closes #45.
+- `benchmarks/perfomance/runtime_checks/` — per-mode subprocess benchmark (`checks_enabled.rb`, `checks_disabled.rb`, `compare.rb`) demonstrating the toggle's perf effect across Ruby versions and JIT modes.
 
 ## [5.3.1] - 2026-05-23
 ### Added
@@ -467,7 +468,7 @@ First release under the `u-case` name (renamed from `u-service`).
 - `Micro::Service::Result` with `Success`/`Failure` factories and helper methods for returning typed results from services.
 - Runtime dependency on `u-attributes` for service input declaration.
 
-[Unreleased]: https://github.com/serradura/u-case/compare/v5.3.1...HEAD
+[5.4.0]: https://github.com/serradura/u-case/compare/v5.3.1...v5.4.0
 [5.3.1]: https://github.com/serradura/u-case/compare/v5.3.0...v5.3.1
 [5.3.0]: https://github.com/serradura/u-case/compare/v5.2.1...v5.3.0
 [5.2.1]: https://github.com/serradura/u-case/compare/v5.2.0...v5.2.1
