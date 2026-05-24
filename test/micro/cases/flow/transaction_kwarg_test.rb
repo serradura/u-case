@@ -74,7 +74,7 @@ class Micro::Cases::Flow::TransactionKwargTest < Minitest::Test
       Class.new(Micro::Case) { flow(Increment, steps: [Increment]) }
     end
 
-    assert_match(/positional steps OR `steps:`/, error.message)
+    assert_match(/positional collection OR `steps:`/, error.message)
   end
 
   def test_inspect_mentions_transaction_when_set

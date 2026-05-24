@@ -20,7 +20,7 @@ module Micro
         @use_cases = use_cases.dup.freeze
         @next_ones = use_cases.dup
         @first = @next_ones.shift
-        @transaction = __coerce_transaction(transaction)
+        @transaction = ::Micro::Case.check.transaction_kwarg!(transaction)
       end
 
       def inspect
@@ -85,9 +85,7 @@ module Micro
         end
 
         def __wrap_in_transaction
-          unless defined?(::ActiveRecord::Base)
-            raise Error::TransactionAdapterMissing
-          end
+          ::Micro::Case.check.activerecord_loaded!
 
           result = nil
 
@@ -98,14 +96,6 @@ module Micro
           end
 
           result
-        end
-
-        def __coerce_transaction(value)
-          return nil if value.nil? || value == false
-          return true if value == true
-
-          raise ArgumentError,
-            "transaction: #{value.inspect} is not supported (only `true` is allowed today)"
         end
 
         def __call_use_case(use_case, result, input)

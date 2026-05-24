@@ -60,6 +60,27 @@ module Micro
           Kind::Hash[arg]
         end
 
+        def flow_steps_kwarg!(args, steps, label)
+          return unless args && steps
+
+          raise ArgumentError,
+            "#{label} accepts a positional collection OR `steps:`, not both"
+        end
+
+        def transaction_kwarg!(value)
+          return nil if value.nil? || value == false
+          return true if value == true
+
+          raise ArgumentError,
+            "transaction: #{value.inspect} is not supported (only `true` is allowed today)"
+        end
+
+        def activerecord_loaded!
+          return if defined?(::ActiveRecord::Base)
+
+          raise ::Micro::Cases::Error::TransactionAdapterMissing
+        end
+
         def results_contract!(use_case_class, kind, type, value)
           contract = use_case_class.__results_contract__
           return unless contract
@@ -108,6 +129,9 @@ module Micro
         def flow_use_cases!(_use_cases); end
         def map_args!(_args); end
         def hash!(arg); arg; end
+        def flow_steps_kwarg!(_args, _steps, _label); end
+        def transaction_kwarg!(value); value ? true : nil; end
+        def activerecord_loaded!; end
         def results_contract!(_use_case_class, _kind, _type, _value); end
       end
     end

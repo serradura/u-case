@@ -64,12 +64,9 @@ module Micro
     end
 
     def self.flow(*args, transaction: nil, steps: nil)
-      if steps
-        raise ArgumentError, "#{self.name}.flow accepts positional steps OR `steps:`, not both" unless args.empty?
-        args = steps
-      end
+      ::Micro::Case.check.flow_steps_kwarg!(args.empty? ? nil : args, steps, "#{self.name}.flow")
 
-      @__flow_use_cases = Cases::Utils.map_use_cases(args)
+      @__flow_use_cases = Cases::Utils.map_use_cases(steps || args)
       @__flow_transaction = transaction
     end
 

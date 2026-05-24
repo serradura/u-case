@@ -173,4 +173,68 @@ class Micro::Case::DisableRuntimeChecksTest < Minitest::Test
       UseCaseWithBadContract.call
     end
   end
+
+  class NoopStep < Micro::Case
+    def call!; Success(); end
+  end
+
+  def test_disabling_skips_the_flow_steps_kwarg_check
+    Micro::Case.config do |config|
+      config.disable_runtime_checks = true
+    end
+
+    # Normally raises ArgumentError because args and steps: are mutually exclusive.
+    flow = Micro::Cases.flow([NoopStep], steps: [NoopStep])
+
+    assert_kind_of(Micro::Cases::Flow, flow)
+  end
+
+  def test_enabled_raises_for_the_flow_steps_kwarg_check
+    err = assert_raises(ArgumentError) do
+      Micro::Cases.flow([NoopStep], steps: [NoopStep])
+    end
+
+    assert_match(/Micro::Cases.flow accepts a positional collection OR `steps:`, not both/, err.message)
+  end
+
+  def test_disabling_skips_the_transaction_kwarg_check
+    Micro::Case.config do |config|
+      config.disable_runtime_checks = true
+    end
+
+    # Normally raises ArgumentError because only `true` is supported today.
+    flow = Micro::Cases.flow(transaction: :sequel, steps: [NoopStep])
+
+    assert_kind_of(Micro::Cases::Flow, flow)
+  end
+
+  def test_enabled_raises_for_the_transaction_kwarg_check
+    err = assert_raises(ArgumentError) do
+      Micro::Cases.flow(transaction: :sequel, steps: [NoopStep])
+    end
+
+    assert_match(/transaction: :sequel is not supported/, err.message)
+  end
+
+  def test_disabling_skips_the_activerecord_loaded_check
+    skip 'activerecord is loaded — checks_disabled path is unreachable in this bundle' if defined?(::ActiveRecord::Base)
+
+    Micro::Case.config do |config|
+      config.disable_runtime_checks = true
+    end
+
+    flow = Micro::Cases.flow(transaction: true, steps: [NoopStep])
+
+    # Without the check, calling reaches ::ActiveRecord::Base and raises
+    # NameError instead of the curated TransactionAdapterMissing.
+    assert_raises(NameError) { flow.call }
+  end
+
+  def test_enabled_raises_for_the_activerecord_loaded_check
+    skip 'activerecord is loaded — TransactionAdapterMissing path is unreachable in this bundle' if defined?(::ActiveRecord::Base)
+
+    flow = Micro::Cases.flow(transaction: true, steps: [NoopStep])
+
+    assert_raises(Micro::Cases::Error::TransactionAdapterMissing) { flow.call }
+  end
 end
