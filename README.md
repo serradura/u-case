@@ -57,6 +57,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
       - [`Micro::Case::Result#transitions` schema](#microcaseresulttransitions-schema)
       - [Is it possible disable the `Micro::Case::Result#transitions`?](#is-it-possible-disable-the-microcaseresulttransitions)
     - [Is it possible to declare a flow that includes the use case itself as a step?](#is-it-possible-to-declare-a-flow-that-includes-the-use-case-itself-as-a-step)
+    - [How to run a use case or flow inside a database transaction?](#how-to-run-a-use-case-or-flow-inside-a-database-transaction)
   - [`Micro::Case::Strict` - What is a strict use case?](#microcasestrict---what-is-a-strict-use-case)
   - [`Micro::Case::Safe` - Is there some feature to auto handle exceptions inside of a use case or flow?](#microcasesafe---is-there-some-feature-to-auto-handle-exceptions-inside-of-a-use-case-or-flow)
     - [`Micro::Cases::Safe::Flow`](#microcasessafeflow)
@@ -976,6 +977,83 @@ result[:number] # "8"
 ```
 
 > **Note:** This feature can be used with the Micro::Case::Safe. Checkout this test to see an example: https://github.com/serradura/u-case/blob/714c6b658fc6aa02617e6833ddee09eddc760f2a/test/micro/case/safe/with_inner_flow_test.rb
+
+[⬆️ Back to Top](#table-of-contents-)
+
+#### How to run a use case or flow inside a database transaction?
+
+`u-case` ships with two complementary helpers for wrapping work in an
+`ActiveRecord::Base.transaction`. Both opt-in — `active_record` is **not**
+required by the gem, so you need to load ActiveRecord yourself (Rails
+applications already do).
+
+##### `Micro::Case#transaction` — inline transactions inside `call!`
+
+`Micro::Case#transaction` (and `Micro::Case::Safe#transaction`) is a private
+instance helper that wraps a block in `ActiveRecord::Base.transaction` and
+issues an `ActiveRecord::Rollback` whenever the block's result is a `Failure`.
+The original result is returned either way, so you can keep chaining with
+`Result#then`:
+
+```ruby
+class CreateUserWithAProfile < Micro::Case
+  def call!
+    transaction {
+      call(CreateUser).then(CreateUserProfile)
+    }
+  end
+end
+```
+
+If the block returns a failure (or raises), every row written inside the
+block is rolled back. The `transaction` accepts an `adapter:` argument that
+currently only supports `:activerecord` (the default).
+
+##### `Micro::Cases.flow(transaction: true, steps: [...])` — flow-level transactions
+
+Pass `transaction: true` together with `steps:` to wrap an entire flow in a
+single `ActiveRecord::Base.transaction`. If any step returns a failure (or
+raises, in a `safe_flow`), every database write performed during the flow is
+rolled back:
+
+```ruby
+CreateUserWithAProfile = Micro::Cases.flow(transaction: true, steps: [
+  CreateUser,
+  CreateUserProfile
+])
+
+# safe_flow rolls back on failures AND on unexpected exceptions
+CreateUserWithAProfile = Micro::Cases.safe_flow(transaction: true, steps: [
+  CreateUser,
+  CreateUserProfile
+])
+
+# Class-level form
+class CreateUserWithAProfile < Micro::Case
+  flow(transaction: true, steps: [CreateUser, CreateUserProfile])
+end
+```
+
+To nest a transactional flow inside another flow, wrap it in a use case
+class — `Micro::Cases.flow([...])` flattens `Flow` instances passed as
+steps, but does **not** flatten classes:
+
+```ruby
+class CreateUserAndProfile < Micro::Case
+  flow(transaction: true, steps: [CreateUser, CreateUserProfile])
+end
+
+SignUpFlow = Micro::Cases.flow([
+  NormalizeParams,
+  ValidatePassword,
+  CreateUserAndProfile,
+  EnqueueIndexingJob
+])
+```
+
+If `transaction: true` is used while `ActiveRecord::Base` is not loaded the
+flow raises `Micro::Cases::Error::TransactionAdapterMissing` on the first
+call so the misconfiguration surfaces immediately.
 
 [⬆️ Back to Top](#table-of-contents-)
 

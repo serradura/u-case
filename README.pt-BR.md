@@ -55,6 +55,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
       - [`Micro::Case::Result#transitions` schema](#microcaseresulttransitions-schema)
       - [É possível desabilitar o `Micro::Case::Result#transitions`?](#é-possível-desabilitar-o-microcaseresulttransitions)
     - [É possível declarar um fluxo que inclui o próprio caso de uso?](#é-possível-declarar-um-fluxo-que-inclui-o-próprio-caso-de-uso)
+    - [Como executar um caso de uso ou flow dentro de uma transação de banco de dados?](#como-executar-um-caso-de-uso-ou-flow-dentro-de-uma-transação-de-banco-de-dados)
   - [`Micro::Case::Strict` - O que é um caso de uso estrito?](#microcasestrict---o-que-é-um-caso-de-uso-estrito)
   - [`Micro::Case::Safe` - Existe algum recurso para lidar automaticamente com exceções dentro de um caso de uso ou fluxo?](#microcasesafe---existe-algum-recurso-para-lidar-automaticamente-com-exceções-dentro-de-um-caso-de-uso-ou-fluxo)
     - [`Micro::Cases::Safe::Flow`](#microcasessafeflow)
@@ -976,6 +977,84 @@ result[:number] # "8"
 ```
 
 > **Note:** Essa funcionalidade pode ser usada com Micro::Case::Safe. Verifique esse teste para ver um example: https://github.com/serradura/u-case/blob/714c6b658fc6aa02617e6833ddee09eddc760f2a/test/micro/case/safe/with_inner_flow_test.rb
+
+[⬆️ Voltar para o índice](#índice-)
+
+#### Como executar um caso de uso ou flow dentro de uma transação de banco de dados?
+
+O `u-case` traz dois helpers complementares para envolver o trabalho em
+um `ActiveRecord::Base.transaction`. Ambos são opt-in — a gem **não**
+requer `active_record` automaticamente, então você precisa carregar o
+ActiveRecord por conta própria (aplicações Rails já o fazem).
+
+##### `Micro::Case#transaction` — transações inline dentro do `call!`
+
+`Micro::Case#transaction` (e `Micro::Case::Safe#transaction`) é um helper
+privado de instância que envolve um bloco em `ActiveRecord::Base.transaction`
+e dispara um `ActiveRecord::Rollback` sempre que o resultado do bloco for um
+`Failure`. O resultado original é devolvido nos dois casos, permitindo
+continuar encadeando com `Result#then`:
+
+```ruby
+class CreateUserWithAProfile < Micro::Case
+  def call!
+    transaction {
+      call(CreateUser).then(CreateUserProfile)
+    }
+  end
+end
+```
+
+Se o bloco retornar uma falha (ou levantar uma exceção), todas as linhas
+gravadas dentro do bloco serão revertidas. O `transaction` aceita um
+argumento `adapter:` que atualmente suporta apenas `:activerecord` (o
+padrão).
+
+##### `Micro::Cases.flow(transaction: true, steps: [...])` — transações no nível do flow
+
+Passe `transaction: true` junto com `steps:` para envolver um flow inteiro
+em uma única `ActiveRecord::Base.transaction`. Se qualquer step retornar
+uma falha (ou levantar uma exceção, no caso de `safe_flow`), todas as
+escritas realizadas no banco durante o flow serão revertidas:
+
+```ruby
+CreateUserWithAProfile = Micro::Cases.flow(transaction: true, steps: [
+  CreateUser,
+  CreateUserProfile
+])
+
+# safe_flow faz rollback em falhas E em exceções inesperadas
+CreateUserWithAProfile = Micro::Cases.safe_flow(transaction: true, steps: [
+  CreateUser,
+  CreateUserProfile
+])
+
+# Forma a nível de classe
+class CreateUserWithAProfile < Micro::Case
+  flow(transaction: true, steps: [CreateUser, CreateUserProfile])
+end
+```
+
+Para aninhar um flow transacional dentro de outro flow, envolva-o em uma
+classe de caso de uso — `Micro::Cases.flow([...])` achata instâncias de
+`Flow` passadas como steps, mas **não** achata classes:
+
+```ruby
+class CreateUserAndProfile < Micro::Case
+  flow(transaction: true, steps: [CreateUser, CreateUserProfile])
+end
+
+SignUpFlow = Micro::Cases.flow([
+  NormalizeParams,
+  ValidatePassword,
+  CreateUserAndProfile,
+  EnqueueIndexingJob
+])
+```
+
+Se `transaction: true` for usado sem que `ActiveRecord::Base` esteja
+carregado, o flow levantará `Micro::Cases::Error::TransactionAdapterMissing`
+na primeira chamada, sinalizando a configuração incorreta imediatamente.
 
 [⬆️ Voltar para o índice](#índice-)
 
