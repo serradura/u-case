@@ -232,7 +232,7 @@ module Micro
       end
 
       def __call_the_use_case_flow
-        self.class.__flow_get__.call(@__input)
+        self.class.__flow_get__.call!(input: @__input, result: @__result)
       end
 
       def Success(type = :ok, result: nil)
