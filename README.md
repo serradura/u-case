@@ -14,6 +14,7 @@
 </p>
 
 The main project goals are:
+
 1. Easy to use and easy to learn (input **>>** process **>>** output).
 2. Promote immutability (transforming data instead of modifying it) and data integrity.
 3. No callbacks (ex: before, after, around) to avoid code indirections that could compromise the state and understanding of application flows.
@@ -24,15 +25,16 @@ The main project goals are:
 
 ## Documentation <!-- omit in toc -->
 
-Version   | Documentation
---------- | -------------
-unreleased| https://github.com/serradura/u-case/blob/main/README.md
-5.6.0     | https://github.com/serradura/u-case/blob/v5.x/README.md
-4.5.1     | https://github.com/serradura/u-case/blob/v4.x/README.md
+| Version    | Documentation                                           |
+| ---------- | ------------------------------------------------------- |
+| unreleased | https://github.com/serradura/u-case/blob/main/README.md |
+| 5.6.0      | https://github.com/serradura/u-case/blob/v5.x/README.md |
+| 4.5.1      | https://github.com/serradura/u-case/blob/v4.x/README.md |
 
 > **Note:** Você entende português? 🇧🇷&nbsp;🇵🇹 Verifique o [README traduzido em pt-BR](https://github.com/serradura/u-case/blob/main/README.pt-BR.md).
 
 ## Table of Contents <!-- omit in toc -->
+
 - [Compatibility](#compatibility)
 - [Dependencies](#dependencies)
 - [Installation](#installation)
@@ -52,6 +54,13 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
       - [What does happens when a `Micro::Case::Result#then` receives a block?](#what-does-happens-when-a-microcaseresultthen-receives-a-block)
       - [How to make attributes data injection using this feature?](#how-to-make-attributes-data-injection-using-this-feature)
     - [Internal steps — building a flow inline inside `call!`](#internal-steps--building-a-flow-inline-inside-call)
+      - [What `Result#then` (and `|`) accept](#what-resultthen-and--accept)
+      - [A minimal example](#a-minimal-example)
+      - [The `|` (pipe) alias](#the--pipe-alias)
+      - [Lambda / `Method` forms](#lambda--method-forms)
+      - [Failure short-circuits the chain](#failure-short-circuits-the-chain)
+      - [Using an internal-step case inside an outer flow](#using-an-internal-step-case-inside-an-outer-flow)
+      - [Internal steps **without** transactions](#internal-steps-without-transactions)
   - [`Micro::Cases::Flow` - How to compose use cases?](#microcasesflow---how-to-compose-use-cases)
     - [Is it possible to compose a flow with other flows?](#is-it-possible-to-compose-a-flow-with-other-flows)
     - [Is it possible a flow accumulates its input and merges each success result to use as the argument of the next use cases?](#is-it-possible-a-flow-accumulates-its-input-and-merges-each-success-result-to-use-as-the-argument-of-the-next-use-cases)
@@ -60,6 +69,12 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
       - [Is it possible disable the `Micro::Case::Result#transitions`?](#is-it-possible-disable-the-microcaseresulttransitions)
     - [Is it possible to declare a flow that includes the use case itself as a step?](#is-it-possible-to-declare-a-flow-that-includes-the-use-case-itself-as-a-step)
     - [How to run a use case or flow inside a database transaction?](#how-to-run-a-use-case-or-flow-inside-a-database-transaction)
+      - [`Micro::Case#transaction` — inline transactions inside `call!`](#microcasetransaction--inline-transactions-inside-call)
+      - [`transaction with: …` — declaring the default for a case](#transaction-with---declaring-the-default-for-a-case)
+      - [`Micro::Cases.flow(transaction: …, steps: [...])` — flow-level transactions](#microcasesflowtransaction--steps---flow-level-transactions)
+      - [`config.default_transaction_class { … }` — global default](#configdefault_transaction_class-----global-default)
+      - [Internal-step flows under transactions](#internal-step-flows-under-transactions)
+      - [Behavior notes](#behavior-notes)
   - [`Micro::Case::Strict` - What is a strict use case?](#microcasestrict---what-is-a-strict-use-case)
   - [`Micro::Case::Safe` - Is there some feature to auto handle exceptions inside of a use case or flow?](#microcasesafe---is-there-some-feature-to-auto-handle-exceptions-inside-of-a-use-case-or-flow)
     - [`Micro::Cases::Safe::Flow`](#microcasessafeflow)
@@ -91,17 +106,16 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
 
 ## Compatibility
 
-| u-case           | branch | ruby     | activemodel    | u-attributes   |
-| ---------------- | ------ | -------- | -------------- | -------------- |
-| unreleased       | main   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0  |
-| 5.6.0            | v5.x   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0  |
-| 5.1.0            | v5.x   | >= 2.7   | >= 6.0         | >= 2.7, < 4.0  |
-| 4.5.1            | v4.x   | >= 2.2.0 | >= 3.2, <= 8.1 | >= 2.7, < 3.0  |
+| u-case     | branch | ruby     | activemodel    | u-attributes  |
+| ---------- | ------ | -------- | -------------- | ------------- |
+| unreleased | main   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0 |
+| 5.6.0      | v5.x   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0 |
+| 4.5.1      | v4.x   | >= 2.2.0 | >= 3.2, <= 8.1 | >= 2.7, < 3.0 |
 
 This library is tested (CI matrix) against:
 
 | Ruby / Rails | 6.0 | 6.1 | 7.0 | 7.1 | 7.2 | 8.0 | 8.1 | Edge |
-|--------------|-----|-----|-----|-----|-----|-----|-----|------|
+| ------------ | --- | --- | --- | --- | --- | --- | --- | ---- |
 | 2.7          | ✅  | ✅  | ✅  | ✅  |     |     |     |      |
 | 3.0          | ✅  | ✅  | ✅  | ✅  |     |     |     |      |
 | 3.1          |     |     | ✅  | ✅  | ✅  |     |     |      |
@@ -117,13 +131,14 @@ This library is tested (CI matrix) against:
 
 1. [`kind`](https://github.com/serradura/kind) gem.
 
-    A simple type system (at runtime) for Ruby.
+   A simple type system (at runtime) for Ruby.
 
-    It is used to validate some internal u-case's methods input. This gem also exposes an  [`ActiveModel validator`](https://github.com/serradura/kind#kindvalidator-activemodelvalidations) when requiring the [`u-case/with_activemodel_validation`](#u-casewith_activemodel_validation---how-to-validate-use-case-attributes) module, or when the [`Micro::Case.config`](#microcaseconfig) was used to enable it.
+   It is used to validate some internal u-case's methods input. This gem also exposes an [`ActiveModel validator`](https://github.com/serradura/kind#kindvalidator-activemodelvalidations) when requiring the [`u-case/with_activemodel_validation`](#u-casewith_activemodel_validation---how-to-validate-use-case-attributes) module, or when the [`Micro::Case.config`](#microcaseconfig) was used to enable it.
+
 2. [`u-attributes`](https://github.com/serradura/u-attributes) gem.
 
-    This gem allows defining read-only attributes, that is, your objects will have only getters to access their attributes data.
-    It is used to define the use case attributes.
+   This gem allows defining read-only attributes, that is, your objects will have only getters to access their attributes data.
+   It is used to define the use case attributes.
 
 ## Installation
 
@@ -190,6 +205,7 @@ bad_result.data     # { message: "`a` and `b` attributes must be numeric" }
 ### `Micro::Case::Result` - What is a use case result?
 
 A `Micro::Case::Result` stores the use cases output data. These are their main methods:
+
 - `#success?` returns true if is a successful result.
 - `#failure?` returns true if is an unsuccessful result.
 - `#use_case` returns the use case responsible for it. This feature is handy to handle a flow failure (this topic will be covered ahead).
@@ -212,6 +228,7 @@ A `Micro::Case::Result` stores the use cases output data. These are their main m
 #### What are the default result types?
 
 Every result has a type, and these are their default values:
+
 - `:ok` when success
 - `:error` or `:exception` when failures
 
@@ -385,6 +402,7 @@ end
 ```
 
 Notes:
+
 - Use cases without a `results` block keep their previous unrestricted behavior — the contract is opt-in.
 - Subclasses inherit the parent's contract.
 - Rescued exceptions in `Micro::Case::Safe` (which produce `Failure(result: exception)` automatically) bypass the contract.
@@ -522,15 +540,15 @@ end
 
 The hash patterns expose these keys:
 
-| Key             | Present on        | Value                                                   |
-| --------------- | ----------------- | ------------------------------------------------------- |
-| `success:`      | success only      | the result `type` (e.g. `:ok`)                          |
-| `failure:`      | failure only      | the result `type` (e.g. `:invalid_attributes`)          |
-| `type:`         | always            | the result `type`                                       |
-| `data:`         | always            | the result `data` hash                                  |
-| `result:`       | always            | alias of `data:` (matches the `Success(result: …)` keyword used at the creation site) |
-| `use_case:`     | always            | the use case instance that produced the result          |
-| `transitions:`  | always            | the result `transitions` array                          |
+| Key            | Present on   | Value                                                                                 |
+| -------------- | ------------ | ------------------------------------------------------------------------------------- |
+| `success:`     | success only | the result `type` (e.g. `:ok`)                                                        |
+| `failure:`     | failure only | the result `type` (e.g. `:invalid_attributes`)                                        |
+| `type:`        | always       | the result `type`                                                                     |
+| `data:`        | always       | the result `data` hash                                                                |
+| `result:`      | always       | alias of `data:` (matches the `Success(result: …)` keyword used at the creation site) |
+| `use_case:`    | always       | the use case instance that produced the result                                        |
+| `transitions:` | always       | the result `transitions` array                                                        |
 
 > **Note:** On the **reader** side, `Result#data` is also accessible as `Result#value` (existing alias). On the **pattern-matching** side, the `data:` key is also accessible as `result:` — both refer to the same payload.
 
@@ -688,7 +706,7 @@ Todo::FindAllForUser
 `Result#then` (and its `|` pipe alias) is u-case's **third way of
 composing a flow**, side by side with `Micro::Cases.flow(...)` and the
 class-level `flow ...` macro. Instead of wiring sibling use cases
-together, you keep the chain *inside* a single use case's `call!`:
+together, you keep the chain _inside_ a single use case's `call!`:
 each link is a method, lambda or another use case class; each link
 returns a `Micro::Case::Result`; each link's `Success` data becomes
 the next link's keyword arguments; and each link contributes a row to
@@ -696,14 +714,14 @@ the next link's keyword arguments; and each link contributes a row to
 
 ##### What `Result#then` (and `|`) accept
 
-| Argument shape | Example |
-| --- | --- |
-| `Symbol` (method name) | `result.then(:sum_a_and_b)` |
-| Bound `Method` object | `result.then(method(:sum_a_and_b))` |
-| `Lambda` / `Proc` | `result.then(-> data { sum_a_and_b(**data) })` |
-| Use case class | `result.then(SumHalf)` |
-| `Symbol` + Hash defaults | `result.then(:add, number: 3)` |
-| Block | `result.then { \|r\| r.success? ? r[:sum] : 0 }` |
+| Argument shape           | Example                                          |
+| ------------------------ | ------------------------------------------------ |
+| `Symbol` (method name)   | `result.then(:sum_a_and_b)`                      |
+| Bound `Method` object    | `result.then(method(:sum_a_and_b))`              |
+| `Lambda` / `Proc`        | `result.then(-> data { sum_a_and_b(**data) })`   |
+| Use case class           | `result.then(SumHalf)`                           |
+| `Symbol` + Hash defaults | `result.then(:add, number: 3)`                   |
+| Block                    | `result.then { \|r\| r.success? ? r[:sum] : 0 }` |
 
 The connecting method **must** return a `Micro::Case::Result`. Anything
 else raises `Micro::Case::Error::UnexpectedResult` — for example a
@@ -896,7 +914,7 @@ CreateUserWithProfileInline.call(name: 'Rodrigo', info: '')
 
 If you need the partial side-effects to be undone, wrap the chain in
 a transaction. Because internal steps are just another way of
-expressing a flow (an *internal* flow), the transactional story is
+expressing a flow (an _internal_ flow), the transactional story is
 exactly the one already documented in
 [How to run a use case or flow inside a database transaction?](#how-to-run-a-use-case-or-flow-inside-a-database-transaction)
 below — the "Internal-step flows under transactions" subsection
@@ -1193,6 +1211,7 @@ And look up the `accessible_attributes` property, it shows whats attributes are 
 > **Note:** The [`Micro::Case::Result#then`](#how-to-use-the-microcaseresultthen-method) increments the `Micro::Case::Result#transitions`.
 
 ##### `Micro::Case::Result#transitions` schema
+
 ```ruby
 [
   {
@@ -1426,7 +1445,7 @@ A non-callable assignment to `default_transaction_class=` raises
 
 [Internal steps](#internal-steps--building-a-flow-inline-inside-call)
 (the `Result#then(:symbol)` / `|` form built inline inside a single
-`call!`) are u-case's third way of composing a flow — an *internal*
+`call!`) are u-case's third way of composing a flow — an _internal_
 flow. By default an internal flow has **no transactional rollback**:
 side-effects from earlier `.then(:method)` links persist even when a
 later link returns `Failure`.
@@ -1437,7 +1456,7 @@ rollback. Both reuse the helpers already covered above:
 **1. Wrap the host case in a `transaction: true` flow.** This is the
 recommended way once the host case is composed with the rest of the
 pipeline. The transaction spans the whole flow call, so a `Failure`
-*anywhere* — including from any internal `.then(:method)` link — rolls
+_anywhere_ — including from any internal `.then(:method)` link — rolls
 back every database write performed during that call:
 
 ```ruby
@@ -1519,7 +1538,7 @@ nesting / flatten rules.
   `result.accessible_attributes` are identical to those of an equivalent
   non-transactional flow.
 - **`Flow` instances get flattened.** `Micro::Cases.flow([inner_flow,
-  Other])` flattens `inner_flow` into its leaf steps, which means a
+Other])` flattens `inner_flow` into its leaf steps, which means a
   transactional `Flow` instance passed this way **loses its
   transaction**. Wrap reusable transactional flows in a use case class
   (the snippet above) to preserve their transaction when nested.
@@ -1770,9 +1789,9 @@ But if do you want an automatic way to fail your use cases on validation errors,
 
 1. **require 'u-case/with_activemodel_validation'** in the Gemfile
 
-  ```ruby
-  gem 'u-case', require: 'u-case/with_activemodel_validation'
-  ```
+```ruby
+gem 'u-case', require: 'u-case/with_activemodel_validation'
+```
 
 2. Use the `Micro::Case.config` to enable it. [Link to](#microcaseconfig) this section.
 
@@ -1894,13 +1913,13 @@ methods are no-ops — so the validations themselves are not run on each call.
 
 #### Success results
 
-| Gem / Abstraction      | Iterations per second |       Comparison  |
-| -----------------      | --------------------: | ----------------: |
+| Gem / Abstraction      | Iterations per second |        Comparison |
+| ---------------------- | --------------------: | ----------------: |
 | Dry::Monads            |              315635.1 | _**The Fastest**_ |
-| **Micro::Case**        |               75837.7 |     4.16x slower  |
-| Interactor             |               59745.5 |     5.28x slower  |
-| Trailblazer::Operation |               28423.9 |    11.10x slower  |
-| Dry::Transaction       |               10130.9 |    31.16x slower  |
+| **Micro::Case**        |               75837.7 |      4.16x slower |
+| Interactor             |               59745.5 |      5.28x slower |
+| Trailblazer::Operation |               28423.9 |     11.10x slower |
+| Dry::Transaction       |               10130.9 |     31.16x slower |
 
 <details>
   <summary>Show the full <a href="https://github.com/evanphx/benchmark-ips">benchmark/ips</a> results.</summary>
@@ -1935,19 +1954,20 @@ methods are no-ops — so the validations themselves are not run on each call.
 # Trailblazer::Operation:    28423.9 i/s - 11.10x  (± 0.00) slower
 #     Dry::Transaction:    10130.9 i/s - 31.16x  (± 0.00) slower
 ```
+
 </details>
 
 https://github.com/serradura/u-case/blob/main/benchmarks/perfomance/use_case/success_results.rb
 
 #### Failure results
 
-| Gem / Abstraction      | Iterations per second |       Comparison  |
-| -----------------      | --------------------: | ----------------: |
+| Gem / Abstraction      | Iterations per second |        Comparison |
+| ---------------------- | --------------------: | ----------------: |
 | Dry::Monads            |              135386.9 | _**The Fastest**_ |
-| **Micro::Case**        |               73489.3 |     1.85x slower  |
-| Trailblazer::Operation |               29016.4 |     4.67x slower  |
-| Interactor             |               27037.0 |     5.01x slower  |
-| Dry::Transaction       |                8988.6 |    15.06x slower  |
+| **Micro::Case**        |               73489.3 |      1.85x slower |
+| Trailblazer::Operation |               29016.4 |      4.67x slower |
+| Interactor             |               27037.0 |      5.01x slower |
+| Dry::Transaction       |                8988.6 |     15.06x slower |
 
 <details>
   <summary>Show the full <a href="https://github.com/evanphx/benchmark-ips">benchmark/ips</a> results.</summary>
@@ -1980,6 +2000,7 @@ https://github.com/serradura/u-case/blob/main/benchmarks/perfomance/use_case/suc
 #           Interactor:    27037.0 i/s - 5.01x  (± 0.00) slower
 #     Dry::Transaction:     8988.6 i/s - 15.06x  (± 0.00) slower
 ```
+
 </details>
 
 https://github.com/serradura/u-case/blob/main/benchmarks/perfomance/use_case/failure_results.rb
@@ -1988,14 +2009,14 @@ https://github.com/serradura/u-case/blob/main/benchmarks/perfomance/use_case/fai
 
 ### `Micro::Cases::Flow`
 
-| Gems / Abstraction      | [Success results](https://github.com/serradura/u-case/blob/main/benchmarks/perfomance/flow/success_results.rb) | [Failure results](https://github.com/serradura/u-case/blob/main/benchmarks/perfomance/flow/failure_results.rb) |
-| ------------------------------------------- | ----------------: | ----------------: |
-| Micro::Case::Result `pipe` method           |       80936.2 i/s |       78280.4 i/s |
-| Micro::Case::Result `then` method           |         0x slower |         0x slower |
-| Micro::Cases.flow                           |         0x slower |         0x slower |
-| Micro::Case class with an inner flow        |      1.72x slower |      1.68x slower |
-| Micro::Case class including itself as a step|      1.93x slower |      1.87x slower |
-| Interactor::Organizer                       |      3.33x slower |      3.22x slower |
+| Gems / Abstraction                           | [Success results](https://github.com/serradura/u-case/blob/main/benchmarks/perfomance/flow/success_results.rb) | [Failure results](https://github.com/serradura/u-case/blob/main/benchmarks/perfomance/flow/failure_results.rb) |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------: | -------------------------------------------------------------------------------------------------------------: |
+| Micro::Case::Result `pipe` method            |                                                                                                    80936.2 i/s |                                                                                                    78280.4 i/s |
+| Micro::Case::Result `then` method            |                                                                                                      0x slower |                                                                                                      0x slower |
+| Micro::Cases.flow                            |                                                                                                      0x slower |                                                                                                      0x slower |
+| Micro::Case class with an inner flow         |                                                                                                   1.72x slower |                                                                                                   1.68x slower |
+| Micro::Case class including itself as a step |                                                                                                   1.93x slower |                                                                                                   1.87x slower |
+| Interactor::Organizer                        |                                                                                                   3.33x slower |                                                                                                   3.22x slower |
 
 \* The `Dry::Monads`, `Dry::Transaction`, `Trailblazer::Operation` gems are out of this analysis because all of them doesn't have this kind of feature.
 
@@ -2027,6 +2048,7 @@ https://github.com/serradura/u-case/blob/main/benchmarks/perfomance/use_case/fai
 # Micro::Case including the class:  42030.2 i/s - 1.93x  (± 0.00) slower
 # Interactor::Organizer:            24290.3 i/s - 3.33x  (± 0.00) slower
 ```
+
 </details>
 
 <details>
@@ -2057,6 +2079,7 @@ https://github.com/serradura/u-case/blob/main/benchmarks/perfomance/use_case/fai
 # Micro::Case including the class:  41920.8 i/s - 1.87x  (± 0.00) slower
 # Interactor::Organizer:            24280.0 i/s - 3.22x  (± 0.00) slower
 ```
+
 </details>
 
 https://github.com/serradura/u-case/blob/main/benchmarks/perfomance/flow/
@@ -2105,8 +2128,8 @@ ruby benchmarks/perfomance/flow/success_results.rb
 
 Check it out implementations of the same use case with different gems/abstractions.
 
-* [interactor](https://github.com/serradura/u-case/blob/main/comparisons/interactor.rb)
-* [u-case](https://github.com/serradura/u-case/blob/main/comparisons/u-case.rb)
+- [interactor](https://github.com/serradura/u-case/blob/main/comparisons/interactor.rb)
+- [u-case](https://github.com/serradura/u-case/blob/main/comparisons/u-case.rb)
 
 [⬆️ Back to Top](#table-of-contents-)
 
