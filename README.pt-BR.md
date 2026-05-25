@@ -1244,6 +1244,19 @@ Quando `with:` é omitido, o helper cai no macro de classe
 (`transaction with: …`) e depois no callback global padrão (veja abaixo),
 que vem com `-> { ::ActiveRecord::Base }`.
 
+> **Nota:** qualquer classe passada via `with:` (aqui, no macro de classe ou
+> no kwarg `transaction:` de um flow) **precisa ser uma subclasse de
+> `ActiveRecord::Base`**. Classes não-AR são rejeitadas com `ArgumentError`.
+> A validação do macro de classe roda em tempo de class-eval quando o
+> ActiveRecord já está carregado (caso típico de apps Rails); caso
+> contrário, é adiada para runtime, então a ordem de carregamento de
+> initializers não quebra declarações.
+
+> **Compatibilidade retroativa:** a forma posicional pré-5.6.0
+> `transaction(:activerecord) { ... }` continua funcionando como alias de
+> `transaction { ... }`. Qualquer outro valor posicional levanta
+> `ArgumentError` — o helper antigo aceitava apenas `:activerecord`.
+
 ##### `transaction with: …` — declarando o padrão para um caso
 
 Um macro no nível de classe permite que um caso declare qual classe

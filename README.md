@@ -1237,6 +1237,18 @@ When `with:` is omitted, the helper falls back to the class macro
 (`transaction with: …`) and then to the global default callback (see below),
 which ships as `-> { ::ActiveRecord::Base }`.
 
+> **Note:** any class passed via `with:` (here, on the class macro, or on a
+> flow's `transaction:` kwarg) **must be a subclass of `ActiveRecord::Base`**.
+> Non-AR classes are rejected with `ArgumentError`. The class-macro
+> validation runs at class-eval time when ActiveRecord is already loaded
+> (typical Rails app); otherwise it's deferred to runtime, so initializer
+> load order doesn't break declarations.
+
+> **Backward compatibility:** the pre-5.6.0 positional form
+> `transaction(:activerecord) { ... }` still works as an alias for
+> `transaction { ... }`. Any other positional value raises `ArgumentError` —
+> the legacy helper accepted only `:activerecord`.
+
 ##### `transaction with: …` — declaring the default for a case
 
 A class macro lets a case declare which ActiveRecord class should own its
