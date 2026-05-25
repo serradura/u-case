@@ -85,17 +85,32 @@ module Micro
         end
 
         def __wrap_in_transaction
-          ::Micro::Case.check.activerecord_loaded!
+          owner = __transaction_owner
 
           result = nil
 
-          ::ActiveRecord::Base.transaction do
+          owner.transaction do
             result = yield
 
             raise ::ActiveRecord::Rollback if result.failure?
           end
 
           result
+        end
+
+        def __transaction_owner
+          return @transaction if @transaction.is_a?(Class)
+
+          callback = ::Micro::Case::Config.instance.default_transaction_class
+
+          # Only the gem's default callback (`-> { ActiveRecord::Base }`)
+          # needs the AR-loaded guard. A user-supplied callback can
+          # return whatever class they want — we trust it.
+          if callback.equal?(::Micro::Case::Config::DEFAULT_TRANSACTION_CLASS_CALLBACK)
+            ::Micro::Case.check.activerecord_loaded!
+          end
+
+          callback.call
         end
 
         def __call_use_case(use_case, result, input)

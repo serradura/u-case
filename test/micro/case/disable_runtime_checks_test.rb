@@ -237,4 +237,61 @@ class Micro::Case::DisableRuntimeChecksTest < Minitest::Test
 
     assert_raises(Micro::Cases::Error::TransactionAdapterMissing) { flow.call }
   end
+
+  def test_disabling_skips_the_transaction_owner_check
+    Micro::Case.config do |config|
+      config.disable_runtime_checks = true
+    end
+
+    # Normally raises ArgumentError because the inline helper rejects
+    # non-Class `with:` values via Micro::Case::Check#transaction_owner!.
+    klass = Class.new(Micro::Case) do
+      def call!
+        transaction(with: 'not-a-class') { Success() }
+      rescue NoMethodError, NameError
+        Success(:caught)
+      end
+    end
+
+    # Without the check the bad `with:` value falls through to the
+    # `.transaction` call site; we just want to confirm the
+    # ArgumentError doesn't fire.
+    result = klass.call
+    assert_predicate(result, :success?)
+  end
+
+  def test_enabled_raises_for_the_transaction_owner_check
+    klass = Class.new(Micro::Case) do
+      def call!
+        transaction(with: 'not-a-class') { Success() }
+      end
+    end
+
+    err = assert_raises(ArgumentError) { klass.call }
+    assert_match(/must be a Class that responds to `\.transaction`/, err.message)
+  end
+
+  def test_disabling_skips_the_transaction_class_callback_check
+    Micro::Case.config do |config|
+      config.disable_runtime_checks = true
+    end
+
+    # Normally raises ArgumentError because the callback must be callable.
+    Micro::Case.config do |config|
+      config.default_transaction_class = 'ApplicationRecord'
+    end
+
+    # Restore for teardown.
+    Micro::Case::Config.instance.remove_instance_variable(:@default_transaction_class)
+  end
+
+  def test_enabled_raises_for_the_transaction_class_callback_check
+    err = assert_raises(ArgumentError) do
+      Micro::Case.config do |config|
+        config.default_transaction_class = 'ApplicationRecord'
+      end
+    end
+
+    assert_match(/expects a callable/, err.message)
+  end
 end

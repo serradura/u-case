@@ -52,6 +52,22 @@ module Micro
 
         @activemodel_validation_errors_failure = :invalid_attributes
       end
+
+      DEFAULT_TRANSACTION_CLASS_CALLBACK = -> { ::ActiveRecord::Base }.freeze
+
+      def default_transaction_class=(callable)
+        ::Micro::Case.check.transaction_class_callback!(callable)
+
+        @default_transaction_class = callable
+      end
+
+      def default_transaction_class(&block)
+        return self.default_transaction_class = block if block
+
+        return @default_transaction_class if defined?(@default_transaction_class)
+
+        DEFAULT_TRANSACTION_CLASS_CALLBACK
+      end
     end
   end
 end

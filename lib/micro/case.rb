@@ -84,6 +84,17 @@ module Micro
       parent.respond_to?(:__results_contract__) ? parent.__results_contract__ : nil
     end
 
+    def self.transaction(with:)
+      @__transaction_class = with
+    end
+
+    def self.__transaction_class__
+      return @__transaction_class if defined?(@__transaction_class)
+
+      parent = superclass
+      parent.respond_to?(:__transaction_class__) ? parent.__transaction_class__ : nil
+    end
+
     class << self
       alias __call__ call
 
@@ -132,11 +143,17 @@ module Micro
 
       self.class_eval('def use_cases; self.class.use_cases; end')
 
-      @__flow = __flow_builder__.build(args, transaction: __flow_transaction)
+      @__flow = __flow_builder__.build(args, transaction: __resolved_flow_transaction)
     end
 
     private_class_method def self.__flow_transaction
       return @__flow_transaction if defined?(@__flow_transaction)
+    end
+
+    private_class_method def self.__resolved_flow_transaction
+      return __transaction_class__ || true if __flow_transaction == true
+
+      __flow_transaction
     end
 
     FLOW_STEP = 'Self'.freeze
@@ -308,15 +325,17 @@ module Micro
         @__result.__set__(is_success, value, type, self)
       end
 
-      def transaction(adapter = :activerecord)
-        raise NotImplementedError unless adapter == :activerecord
+      def transaction(with: nil)
+        ::Micro::Case.check.transaction_owner!(with) if with
+
+        owner = with || self.class.__transaction_class__ || Config.instance.default_transaction_class.call
 
         result = nil
 
-        ActiveRecord::Base.transaction do
+        owner.transaction do
           result = yield
 
-          raise ActiveRecord::Rollback if result.failure?
+          raise ::ActiveRecord::Rollback if result.failure?
         end
 
         result
