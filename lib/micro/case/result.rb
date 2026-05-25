@@ -51,7 +51,7 @@ module Micro
       end
 
       def deconstruct
-        [data, type]
+        [@__success ? :success : :failure, type, data]
       end
 
       def deconstruct_keys(keys)

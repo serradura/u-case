@@ -534,14 +534,20 @@ The hash patterns expose these keys:
 
 > **Note:** On the **reader** side, `Result#data` is also accessible as `Result#value` (existing alias). On the **pattern-matching** side, the `data:` key is also accessible as `result:` — both refer to the same payload.
 
-You can also array-destructure a result, mirroring `to_ary`:
+`Result#deconstruct` returns a three-element array `[status, type, data]` where `status` is `:success` or `:failure`, so array patterns can use the status as a discriminant — mirroring how libraries with separate `Success`/`Failure` classes are pattern-matched, even though `Micro::Case::Result` is a single class:
 
 ```ruby
 case result
-in [{ number: Integer => n }, :ok]
+in [:success, :ok, { number: Integer => n }]
   n
+in [:failure, :invalid_attributes, { invalid_attributes: errors }]
+  # ...
+in [:failure, :exception, { exception: }]
+  # ...
 end
 ```
+
+> **Note:** `Result#to_ary` is unchanged and still returns `[data, type]` (used by multi-assignment, e.g. `data, type = result`). Ruby's pattern matching uses `#deconstruct`, so the two hooks intentionally return different shapes.
 
 [⬆️ Back to Top](#table-of-contents-)
 

@@ -533,14 +533,20 @@ Os hash patterns expõem essas chaves:
 
 > **Nota:** No lado de **leitura**, `Result#data` também é acessível como `Result#value` (apelido existente). No lado de **pattern matching**, a chave `data:` também é acessível como `result:` — ambas se referem ao mesmo payload.
 
-Você também pode desestruturar um resultado como um array, espelhando `to_ary`:
+`Result#deconstruct` retorna um array de três elementos `[status, type, data]`, onde `status` é `:success` ou `:failure`. Isso permite que array patterns usem o status como discriminante — espelhando como bibliotecas com classes `Success`/`Failure` separadas fazem pattern matching, mesmo que `Micro::Case::Result` seja uma classe única:
 
 ```ruby
 case result
-in [{ number: Integer => n }, :ok]
+in [:success, :ok, { number: Integer => n }]
   n
+in [:failure, :invalid_attributes, { invalid_attributes: errors }]
+  # ...
+in [:failure, :exception, { exception: }]
+  # ...
 end
 ```
+
+> **Nota:** `Result#to_ary` permanece inalterado e ainda retorna `[data, type]` (usado pela atribuição múltipla, ex.: `data, type = result`). O pattern matching do Ruby usa `#deconstruct`, então os dois hooks intencionalmente retornam shapes diferentes.
 
 [⬆️ Voltar para o índice](#índice-)
 

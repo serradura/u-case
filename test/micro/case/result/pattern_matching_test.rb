@@ -15,12 +15,22 @@ class Micro::Case::Result::PatternMatchingTest < Minitest::Test
     build_result(**{ type: :error }.merge(options).merge(success: false))
   end
 
-  def test_deconstruct_returns_data_and_type
+  def test_deconstruct_returns_status_type_and_data
     success = success_result(value: { number: 42 }, type: :ok)
     failure = failure_result(value: { reason: 'nope' }, type: :invalid_attributes)
 
-    assert_equal([{ number: 42 }, :ok], success.deconstruct)
-    assert_equal([{ reason: 'nope' }, :invalid_attributes], failure.deconstruct)
+    assert_equal([:success, :ok, { number: 42 }], success.deconstruct)
+    assert_equal([:failure, :invalid_attributes, { reason: 'nope' }], failure.deconstruct)
+  end
+
+  def test_to_ary_still_returns_data_and_type
+    success = success_result(value: { number: 42 }, type: :ok)
+
+    assert_equal([{ number: 42 }, :ok], success.to_ary)
+
+    data, type = success
+    assert_equal({ number: 42 }, data)
+    assert_equal(:ok, type)
   end
 
   def test_deconstruct_keys_with_nil_returns_full_hash_for_success
@@ -125,17 +135,42 @@ class Micro::Case::Result::PatternMatchingTest < Minitest::Test
     assert_equal(:matched_success, matched)
   end
 
-  def test_array_pattern_matches_data_and_type
-    result = success_result(value: { number: 42 }, type: :ok)
+  def test_array_pattern_matches_status_type_and_data
+    success = success_result(value: { number: 42 }, type: :ok)
+    failure = failure_result(value: { reason: 'nope' }, type: :invalid_attributes)
 
-    matched = case result
-              in [{ number: Integer => number }, :ok]
-                number
-              else
-                :no_match
+    success_match = case success
+                    in [:success, :ok, { number: Integer => number }]
+                      number
+                    else
+                      :no_match
+                    end
+
+    failure_match = case failure
+                    in [:failure, :invalid_attributes, { reason: String => reason }]
+                      reason
+                    else
+                      :no_match
+                    end
+
+    assert_equal(42, success_match)
+    assert_equal('nope', failure_match)
+  end
+
+  def test_array_pattern_status_acts_as_discriminant
+    success = success_result(value: {}, type: :ok)
+    failure = failure_result(value: {}, type: :error)
+
+    [success, failure].each do |result|
+      label = case result
+              in [:success, *]
+                :got_success
+              in [:failure, *]
+                :got_failure
               end
 
-    assert_equal(42, matched)
+      assert_equal(result.success? ? :got_success : :got_failure, label)
+    end
   end
 
   def test_pattern_match_with_type_key
