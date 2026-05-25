@@ -46,6 +46,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
     - [How to use the result hooks?](#how-to-use-the-result-hooks)
     - [Why the hook usage without a defined type exposes the result itself?](#why-the-hook-usage-without-a-defined-type-exposes-the-result-itself)
       - [Using decomposition to access the result data and type](#using-decomposition-to-access-the-result-data-and-type)
+      - [Using pattern matching to destructure a result](#using-pattern-matching-to-destructure-a-result)
     - [What happens if a result hook was declared multiple times?](#what-happens-if-a-result-hook-was-declared-multiple-times)
     - [How to use the `Micro::Case::Result#then` method?](#how-to-use-the-microcaseresultthen-method)
       - [What does happens when a `Micro::Case::Result#then` receives a block?](#what-does-happens-when-a-microcaseresultthen-receives-a-block)
@@ -499,6 +500,54 @@ Double
 ```
 
 > **Note:** The same that was did in the previous examples could be done with `#on_success` hook!
+
+[⬆️ Back to Top](#table-of-contents-)
+
+##### Using pattern matching to destructure a result
+
+`Micro::Case::Result` implements [`deconstruct`](https://docs.ruby-lang.org/en/3.4/syntax/pattern_matching_rdoc.html) and [`deconstruct_keys`](https://docs.ruby-lang.org/en/3.4/syntax/pattern_matching_rdoc.html), so Ruby's `case`/`in` pattern matching works out of the box (requires Ruby `>= 2.7`).
+
+```ruby
+result = Divide.call(a: 10, b: 2)
+
+case result
+in { success: _, data: { number: Numeric => number } }
+  puts "got #{number}"
+in { failure: :invalid_attributes, data: { invalid_attributes: errors } }
+  warn "bad input: #{errors.keys.join(", ")}"
+in { failure: :exception, data: { exception: } }
+  warn "boom: #{exception.message}"
+end
+```
+
+The hash patterns expose these keys:
+
+| Key             | Present on        | Value                                                   |
+| --------------- | ----------------- | ------------------------------------------------------- |
+| `success:`      | success only      | the result `type` (e.g. `:ok`)                          |
+| `failure:`      | failure only      | the result `type` (e.g. `:invalid_attributes`)          |
+| `type:`         | always            | the result `type`                                       |
+| `data:`         | always            | the result `data` hash                                  |
+| `result:`       | always            | alias of `data:` (matches the `Success(result: …)` keyword used at the creation site) |
+| `use_case:`     | always            | the use case instance that produced the result          |
+| `transitions:`  | always            | the result `transitions` array                          |
+
+> **Note:** On the **reader** side, `Result#data` is also accessible as `Result#value` (existing alias). On the **pattern-matching** side, the `data:` key is also accessible as `result:` — both refer to the same payload.
+
+`Result#deconstruct` returns a three-element array `[status, type, data]` where `status` is `:success` or `:failure`, so array patterns can use the status as a discriminant — mirroring how libraries with separate `Success`/`Failure` classes are pattern-matched, even though `Micro::Case::Result` is a single class:
+
+```ruby
+case result
+in [:success, :ok, { number: Integer => n }]
+  n
+in [:failure, :invalid_attributes, { invalid_attributes: errors }]
+  # ...
+in [:failure, :exception, { exception: }]
+  # ...
+end
+```
+
+> **Note:** `Result#to_ary` is unchanged and still returns `[data, type]` (used by multi-assignment, e.g. `data, type = result`). Ruby's pattern matching uses `#deconstruct`, so the two hooks intentionally return different shapes.
 
 [⬆️ Back to Top](#table-of-contents-)
 

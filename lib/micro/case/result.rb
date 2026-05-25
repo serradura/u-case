@@ -50,6 +50,32 @@ module Micro
         @__success ? :success : :failure
       end
 
+      def deconstruct
+        [@__success ? :success : :failure, type, data]
+      end
+
+      def deconstruct_keys(keys)
+        if keys.nil?
+          hash = { type: type, data: data, result: data, use_case: use_case, transitions: transitions }
+          hash[@__success ? :success : :failure] = type
+          return hash
+        end
+
+        hash = {}
+        keys.each do |key|
+          case key
+          when :type        then hash[:type]        = type
+          when :data        then hash[:data]        = data
+          when :result      then hash[:result]      = data
+          when :use_case    then hash[:use_case]    = use_case
+          when :transitions then hash[:transitions] = transitions
+          when :success     then hash[:success]     = type if @__success
+          when :failure     then hash[:failure]     = type if !@__success
+          end
+        end
+        hash
+      end
+
       def [](key)
         data[key]
       end
