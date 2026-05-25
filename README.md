@@ -744,6 +744,24 @@ end
 
 Both forms produce identical `result.data` and `result.transitions`.
 
+> **Elixir-style chains with `it` (Ruby ≥ 3.4):** because Ruby 3.4
+> exposes `it` as the implicit first parameter of a block/lambda body,
+> you can write a chain that reads almost exactly like Elixir's
+> `|>` pipe. Each lambda receives the accumulated data hash as `it`
+> and must still terminate in a `Success(...)` / `Failure(...)` call:
+>
+> ```ruby
+> def call!
+>   validate_something \
+>     | -> { do_something_with(**it) } \
+>     | -> { and_another_thing_with(**it) }
+> end
+> ```
+>
+> On Ruby 2.7 – 3.3 (where `it` is just an undefined identifier),
+> use the portable explicit form `->(data) { do_something_with(**data) }`
+> shown in the next section.
+
 ##### Lambda / `Method` forms
 
 Lambdas (and bound `Method` objects) receive the accumulated data

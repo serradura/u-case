@@ -747,6 +747,25 @@ end
 Ambas as formas produzem `result.data` e `result.transitions`
 idênticos.
 
+> **Encadeamento estilo Elixir com `it` (Ruby ≥ 3.4):** como o Ruby
+> 3.4 expõe `it` como o primeiro parâmetro implícito do corpo de um
+> bloco/lambda, é possível escrever uma cadeia que se lê quase
+> exatamente como o operador `|>` do Elixir. Cada lambda recebe o
+> hash de dados acumulados como `it` e ainda precisa terminar em
+> uma chamada `Success(...)` / `Failure(...)`:
+>
+> ```ruby
+> def call!
+>   validate_something \
+>     | -> { do_something_with(**it) } \
+>     | -> { and_another_thing_with(**it) }
+> end
+> ```
+>
+> No Ruby 2.7 – 3.3 (onde `it` é apenas um identificador
+> indefinido), use a forma explícita portátil
+> `->(data) { do_something_with(**data) }` mostrada na próxima seção.
+
 ##### Formas lambda / `Method`
 
 Lambdas (e objetos `Method` ligados) recebem os dados acumulados
