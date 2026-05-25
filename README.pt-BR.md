@@ -44,6 +44,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
     - [Como utilizar os hooks dos resultados?](#como-utilizar-os-hooks-dos-resultados)
     - [Por que o hook sem um tipo definido expõe o próprio resultado?](#por-que-o-hook-sem-um-tipo-definido-expõe-o-próprio-resultado)
       - [Usando decomposição para acessar os dados e tipo do resultado](#usando-decomposição-para-acessar-os-dados-e-tipo-do-resultado)
+      - [Usando pattern matching para desestruturar um resultado](#usando-pattern-matching-para-desestruturar-um-resultado)
     - [O que acontece se um hook de resultado for declarado múltiplas vezes?](#o-que-acontece-se-um-hook-de-resultado-for-declarado-múltiplas-vezes)
     - [Como usar o método `Micro::Case::Result#then`?](#como-usar-o-método-microcaseresultthen)
       - [O que acontece quando um `Micro::Case::Result#then` recebe um bloco?](#o-que-acontece-quando-um-microcaseresultthen-recebe-um-bloco)
@@ -498,6 +499,48 @@ Double
 ```
 
 > **Nota:** O que mesmo pode ser feito com o `#on_success` hook!
+
+[⬆️ Voltar para o índice](#índice-)
+
+##### Usando pattern matching para desestruturar um resultado
+
+`Micro::Case::Result` implementa [`deconstruct`](https://docs.ruby-lang.org/en/3.4/syntax/pattern_matching_rdoc.html) e [`deconstruct_keys`](https://docs.ruby-lang.org/en/3.4/syntax/pattern_matching_rdoc.html), então o pattern matching do Ruby (`case`/`in`) funciona de forma nativa (requer Ruby `>= 2.7`).
+
+```ruby
+result = Divide.call(a: 10, b: 2)
+
+case result
+in { success: _, data: { number: Numeric => number } }
+  puts "deu #{number}"
+in { failure: :invalid_attributes, data: { invalid_attributes: errors } }
+  warn "entrada inválida: #{errors.keys.join(", ")}"
+in { failure: :exception, data: { exception: } }
+  warn "boom: #{exception.message}"
+end
+```
+
+Os hash patterns expõem essas chaves:
+
+| Chave           | Presente em       | Valor                                                                                   |
+| --------------- | ----------------- | --------------------------------------------------------------------------------------- |
+| `success:`      | apenas em sucesso | o `type` do resultado (ex.: `:ok`)                                                      |
+| `failure:`      | apenas em falha   | o `type` do resultado (ex.: `:invalid_attributes`)                                      |
+| `type:`         | sempre            | o `type` do resultado                                                                   |
+| `data:`         | sempre            | o hash de `data` do resultado                                                           |
+| `result:`       | sempre            | apelido de `data:` (combina com a keyword `result:` usada em `Success(result: …)`)      |
+| `use_case:`     | sempre            | a instância de caso de uso que produziu o resultado                                     |
+| `transitions:`  | sempre            | o array de `transitions` do resultado                                                   |
+
+> **Nota:** No lado de **leitura**, `Result#data` também é acessível como `Result#value` (apelido existente). No lado de **pattern matching**, a chave `data:` também é acessível como `result:` — ambas se referem ao mesmo payload.
+
+Você também pode desestruturar um resultado como um array, espelhando `to_ary`:
+
+```ruby
+case result
+in [{ number: Integer => n }, :ok]
+  n
+end
+```
 
 [⬆️ Voltar para o índice](#índice-)
 

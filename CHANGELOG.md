@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This gem was originally published as `u-service` (versions 0.1.0 – 1.0.0) and renamed to `u-case` starting with `u-case 1.0.0` on 2019-09-15.
 
+## [5.7.0] - 2026-05-25
+### Added
+- Pattern matching support on `Micro::Case::Result` via `#deconstruct` and `#deconstruct_keys` (closes #146). Purely additive — no existing API is changed or removed. `#deconstruct` returns `[data, type]` (mirroring `#to_ary`). `#deconstruct_keys` exposes `:type`, `:data`, `:result` (alias of `:data` that matches the `Success(result: …)` creation-site vocabulary), `:use_case` and `:transitions` on every result; `:success` is present only on success results and `:failure` only on failure results, and both carry the result `type` symbol as their value so `in { failure: :invalid_attributes }` works. `#deconstruct_keys` honors Ruby's `keys` argument and only computes the requested entries (relevant for `:transitions`, which allocates a duped array).
+- READMEs (EN + pt-BR) document the new pattern under the `Micro::Case::Result` section, including the key table and the `data:` / `result:` alias note.
+
 ## [5.6.0] - 2026-05-24
 ### Added
 - `Micro::Cases.flow(transaction: true, steps: [...])` and `Micro::Cases.safe_flow(transaction: true, steps: [...])` to wrap an entire flow in an `ActiveRecord::Base.transaction`. Any step that returns a failure (or, in `safe_flow`, raises) triggers an `ActiveRecord::Rollback`. The same kwargs are accepted by the class-level macro: `class MyCase < Micro::Case; flow(transaction: true, steps: [...]); end` (closes #44).
@@ -495,6 +500,7 @@ First release under the `u-case` name (renamed from `u-service`).
 - `Micro::Service::Result` with `Success`/`Failure` factories and helper methods for returning typed results from services.
 - Runtime dependency on `u-attributes` for service input declaration.
 
+[5.7.0]: https://github.com/serradura/u-case/compare/v5.6.0...v5.7.0
 [5.6.0]: https://github.com/serradura/u-case/compare/v5.5.0...v5.6.0
 [5.5.0]: https://github.com/serradura/u-case/compare/v5.4.0...v5.5.0
 [5.4.0]: https://github.com/serradura/u-case/compare/v5.3.1...v5.4.0
