@@ -11,26 +11,13 @@ require 'test_helper'
 #     (lazy, called on every transaction open) and its default
 #     `-> { ::ActiveRecord::Base }`.
 #
-# The gem's transaction code raises `::ActiveRecord::Rollback`. When
-# running under a bundle that includes activerecord (appraisals), we
-# pre-load it so the real Rollback class exists. On the bare bundle
-# we stub a `::ActiveRecord::Rollback` constant so the raise works
-# without pulling in the whole AR dependency tree.
+# Because every public `with:` site now requires a subclass of
+# `ActiveRecord::Base`, this whole file only runs when activerecord
+# is in the bundle. On the bare bundle the multi-DB surface isn't
+# exercisable, and the `disable_runtime_checks_test.rb` pair that
+# covers the AR-not-loaded path runs in its place.
 if Gem.loaded_specs.key?('activerecord')
   require 'support/activerecord_setup'
-elsif !defined?(::ActiveRecord)
-  module ::ActiveRecord
-    class Rollback < StandardError; end
-
-    class Base
-      def self.transaction
-        yield
-      rescue ::ActiveRecord::Rollback
-        # swallow, like real AR
-      end
-    end
-  end
-end
 
 class Micro::Case::TransactionClassTest < Minitest::Test
   i_suck_and_my_tests_are_order_dependent!
@@ -334,3 +321,5 @@ class Micro::Case::TransactionClassTest < Minitest::Test
     assert_nil(AppRecord.opened_by)
   end
 end
+
+end # if Gem.loaded_specs.key?('activerecord')
