@@ -1209,9 +1209,9 @@ ActiveRecord por conta própria (aplicações Rails já o fazem).
 ##### `Micro::Case#transaction` — transações inline dentro do `call!`
 
 `Micro::Case#transaction` (e `Micro::Case::Safe#transaction`) é um helper
-privado de instância que envolve um bloco em `ActiveRecord::Base.transaction`
-e dispara um `ActiveRecord::Rollback` sempre que o resultado do bloco for um
-`Failure`. O resultado original é devolvido nos dois casos, permitindo
+privado de instância que envolve um bloco em uma transação de banco e
+dispara um `ActiveRecord::Rollback` sempre que o resultado do bloco for
+um `Failure`. O resultado original é devolvido nos dois casos, permitindo
 continuar encadeando com `Result#then`:
 
 ```ruby
@@ -1225,25 +1225,70 @@ end
 ```
 
 Se o bloco retornar uma falha (ou levantar uma exceção), todas as linhas
-gravadas dentro do bloco serão revertidas. O `transaction` aceita um
-argumento `adapter:` que atualmente suporta apenas `:activerecord` (o
-padrão).
-
-##### `Micro::Cases.flow(transaction: true, steps: [...])` — transações no nível do flow
-
-Passe `transaction: true` junto com `steps:` para envolver um flow inteiro
-em uma única `ActiveRecord::Base.transaction`. Se qualquer step retornar
-uma falha (ou levantar uma exceção, no caso de `safe_flow`), todas as
-escritas realizadas no banco durante o flow serão revertidas:
+gravadas dentro do bloco serão revertidas. O helper aceita um kwarg
+opcional `with:` para escolher a classe ActiveRecord sobre a qual
+`.transaction` é aberta — útil em aplicações Rails com múltiplos bancos
+(`ApplicationRecord`, `AnalyticsRecord`, `BillingRecord`, …):
 
 ```ruby
-CreateUserWithAProfile = Micro::Cases.flow(transaction: true, steps: [
-  CreateUser,
-  CreateUserProfile
+class CreateAuditEntry < Micro::Case
+  def call!
+    transaction(with: AnalyticsRecord) {
+      call(WriteAuditLog).then(BumpCounter)
+    }
+  end
+end
+```
+
+Quando `with:` é omitido, o helper cai no macro de classe
+(`transaction with: …`) e depois no callback global padrão (veja abaixo),
+que vem com `-> { ::ActiveRecord::Base }`.
+
+##### `transaction with: …` — declarando o padrão para um caso
+
+Um macro no nível de classe permite que um caso declare qual classe
+ActiveRecord deve ser dona de suas transações, para que nem o helper
+inline nem qualquer flow que envolva o caso precise especificá-la em cada
+ponto de chamada. A declaração é herdada por subclasses:
+
+```ruby
+class ApplicationUseCase < Micro::Case
+  transaction with: ApplicationRecord
+end
+
+class CreateUserWithAProfile < ApplicationUseCase
+  flow(transaction: true, steps: [CreateUser, CreateUserProfile])
+  # transaction: true resolve para ApplicationRecord porque é o que
+  # a classe hospedeira declarou via `transaction with:`.
+end
+
+class BillingCase < ApplicationUseCase
+  transaction with: BillingRecord
+  # sobrescreve a declaração herdada para este ramo da hierarquia
+end
+```
+
+##### `Micro::Cases.flow(transaction: …, steps: [...])` — transações no nível do flow
+
+Passe `transaction:` junto com `steps:` para envolver um flow inteiro em
+uma única transação. Se qualquer step retornar uma falha (ou levantar uma
+exceção, no caso de `safe_flow`), todas as escritas realizadas no banco
+durante o flow serão revertidas. O kwarg aceita três formas:
+
+```ruby
+# Usa o macro de nível de classe (se a classe hospedeira declarou um) ou
+# o padrão global (`ActiveRecord::Base` salvo configuração).
+Micro::Cases.flow(transaction: true, steps: [CreateUser, CreateUserProfile])
+
+# Escolhe uma classe ActiveRecord explícita só para este flow — mesmo
+# vocabulário `with:` usado pelo helper inline e pelo macro de classe.
+Micro::Cases.flow(transaction: { with: AnalyticsRecord }, steps: [
+  WriteAuditLog,
+  BumpCounter
 ])
 
 # safe_flow faz rollback em falhas E em exceções inesperadas
-CreateUserWithAProfile = Micro::Cases.safe_flow(transaction: true, steps: [
+Micro::Cases.safe_flow(transaction: { with: ApplicationRecord }, steps: [
   CreateUser,
   CreateUserProfile
 ])
@@ -1274,6 +1319,39 @@ SignUpFlow = Micro::Cases.flow([
 Se `transaction: true` for usado sem que `ActiveRecord::Base` esteja
 carregado, o flow levantará `Micro::Cases::Error::TransactionAdapterMissing`
 na primeira chamada, sinalizando a configuração incorreta imediatamente.
+Passar `transaction: { with: SomeClass }` pula essa verificação —
+`SomeClass` é considerada confiável e basta responder a `.transaction`.
+
+##### `config.default_transaction_class { … }` — padrão global
+
+Para aplicações Rails que usam um único abstract record
+(`ApplicationRecord`), configure-o uma vez em um initializer em vez de
+declará-lo em cada caso ou flow:
+
+```ruby
+# config/initializers/u_case.rb
+Micro::Case.config do |config|
+  config.default_transaction_class { ApplicationRecord }
+end
+```
+
+O callback (block ou lambda) é invocado **a cada abertura** de transação
+— sem memoização — então é seguro fazer o valor de retorno depender de
+estado em tempo de execução (roteamento por tenant, etc.). O padrão é
+`-> { ::ActiveRecord::Base }`. Ordem de resolução quando uma transação
+abre:
+
+1. **Override no ponto de chamada.** `transaction: { with: X }` no
+   kwarg do flow, ou `transaction(with: X) { ... }` no helper inline.
+2. **Macro `transaction with: X` da classe hospedeira** (sobe pela
+   hierarquia).
+3. **`Micro::Case.config.default_transaction_class.call`** — o callback
+   global (padrão `ActiveRecord::Base`).
+
+Uma atribuição não-callable a `default_transaction_class=` levanta
+`ArgumentError` no momento da configuração para que erros como
+`config.default_transaction_class = 'ApplicationRecord'` falhem
+imediatamente em vez de quebrar a primeira transação.
 
 ##### Flows com steps internos sob transações
 
