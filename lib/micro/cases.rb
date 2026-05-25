@@ -9,6 +9,8 @@ require 'micro/cases/map'
 module Micro
   module Cases
     def self.flow(args = nil, transaction: nil, steps: nil)
+      args = nil if args.is_a?(Array) && args.empty?
+
       ::Micro::Case.check.flow_steps_kwarg!(args, steps, 'Micro::Cases.flow')
 
       Flow.build(steps || args, transaction: transaction)
@@ -18,6 +20,8 @@ module Micro
       if Case::Config.instance.disable_safe_features
         raise Case::Error::SafeFeaturesDisabled.new('Micro::Cases.safe_flow')
       end
+
+      args = nil if args.is_a?(Array) && args.empty?
 
       ::Micro::Case.check.flow_steps_kwarg!(args, steps, 'Micro::Cases.safe_flow')
 

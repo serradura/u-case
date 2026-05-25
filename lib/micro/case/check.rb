@@ -70,7 +70,11 @@ module Micro
         def transaction_kwarg!(value)
           return nil if value.nil? || value == false
           return true if value == true
-          return value if value.is_a?(Class)
+
+          if value.is_a?(Class)
+            transaction_owner!(value)
+            return value
+          end
 
           if value.is_a?(Hash)
             extra = value.keys - [:with]
@@ -79,9 +83,7 @@ module Micro
               "transaction: unsupported key(s) #{extra.inspect} (only `:with` is accepted)" unless extra.empty?
 
             with = value[:with]
-
-            raise ArgumentError,
-              "transaction: { with: #{with.inspect} } expects a Class" unless with.is_a?(Class)
+            transaction_owner!(with)
 
             return with
           end
@@ -96,11 +98,20 @@ module Micro
           raise ::Micro::Cases::Error::TransactionAdapterMissing
         end
 
+        # Validates a transaction owner class. We accept Class instances
+        # only; the AR-subclass check is enforced if (and only if)
+        # ActiveRecord is already loaded — otherwise we defer to runtime
+        # so that load-order quirks (Rails initializers running before
+        # the AR autoload) don't break class-eval-time declarations.
         def transaction_owner!(klass)
-          return if klass.is_a?(Class) && klass.respond_to?(:transaction)
+          raise ArgumentError,
+            "transaction owner #{klass.inspect} must be a subclass of ActiveRecord::Base" unless klass.is_a?(Class)
+
+          return unless defined?(::ActiveRecord::Base)
+          return if klass <= ::ActiveRecord::Base
 
           raise ArgumentError,
-            "transaction owner #{klass.inspect} must be a Class that responds to `.transaction`"
+            "transaction owner #{klass.inspect} must be a subclass of ActiveRecord::Base"
         end
 
         def transaction_class_callback!(callable)
@@ -160,10 +171,10 @@ module Micro
         def hash!(arg); arg; end
         def flow_steps_kwarg!(_args, _steps, _label); end
         def transaction_kwarg!(value)
-          return nil if value.nil? || value == false
+          return true if value == true
           return value if value.is_a?(Class)
           return value[:with] if value.is_a?(Hash) && value[:with].is_a?(Class)
-          true
+          nil
         end
         def activerecord_loaded!; end
         def transaction_owner!(_klass); end

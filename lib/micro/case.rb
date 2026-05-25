@@ -85,6 +85,8 @@ module Micro
     end
 
     def self.transaction(with:)
+      ::Micro::Case.check.transaction_owner!(with)
+
       @__transaction_class = with
     end
 
@@ -325,10 +327,24 @@ module Micro
         @__result.__set__(is_success, value, type, self)
       end
 
-      def transaction(with: nil)
+      def transaction(adapter = nil, with: nil)
+        # Backward-compat shim for the pre-5.6.0 positional form:
+        #   transaction(:activerecord) { ... }
+        # The `:activerecord` value was the only positional value the
+        # helper ever accepted on prior versions. Anything else raises.
+        if adapter
+          raise ArgumentError,
+            "transaction(#{adapter.inspect}) is not supported; use transaction(with: SomeARClass) or transaction without arguments" unless adapter == :activerecord
+        end
+
         ::Micro::Case.check.transaction_owner!(with) if with
 
-        owner = with || self.class.__transaction_class__ || Config.instance.default_transaction_class.call
+        owner = with || self.class.__transaction_class__
+
+        if owner.nil?
+          ::Micro::Case.check.activerecord_loaded!
+          owner = Config.instance.default_transaction_class.call
+        end
 
         result = nil
 

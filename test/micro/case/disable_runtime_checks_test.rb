@@ -202,10 +202,15 @@ class Micro::Case::DisableRuntimeChecksTest < Minitest::Test
       config.disable_runtime_checks = true
     end
 
-    # Normally raises ArgumentError because only `true` is supported today.
+    # Normally raises ArgumentError because :sequel isn't a supported
+    # transaction kwarg value. Under disable_runtime_checks the check
+    # method coerces unrecognized inputs to nil (no transaction) — the
+    # safe default — instead of silently upgrading them to a real
+    # transaction.
     flow = Micro::Cases.flow(transaction: :sequel, steps: [NoopStep])
 
     assert_kind_of(Micro::Cases::Flow, flow)
+    refute_match(/transaction=/, flow.inspect)
   end
 
   def test_enabled_raises_for_the_transaction_kwarg_check
@@ -268,7 +273,7 @@ class Micro::Case::DisableRuntimeChecksTest < Minitest::Test
     end
 
     err = assert_raises(ArgumentError) { klass.call }
-    assert_match(/must be a Class that responds to `\.transaction`/, err.message)
+    assert_match(/must be a subclass of ActiveRecord::Base/, err.message)
   end
 
   def test_disabling_skips_the_transaction_class_callback_check

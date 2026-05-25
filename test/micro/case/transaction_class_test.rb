@@ -21,16 +21,26 @@ if Gem.loaded_specs.key?('activerecord')
 elsif !defined?(::ActiveRecord)
   module ::ActiveRecord
     class Rollback < StandardError; end
+
+    class Base
+      def self.transaction
+        yield
+      rescue ::ActiveRecord::Rollback
+        # swallow, like real AR
+      end
+    end
   end
 end
 
 class Micro::Case::TransactionClassTest < Minitest::Test
   i_suck_and_my_tests_are_order_dependent!
 
-  # A test double that mimics the slice of ActiveRecord::Base we use:
-  # a `.transaction` class method that yields and records who opened
-  # it, and rescues `::ActiveRecord::Rollback` exactly as AR would.
-  class FakeRecord
+  # Test doubles that satisfy `transaction_owner!` (which requires
+  # `<= ActiveRecord::Base`) but override `.transaction` so the test
+  # can record who opened it without touching a real DB connection.
+  class FakeRecord < ::ActiveRecord::Base
+    self.abstract_class = true if respond_to?(:abstract_class=)
+
     class << self
       attr_accessor :opened_by, :rolled_back
 
@@ -199,7 +209,40 @@ class Micro::Case::TransactionClassTest < Minitest::Test
     end
 
     err = assert_raises(ArgumentError) { klass.call }
-    assert_match(/must be a Class that responds to `\.transaction`/, err.message)
+    assert_match(/must be a subclass of ActiveRecord::Base/, err.message)
+  end
+
+  def test_inline_helper_rejects_a_class_that_is_not_an_active_record_subclass
+    non_ar_class = Class.new
+    klass = Class.new(Micro::Case) do
+      define_method(:call!) { transaction(with: non_ar_class) { Success() } }
+    end
+
+    err = assert_raises(ArgumentError) { klass.call }
+    assert_match(/must be a subclass of ActiveRecord::Base/, err.message)
+  end
+
+  def test_inline_helper_accepts_the_legacy_positional_activerecord_value
+    klass = Class.new(Micro::Case) do
+      define_method(:call!) { transaction(:activerecord) { Success() } }
+    end
+
+    # No transaction_class declared and no global override, so it
+    # routes through the default callback (`-> { ::ActiveRecord::Base }`).
+    # In tests that path resolves to the real / stubbed AR::Base; we
+    # only assert the call doesn't raise the new ArgumentError shim.
+    result = klass.call
+
+    assert_predicate(result, :success?)
+  end
+
+  def test_inline_helper_rejects_any_other_positional_value
+    klass = Class.new(Micro::Case) do
+      define_method(:call!) { transaction(:redis) { Success() } }
+    end
+
+    err = assert_raises(ArgumentError) { klass.call }
+    assert_match(/transaction\(:redis\) is not supported/, err.message)
   end
 
   # ---------------------------------------------------------------------------
@@ -239,7 +282,29 @@ class Micro::Case::TransactionClassTest < Minitest::Test
     err = assert_raises(ArgumentError) do
       Micro::Cases.flow(transaction: { with: 'AppRecord' }, steps: [TouchOnly])
     end
-    assert_match(/expects a Class/, err.message)
+    assert_match(/must be a subclass of ActiveRecord::Base/, err.message)
+  end
+
+  def test_flow_transaction_with_bare_class_rejects_non_ar_subclass
+    non_ar = Class.new
+    err = assert_raises(ArgumentError) do
+      Micro::Cases.flow(transaction: non_ar, steps: [TouchOnly])
+    end
+    assert_match(/must be a subclass of ActiveRecord::Base/, err.message)
+  end
+
+  def test_class_level_transaction_macro_rejects_non_ar_subclass_eagerly
+    err = assert_raises(ArgumentError) do
+      Class.new(Micro::Case) { transaction with: Class.new }
+    end
+    assert_match(/must be a subclass of ActiveRecord::Base/, err.message)
+  end
+
+  def test_class_level_transaction_macro_rejects_non_class_eagerly
+    err = assert_raises(ArgumentError) do
+      Class.new(Micro::Case) { transaction with: 'AppRecord' }
+    end
+    assert_match(/must be a subclass of ActiveRecord::Base/, err.message)
   end
 
   # ---------------------------------------------------------------------------
