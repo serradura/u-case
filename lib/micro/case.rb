@@ -63,8 +63,11 @@ module Micro
       Proc.new { |arg| call(arg) }
     end
 
-    def self.flow(*args)
-      @__flow_use_cases = Cases::Utils.map_use_cases(args)
+    def self.flow(*args, transaction: nil, steps: nil)
+      ::Micro::Case.check.flow_steps_kwarg!(args.empty? ? nil : args, steps, "#{self.name}.flow")
+
+      @__flow_use_cases = Cases::Utils.map_use_cases(steps || args)
+      @__flow_transaction = transaction
     end
 
     def self.results(&block)
@@ -79,6 +82,19 @@ module Micro
 
       parent = superclass
       parent.respond_to?(:__results_contract__) ? parent.__results_contract__ : nil
+    end
+
+    def self.transaction(with:)
+      ::Micro::Case.check.transaction_owner!(with)
+
+      @__transaction_class = with
+    end
+
+    def self.__transaction_class__
+      return @__transaction_class if defined?(@__transaction_class)
+
+      parent = superclass
+      parent.respond_to?(:__transaction_class__) ? parent.__transaction_class__ : nil
     end
 
     class << self
@@ -129,7 +145,17 @@ module Micro
 
       self.class_eval('def use_cases; self.class.use_cases; end')
 
-      @__flow = __flow_builder__.build(args)
+      @__flow = __flow_builder__.build(args, transaction: __resolved_flow_transaction)
+    end
+
+    private_class_method def self.__flow_transaction
+      return @__flow_transaction if defined?(@__flow_transaction)
+    end
+
+    private_class_method def self.__resolved_flow_transaction
+      return __transaction_class__ || true if __flow_transaction == true
+
+      __flow_transaction
     end
 
     FLOW_STEP = 'Self'.freeze
@@ -301,15 +327,31 @@ module Micro
         @__result.__set__(is_success, value, type, self)
       end
 
-      def transaction(adapter = :activerecord)
-        raise NotImplementedError unless adapter == :activerecord
+      def transaction(adapter = nil, with: nil)
+        # Backward-compat shim for the pre-5.6.0 positional form:
+        #   transaction(:activerecord) { ... }
+        # The `:activerecord` value was the only positional value the
+        # helper ever accepted on prior versions. Anything else raises.
+        if adapter
+          raise ArgumentError,
+            "transaction(#{adapter.inspect}) is not supported; use transaction(with: SomeARClass) or transaction without arguments" unless adapter == :activerecord
+        end
+
+        ::Micro::Case.check.transaction_owner!(with) if with
+
+        owner = with || self.class.__transaction_class__
+
+        if owner.nil?
+          ::Micro::Case.check.activerecord_loaded!
+          owner = Config.instance.default_transaction_class.call
+        end
 
         result = nil
 
-        ActiveRecord::Base.transaction do
+        owner.transaction do
           result = yield
 
-          raise ActiveRecord::Rollback if result.failure?
+          raise ::ActiveRecord::Rollback if result.failure?
         end
 
         result

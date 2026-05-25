@@ -60,6 +60,67 @@ module Micro
           Kind::Hash[arg]
         end
 
+        def flow_steps_kwarg!(args, steps, label)
+          return unless args && steps
+
+          raise ArgumentError,
+            "#{label} accepts a positional collection OR `steps:`, not both"
+        end
+
+        def transaction_kwarg!(value)
+          return nil if value.nil? || value == false
+          return true if value == true
+
+          if value.is_a?(Class)
+            transaction_owner!(value)
+            return value
+          end
+
+          if value.is_a?(Hash)
+            extra = value.keys - [:with]
+
+            raise ArgumentError,
+              "transaction: unsupported key(s) #{extra.inspect} (only `:with` is accepted)" unless extra.empty?
+
+            with = value[:with]
+            transaction_owner!(with)
+
+            return with
+          end
+
+          raise ArgumentError,
+            "transaction: #{value.inspect} is not supported (accepts `true`, `false`, `nil`, or `{ with: SomeARClass }`)"
+        end
+
+        def activerecord_loaded!
+          return if defined?(::ActiveRecord::Base)
+
+          raise ::Micro::Cases::Error::TransactionAdapterMissing
+        end
+
+        # Validates a transaction owner class. We accept Class instances
+        # only; the AR-subclass check is enforced if (and only if)
+        # ActiveRecord is already loaded — otherwise we defer to runtime
+        # so that load-order quirks (Rails initializers running before
+        # the AR autoload) don't break class-eval-time declarations.
+        def transaction_owner!(klass)
+          raise ArgumentError,
+            "transaction owner #{klass.inspect} must be a subclass of ActiveRecord::Base" unless klass.is_a?(Class)
+
+          return unless defined?(::ActiveRecord::Base)
+          return if klass <= ::ActiveRecord::Base
+
+          raise ArgumentError,
+            "transaction owner #{klass.inspect} must be a subclass of ActiveRecord::Base"
+        end
+
+        def transaction_class_callback!(callable)
+          return if callable.respond_to?(:call)
+
+          raise ArgumentError,
+            "Micro::Case.config.default_transaction_class= expects a callable (a block, lambda or proc), got #{callable.inspect}"
+        end
+
         def results_contract!(use_case_class, kind, type, value)
           contract = use_case_class.__results_contract__
           return unless contract
@@ -108,6 +169,16 @@ module Micro
         def flow_use_cases!(_use_cases); end
         def map_args!(_args); end
         def hash!(arg); arg; end
+        def flow_steps_kwarg!(_args, _steps, _label); end
+        def transaction_kwarg!(value)
+          return true if value == true
+          return value if value.is_a?(Class)
+          return value[:with] if value.is_a?(Hash) && value[:with].is_a?(Class)
+          nil
+        end
+        def activerecord_loaded!; end
+        def transaction_owner!(_klass); end
+        def transaction_class_callback!(_callable); end
         def results_contract!(_use_case_class, _kind, _type, _value); end
       end
     end

@@ -27,7 +27,7 @@ The main project goals are:
 Version   | Documentation
 --------- | -------------
 unreleased| https://github.com/serradura/u-case/blob/main/README.md
-5.5.0     | https://github.com/serradura/u-case/blob/v5.x/README.md
+5.6.0     | https://github.com/serradura/u-case/blob/v5.x/README.md
 4.5.1     | https://github.com/serradura/u-case/blob/v4.x/README.md
 
 > **Note:** Você entende português? 🇧🇷&nbsp;🇵🇹 Verifique o [README traduzido em pt-BR](https://github.com/serradura/u-case/blob/main/README.pt-BR.md).
@@ -50,6 +50,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
     - [How to use the `Micro::Case::Result#then` method?](#how-to-use-the-microcaseresultthen-method)
       - [What does happens when a `Micro::Case::Result#then` receives a block?](#what-does-happens-when-a-microcaseresultthen-receives-a-block)
       - [How to make attributes data injection using this feature?](#how-to-make-attributes-data-injection-using-this-feature)
+    - [Internal steps — building a flow inline inside `call!`](#internal-steps--building-a-flow-inline-inside-call)
   - [`Micro::Cases::Flow` - How to compose use cases?](#microcasesflow---how-to-compose-use-cases)
     - [Is it possible to compose a flow with other flows?](#is-it-possible-to-compose-a-flow-with-other-flows)
     - [Is it possible a flow accumulates its input and merges each success result to use as the argument of the next use cases?](#is-it-possible-a-flow-accumulates-its-input-and-merges-each-success-result-to-use-as-the-argument-of-the-next-use-cases)
@@ -57,6 +58,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
       - [`Micro::Case::Result#transitions` schema](#microcaseresulttransitions-schema)
       - [Is it possible disable the `Micro::Case::Result#transitions`?](#is-it-possible-disable-the-microcaseresulttransitions)
     - [Is it possible to declare a flow that includes the use case itself as a step?](#is-it-possible-to-declare-a-flow-that-includes-the-use-case-itself-as-a-step)
+    - [How to run a use case or flow inside a database transaction?](#how-to-run-a-use-case-or-flow-inside-a-database-transaction)
   - [`Micro::Case::Strict` - What is a strict use case?](#microcasestrict---what-is-a-strict-use-case)
   - [`Micro::Case::Safe` - Is there some feature to auto handle exceptions inside of a use case or flow?](#microcasesafe---is-there-some-feature-to-auto-handle-exceptions-inside-of-a-use-case-or-flow)
     - [`Micro::Cases::Safe::Flow`](#microcasessafeflow)
@@ -91,7 +93,7 @@ unreleased| https://github.com/serradura/u-case/blob/main/README.md
 | u-case           | branch | ruby     | activemodel    | u-attributes   |
 | ---------------- | ------ | -------- | -------------- | -------------- |
 | unreleased       | main   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0  |
-| 5.5.0            | v5.x   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0  |
+| 5.6.0            | v5.x   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0  |
 | 5.1.0            | v5.x   | >= 2.7   | >= 6.0         | >= 2.7, < 4.0  |
 | 4.5.1            | v4.x   | >= 2.2.0 | >= 3.2, <= 8.1 | >= 2.7, < 3.0  |
 
@@ -632,6 +634,235 @@ Todo::FindAllForUser
 
 [⬆️ Back to Top](#table-of-contents-)
 
+#### Internal steps — building a flow inline inside `call!`
+
+`Result#then` (and its `|` pipe alias) is u-case's **third way of
+composing a flow**, side by side with `Micro::Cases.flow(...)` and the
+class-level `flow ...` macro. Instead of wiring sibling use cases
+together, you keep the chain *inside* a single use case's `call!`:
+each link is a method, lambda or another use case class; each link
+returns a `Micro::Case::Result`; each link's `Success` data becomes
+the next link's keyword arguments; and each link contributes a row to
+`result.transitions` — just like a step in a top-level flow.
+
+##### What `Result#then` (and `|`) accept
+
+| Argument shape | Example |
+| --- | --- |
+| `Symbol` (method name) | `result.then(:sum_a_and_b)` |
+| Bound `Method` object | `result.then(method(:sum_a_and_b))` |
+| `Lambda` / `Proc` | `result.then(-> data { sum_a_and_b(**data) })` |
+| Use case class | `result.then(SumHalf)` |
+| `Symbol` + Hash defaults | `result.then(:add, number: 3)` |
+| Block | `result.then { \|r\| r.success? ? r[:sum] : 0 }` |
+
+The connecting method **must** return a `Micro::Case::Result`. Anything
+else raises `Micro::Case::Error::UnexpectedResult` — for example a
+method that returns a plain `Hash` will be rejected with a message like
+`MyCase#method(:foo) must return an instance of Micro::Case::Result`.
+
+##### A minimal example
+
+```ruby
+class SumHalf < Micro::Case
+  attribute :sum
+
+  def call!
+    Success :third_sum, result: { sum: sum + 0.5 }
+  end
+end
+
+class DoSomeSum < Micro::Case
+  attributes :a, :b
+
+  def call!
+    validate_numbers
+      .then(:sum_a_and_b)
+      .then(:add, number: 3)
+      .then(SumHalf)
+  end
+
+  private
+
+  def validate_numbers
+    Kind.of?(Numeric, a, b) ? Success(:valid) : Failure()
+  end
+
+  def sum_a_and_b
+    Success :first_sum, result: { sum: a + b }
+  end
+
+  def add(sum:, number:, **)
+    Success :second_sum, result: { sum: sum + number }
+  end
+end
+
+result = DoSomeSum.call(a: 1, b: 2)
+
+result.success?    # true
+result.data        # { sum: 6.5 }
+result.transitions # 4 entries — see below
+```
+
+`result.transitions` for the call above:
+
+```ruby
+[
+  { use_case: { class: DoSomeSum, attributes: { a: 1, b: 2 } },
+    success: { type: :valid,       result: { valid: true } },
+    accessible_attributes: [:a, :b] },
+
+  { use_case: { class: DoSomeSum, attributes: { a: 1, b: 2 } },
+    success: { type: :first_sum,   result: { sum: 3 } },
+    accessible_attributes: [:a, :b, :valid] },
+
+  { use_case: { class: DoSomeSum, attributes: { a: 1, b: 2 } },
+    success: { type: :second_sum,  result: { sum: 6 } },
+    accessible_attributes: [:a, :b, :valid, :number, :sum] },
+
+  { use_case: { class: SumHalf,   attributes: { sum: 6 } },
+    success: { type: :third_sum,  result: { sum: 6.5 } },
+    accessible_attributes: [:a, :b, :valid, :number, :sum] }
+]
+```
+
+Symbol-, method- and lambda-based links all run **as the host use
+case**, so the first three transitions report `class: DoSomeSum`. Only
+the `SumHalf` link, which is another use case class, contributes a
+transition with a different `use_case.class`. The `accessible_attributes`
+grows as each link's `Success` output is merged into the running data.
+
+##### The `|` (pipe) alias
+
+`|` is sugar for `.then(...)`. The previous example becomes:
+
+```ruby
+def call!
+  validate_numbers | :sum_a_and_b | :add | SumHalf
+end
+```
+
+Both forms produce identical `result.data` and `result.transitions`.
+
+> **Elixir-style chains with `it` (Ruby ≥ 3.4):** because Ruby 3.4
+> exposes `it` as the implicit first parameter of a block/lambda body,
+> you can write a chain that reads almost exactly like Elixir's
+> `|>` pipe. Each lambda receives the accumulated data hash as `it`
+> and must still terminate in a `Success(...)` / `Failure(...)` call:
+>
+> ```ruby
+> def call!
+>   validate_something \
+>     | -> { do_something_with(**it) } \
+>     | -> { and_another_thing_with(**it) }
+> end
+> ```
+>
+> On Ruby 2.7 – 3.3 (where `it` is just an undefined identifier),
+> use the portable explicit form `->(data) { do_something_with(**data) }`
+> shown in the next section.
+
+##### Lambda / `Method` forms
+
+Lambdas (and bound `Method` objects) receive the accumulated data
+**positionally** as a single Hash:
+
+```ruby
+def call!
+  validate_numbers
+    .then(method(:sum_a_and_b))
+    .then(->(data) { add(**data, number: 3) })
+    .then(SumHalf)
+end
+```
+
+##### Failure short-circuits the chain
+
+Returning `Failure(...)` from any link halts the rest of the chain
+immediately — exactly like a step in a top-level flow returning a
+failure. The remaining `.then(...)` / `|` links are not invoked, and
+the final `result` is the failure:
+
+```ruby
+DoSomeSum.call(a: 1, b: '2')
+
+# validate_numbers returns Failure() → :sum_a_and_b, :add and SumHalf
+# never run. result.failure? == true, result.transitions has 1 entry.
+```
+
+##### Using an internal-step case inside an outer flow
+
+A use case that composes internally with `.then(...)` is just a use
+case, so you can drop it into any flow constructor:
+
+```ruby
+SignUp = Micro::Cases.flow([
+  NormalizeParams,
+  DoSomeSum,          # ← uses .then(:method) internally
+  EnqueueIndexingJob
+])
+```
+
+The host class's internal transitions are interleaved with the outer
+flow's leaf transitions in execution order. If `DoSomeSum` produces 4
+internal transitions and the outer flow has 2 other leaf steps, the
+final `result.transitions` has 6 entries.
+
+##### Internal steps **without** transactions
+
+By default — i.e. when neither the host class nor the outer flow uses
+`transaction: true` — internal steps behave like any other code in
+`call!`: side-effects made by earlier links **persist** even if a
+later link returns `Failure`. The chain is interrupted, but anything
+already written to the database stays written:
+
+```ruby
+class CreateUserWithProfileInline < Micro::Case
+  attributes :name, :info
+
+  def call!
+    create_user
+      .then(:create_profile)
+  end
+
+  private
+
+  def create_user
+    user = User.create(name: name)
+    Success result: { user: user }
+  end
+
+  def create_profile(user:, **)
+    profile = UserProfile.create(user_id: user.id, info: info)
+    return Failure(:invalid_profile) if profile.errors.any?
+
+    Success result: { user: user, profile: profile }
+  end
+end
+
+CreateUserWithProfileInline.call(name: 'Rodrigo', info: '')
+# create_user already INSERTed the user row; create_profile failed.
+# user is persisted; profile is not. No automatic rollback.
+```
+
+If you need the partial side-effects to be undone, wrap the chain in
+a transaction. Because internal steps are just another way of
+expressing a flow (an *internal* flow), the transactional story is
+exactly the one already documented in
+[How to run a use case or flow inside a database transaction?](#how-to-run-a-use-case-or-flow-inside-a-database-transaction)
+below — the "Internal-step flows under transactions" subsection
+there walks through both the inline `transaction { ... }` form and
+the `transaction: true` flow form for an internal-step host case.
+
+> **Note:** See `test/micro/case/internal_steps/with_symbols_test.rb`,
+> `with_methods_test.rb` and `with_lambdas_test.rb` for full examples
+> of each form, and
+> `test/micro/cases/flow/internal_steps_in_flows_test.rb` for the
+> interaction with flows and transactions (accumulation, transitions,
+> rollback at every nesting level).
+
+[⬆️ Back to Top](#table-of-contents-)
+
 ### `Micro::Cases::Flow` - How to compose use cases?
 
 We call as **flow** a composition of use cases. The main idea of this feature is to use/reuse use cases as steps of a new use case. e.g.
@@ -976,6 +1207,287 @@ result[:number] # "8"
 ```
 
 > **Note:** This feature can be used with the Micro::Case::Safe. Checkout this test to see an example: https://github.com/serradura/u-case/blob/714c6b658fc6aa02617e6833ddee09eddc760f2a/test/micro/case/safe/with_inner_flow_test.rb
+
+[⬆️ Back to Top](#table-of-contents-)
+
+#### How to run a use case or flow inside a database transaction?
+
+`u-case` ships with two complementary helpers for wrapping work in an
+`ActiveRecord::Base.transaction`. Both opt-in — `active_record` is **not**
+required by the gem, so you need to load ActiveRecord yourself (Rails
+applications already do).
+
+##### `Micro::Case#transaction` — inline transactions inside `call!`
+
+`Micro::Case#transaction` (and `Micro::Case::Safe#transaction`) is a private
+instance helper that wraps a block in a database transaction and issues an
+`ActiveRecord::Rollback` whenever the block's result is a `Failure`. The
+original result is returned either way, so you can keep chaining with
+`Result#then`:
+
+```ruby
+class CreateUserWithAProfile < Micro::Case
+  def call!
+    transaction {
+      call(CreateUser).then(CreateUserProfile)
+    }
+  end
+end
+```
+
+If the block returns a failure (or raises), every row written inside the
+block is rolled back. The helper accepts an optional `with:` kwarg to pick
+the ActiveRecord class on which `.transaction` is opened — useful for
+multi-database Rails apps (`ApplicationRecord`, `AnalyticsRecord`,
+`BillingRecord`, …):
+
+```ruby
+class CreateAuditEntry < Micro::Case
+  def call!
+    transaction(with: AnalyticsRecord) {
+      call(WriteAuditLog).then(BumpCounter)
+    }
+  end
+end
+```
+
+When `with:` is omitted, the helper falls back to the class macro
+(`transaction with: …`) and then to the global default callback (see below),
+which ships as `-> { ::ActiveRecord::Base }`.
+
+> **Note:** any class passed via `with:` (here, on the class macro, or on a
+> flow's `transaction:` kwarg) **must be a subclass of `ActiveRecord::Base`**.
+> Non-AR classes are rejected with `ArgumentError`. The class-macro
+> validation runs at class-eval time when ActiveRecord is already loaded
+> (typical Rails app); otherwise it's deferred to runtime, so initializer
+> load order doesn't break declarations.
+
+> **Backward compatibility:** the pre-5.6.0 positional form
+> `transaction(:activerecord) { ... }` still works as an alias for
+> `transaction { ... }`. Any other positional value raises `ArgumentError` —
+> the legacy helper accepted only `:activerecord`.
+
+##### `transaction with: …` — declaring the default for a case
+
+A class macro lets a case declare which ActiveRecord class should own its
+transactions, so neither the inline helper nor any flow that wraps the
+case needs to spell it out at every call site. The declaration is inherited
+by subclasses:
+
+```ruby
+class ApplicationUseCase < Micro::Case
+  transaction with: ApplicationRecord
+end
+
+class CreateUserWithAProfile < ApplicationUseCase
+  flow(transaction: true, steps: [CreateUser, CreateUserProfile])
+  # transaction: true resolves to ApplicationRecord because that's
+  # what the host class declared via `transaction with:`.
+end
+
+class BillingCase < ApplicationUseCase
+  transaction with: BillingRecord
+  # overrides the inherited declaration for this branch of the tree
+end
+```
+
+##### `Micro::Cases.flow(transaction: …, steps: [...])` — flow-level transactions
+
+Pass `transaction:` together with `steps:` to wrap an entire flow in a
+single transaction. If any step returns a failure (or raises, in a
+`safe_flow`), every database write performed during the flow is rolled back.
+The kwarg accepts three forms:
+
+```ruby
+# Use the class-level macro (if the host case declared one) or the
+# global default (`ActiveRecord::Base` unless configured otherwise).
+Micro::Cases.flow(transaction: true, steps: [CreateUser, CreateUserProfile])
+
+# Pick an explicit ActiveRecord class for this flow only — same `with:`
+# vocabulary as the inline helper and the class macro.
+Micro::Cases.flow(transaction: { with: AnalyticsRecord }, steps: [
+  WriteAuditLog,
+  BumpCounter
+])
+
+# safe_flow rolls back on failures AND on unexpected exceptions
+Micro::Cases.safe_flow(transaction: { with: ApplicationRecord }, steps: [
+  CreateUser,
+  CreateUserProfile
+])
+
+# Class-level form
+class CreateUserWithAProfile < Micro::Case
+  flow(transaction: true, steps: [CreateUser, CreateUserProfile])
+end
+```
+
+To nest a transactional flow inside another flow, wrap it in a use case
+class — `Micro::Cases.flow([...])` flattens `Flow` instances passed as
+steps, but does **not** flatten classes:
+
+```ruby
+class CreateUserAndProfile < Micro::Case
+  flow(transaction: true, steps: [CreateUser, CreateUserProfile])
+end
+
+SignUpFlow = Micro::Cases.flow([
+  NormalizeParams,
+  ValidatePassword,
+  CreateUserAndProfile,
+  EnqueueIndexingJob
+])
+```
+
+If `transaction: true` is used while `ActiveRecord::Base` is not loaded the
+flow raises `Micro::Cases::Error::TransactionAdapterMissing` on the first
+call so the misconfiguration surfaces immediately. Passing `transaction: {
+with: SomeClass }` skips this check — `SomeClass` is trusted to respond
+to `.transaction`.
+
+##### `config.default_transaction_class { … }` — global default
+
+For Rails apps that use a single abstract record (`ApplicationRecord`),
+configure it once in an initializer instead of declaring it on every case
+or flow:
+
+```ruby
+# config/initializers/u_case.rb
+Micro::Case.config do |config|
+  config.default_transaction_class { ApplicationRecord }
+end
+```
+
+The callback (block or lambda) is invoked **every time** a transaction
+opens — no memoization — so it's safe to make the return value depend on
+runtime state (per-tenant routing, etc.). The default is
+`-> { ::ActiveRecord::Base }`. Resolution order, when a transaction opens:
+
+1. **Call-site override.** `transaction: { with: X }` on a flow kwarg, or
+   `transaction(with: X) { ... }` on the inline helper.
+2. **Host case's `transaction with: X` macro** (walks ancestors).
+3. **`Micro::Case.config.default_transaction_class.call`** — the global
+   callback (defaults to `ActiveRecord::Base`).
+
+A non-callable assignment to `default_transaction_class=` raises
+`ArgumentError` at config time so typos like `config.default_transaction_class
+= 'ApplicationRecord'` fail loudly instead of crashing the first transaction.
+
+##### Internal-step flows under transactions
+
+[Internal steps](#internal-steps--building-a-flow-inline-inside-call)
+(the `Result#then(:symbol)` / `|` form built inline inside a single
+`call!`) are u-case's third way of composing a flow — an *internal*
+flow. By default an internal flow has **no transactional rollback**:
+side-effects from earlier `.then(:method)` links persist even when a
+later link returns `Failure`.
+
+There are two natural ways to give an internal flow transactional
+rollback. Both reuse the helpers already covered above:
+
+**1. Wrap the host case in a `transaction: true` flow.** This is the
+recommended way once the host case is composed with the rest of the
+pipeline. The transaction spans the whole flow call, so a `Failure`
+*anywhere* — including from any internal `.then(:method)` link — rolls
+back every database write performed during that call:
+
+```ruby
+class CreateUserWithProfileInline < Micro::Case
+  attributes :name, :info
+
+  def call!
+    create_user
+      .then(:create_profile)
+  end
+
+  private
+
+  def create_user
+    user = User.create(name: name)
+    Success result: { user: user }
+  end
+
+  def create_profile(user:, **)
+    profile = UserProfile.create(user_id: user.id, info: info)
+    return Failure(:invalid_profile) if profile.errors.any?
+
+    Success result: { user: user, profile: profile }
+  end
+end
+
+SignUp = Micro::Cases.flow(transaction: true, steps: [
+  NormalizeParams,
+  CreateUserWithProfileInline,   # ← internal failure now rolls back
+  EnqueueIndexingJob
+])
+
+# Or class-level:
+class SignUp < Micro::Case
+  flow(transaction: true, steps: [
+    NormalizeParams,
+    CreateUserWithProfileInline,
+    EnqueueIndexingJob
+  ])
+end
+```
+
+If `create_profile` (the internal `.then(:create_profile)` link)
+returns `Failure(:invalid_profile)`, the `User` row inserted earlier
+by `create_user` is rolled back as part of the same
+`ActiveRecord::Base.transaction`. The result still surfaces the
+failure type and the partial transitions, but no row is left behind.
+
+**2. Use the inline `Micro::Case#transaction` helper** to scope the
+rollback to a single `call!` without involving an outer flow:
+
+```ruby
+class CreateUserWithProfileInline < Micro::Case
+  def call!
+    transaction {
+      create_user
+        .then(:create_profile)
+    }
+  end
+end
+```
+
+This is appropriate when the host case is invoked on its own (not
+inside a flow) and you still want the internal flow to be atomic. The
+`transaction` block returns the chain's `Result` as-is, so you can
+keep composing with `Result#then` after it.
+
+The two approaches **compose**. If you put `CreateUserWithProfileInline`
+(already using inline `transaction { ... }`) inside an outer
+`transaction: true` flow, ActiveRecord joins the inner transaction
+into the outer one by default — an outer failure rolls back the
+inner's writes too. See the **Behavior notes** below for the full
+nesting / flatten rules.
+
+##### Behavior notes
+
+- **Result is unaffected.** `transaction: true` only affects database
+  side-effects. `result.data`, `result.type`, `result.transitions` and
+  `result.accessible_attributes` are identical to those of an equivalent
+  non-transactional flow.
+- **`Flow` instances get flattened.** `Micro::Cases.flow([inner_flow,
+  Other])` flattens `inner_flow` into its leaf steps, which means a
+  transactional `Flow` instance passed this way **loses its
+  transaction**. Wrap reusable transactional flows in a use case class
+  (the snippet above) to preserve their transaction when nested.
+- **Nested transactions join the outer one.** When a transactional flow
+  is nested inside another transactional flow, ActiveRecord joins them
+  by default (no `requires_new: true`). A failure anywhere in the chain
+  rolls back **everything** written inside the outermost transaction —
+  including writes performed by the inner flow.
+- **A non-transactional outer commits the inner.** If the outer flow is
+  not transactional and the inner transactional flow succeeds, the
+  inner's writes are committed at the end of the inner step. A failure
+  in a later (non-transactional) step **does not** undo those writes.
+- **Plain `Micro::Cases.flow(transaction: true, ...)` re-raises
+  exceptions.** The transaction still rolls back, but the caller has to
+  rescue. Use `Micro::Cases.safe_flow(transaction: true, ...)` (or the
+  class-level form with `Micro::Case::Safe`) to capture the exception
+  as a `:exception` failure result.
 
 [⬆️ Back to Top](#table-of-contents-)
 
