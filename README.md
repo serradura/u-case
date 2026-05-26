@@ -15,7 +15,9 @@
 </p>
 
 > [!IMPORTANT]
-> **No breaking changes — ever.** From here on, `u-case` will not introduce breaking changes. The gem's role is to remain a stable, backward-compatible foundation for the projects that already depend on it. Any "next major" rethink of the abstractions (dropping `Micro::Cases.flow` / the class-level `flow` macro / `Micro::Case::Strict`, making `.new` public, removing legacy step declarations, etc.) belongs in [`solid-process`](https://github.com/solid-process/solid-process), **not** in a future `u-case` 6.x. Purely additive enhancements that preserve every public API and runtime contract are still in scope on the 5.x line.
+> **No breaking API changes — ever.** From here on, `u-case`'s public API and runtime contracts won't break. The gem's role is to remain a stable, backward-compatible foundation for the projects that already depend on it. Any "next major" rethink of the abstractions belongs in [`solid-process`](https://github.com/solid-process/solid-process) (a redesign that applies what we've learned since `u-case` was created), **not** in a future `u-case` 6.x.
+>
+> Major version bumps signal only that a Ruby or Rails version was dropped from the supported matrix — per SemVer, a dependency-floor change. Your code keeps working.
 >
 > See the full statement on [issue #131](https://github.com/serradura/u-case/issues/131#issuecomment-4531231882).
 
@@ -51,7 +53,8 @@ That's the whole shape: `attributes`, a `call!` method, `Success(...)` or `Failu
 - **Composable three ways** — chain use cases via [`Micro::Cases.flow`](#flows), the [class-level `flow` macro](#flows), or inline [`Result#then`](#internal-steps--resultthen-chains) chains.
 - **Typed results** — every call returns a [`Micro::Case::Result`](#working-with-results) with `success?` / `failure?` / `type` / `data`, hooks, and [pattern matching](#pattern-matching).
 - **Result contracts** — declare which result types and keys your use case can return; misuse fails loudly ([`results do |on| ... end`](#result-contracts)).
-- **Transactions on demand** — wrap a use case or a whole flow in an `ActiveRecord` transaction with one kwarg ([`transaction: true`](#transactions)).
+- **Inspectable execution** — every flow records each step's input, output, and accessible attributes in [`result.transitions`](#inspecting-execution-with-resulttransitions). Debug, log, or audit how any result was produced.
+- ⚡ **Transactions on demand** — wrap a use case or a whole flow in an `ActiveRecord` transaction with one kwarg ([`transaction: true`](#transactions)). Multi-database support, global default callback, and an inline `transaction { ... }` block helper.
 - **Exception-safe by opt-in** — [`Micro::Case::Safe`](#safe-mode--capturing-exceptions) turns unhandled exceptions into `:exception` failures.
 - **Fast** — second-fastest after `Dry::Monads` in the [benchmarks](#performance), with no global state.
 
