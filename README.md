@@ -23,6 +23,8 @@
 
 ## Quick start <!-- omit in toc -->
 
+That's the whole shape: `attributes`, a `call!` method, `Success(...)` or `Failure(...)`. Everything else in this README is a way to make that shape easier to **compose**, **validate**, **observe**, and **transact**.
+
 ```ruby
 require 'u-case'
 
@@ -57,8 +59,6 @@ in { failure: :blank_title }
   render status: 422, json: { error: 'title required' }
 end
 ```
-
-That's the whole shape: `attributes`, a `call!` method, `Success(...)` or `Failure(...)`. Everything else in this README is a way to make that shape easier to **compose**, **validate**, **observe**, and **transact**.
 
 Need a structured input? Declare attributes with a block — child attributes inherit the host's feature mix (see [Going further with `u-attributes`](#going-further-with-u-attributes)):
 

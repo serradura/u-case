@@ -23,6 +23,8 @@
 
 ## Quick start <!-- omit in toc -->
 
+Esse é o formato inteiro: `attributes`, um método `call!`, e `Success(...)` ou `Failure(...)`. Todo o resto deste README é uma forma de tornar esse formato mais fácil de **compor**, **validar**, **observar** e **transacionar**.
+
 ```ruby
 require 'u-case'
 
@@ -57,8 +59,6 @@ in { failure: :blank_title }
   render status: 422, json: { error: 'title required' }
 end
 ```
-
-Esse é o formato inteiro: `attributes`, um método `call!`, e `Success(...)` ou `Failure(...)`. Todo o resto deste README é uma forma de tornar esse formato mais fácil de **compor**, **validar**, **observar** e **transacionar**.
 
 Precisa de uma entrada estruturada? Declare atributos com um bloco — os atributos filhos herdam o mix de features do host (veja [Indo além com `u-attributes`](#indo-além-com-u-attributes)):
 
