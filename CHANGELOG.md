@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This gem was originally published as `u-service` (versions 0.1.0 – 1.0.0) and renamed to `u-case` starting with `u-case 1.0.0` on 2019-09-15.
 
+## [5.7.1] - 2026-05-26
+### Added
+- A `[!IMPORTANT]` GitHub alert at the top of both READMEs (EN + pt-BR) surfacing the **no-breaking-changes-to-the-API** policy (see [issue #131](https://github.com/serradura/u-case/issues/131#issuecomment-4531231882)) — the gem will remain a stable, backward-compatible foundation; redesigns belong in [`solid-process`](https://github.com/solid-process/solid-process). The alert also clarifies that major version bumps happen only when a Ruby or Rails version is dropped from the supported matrix (per SemVer dependency-floor semantics).
+
+### Changed
+- English and pt-BR READMEs restructured for clearer onboarding and reference. Top-level reorganization: added a **Quick start** section (basic use case + pattern matching consumption + transactional flow + inline `transaction { ... }` helper) and a refreshed "What you get" value-prop, promoted result contracts and pattern matching out of nested Result subsections, grouped flows / internal-step `Result#then` chains / transactions under a new "Composing use cases" umbrella, framed `accept:` / `reject:` as the default validation story with ActiveModel as the opt-in Rails-integration layer, condensed the benchmarks section, and added an inline end-to-end sign-up flow under Examples. Heading style is now uniformly declarative (FAQ-style "Is it possible…?" / "How to…?" titles removed) and several `[⬆️ Back to Top]` link occurrences were thinned out. Documented previously-undocumented `Micro::Case.config.set_activemodel_validation_errors_failure`. Both READMEs are in lockstep. No API or behavior changes — purely documentation.
+- New top-level **Going further with `u-attributes`** section in both READMEs covering nested attributes (block form, e.g. `attribute :customer do … end`) and `accept:` targeting another `Micro::Attributes`-based class for auto-coercion of incoming hashes. The Quick start section's closing pointer routes readers here for the deep dive.
+- All math-based example classes throughout both READMEs were rewritten with realistic, non-math use cases that span the same API surface: `Multiply` / `Divide` / `Double` / `Add` / `Square` / `Add2` / `Add3` / `SumHalf` / `DoSomeSum` / `ForbidNegativeNumber` / `ConvertTextToNumber(s)` are replaced by `Slugify`, `ValidateEmail`, `FormatGreeting`, `ParseJsonPayload`, `FetchUser`, `MergeTags`, `PublishPost`, `CreateComment`, `ChangePassword`, `FindActiveUser` / `GenerateInviteToken` / `FindUser`, `CreatePost` / `CountPosts`, the `Steps` module's tag-normalization pipeline (`ParseTags` / `Downcase` / `StripHashPrefix` / `RemoveDuplicates`), `CleanTags` + `ParseTagsString` + `JoinTagsArray`, and `CreateBlogPost` + `CapitalizeTitle`. Same teaching points; idioms a Rails/Ruby reader recognizes on first glance.
+
 ## [5.7.0] - 2026-05-25
 ### Added
 - Pattern matching support on `Micro::Case::Result` via `#deconstruct` and `#deconstruct_keys` (closes #146). Purely additive — no existing API is changed or removed. `#deconstruct` returns `[status, type, data]` where `status` is `:success` or `:failure`, so array patterns like `in [:failure, :invalid_attributes, { invalid_attributes: errors }]` can use the status as a discriminant — mirroring how libraries with separate `Success`/`Failure` classes are pattern-matched, even though `Micro::Case::Result` is a single class. `#deconstruct_keys` exposes `:type`, `:data`, `:result` (alias of `:data` that matches the `Success(result: …)` creation-site vocabulary), `:use_case` and `:transitions` on every result; `:success` is present only on success results and `:failure` only on failure results, and both carry the result `type` symbol as their value so `in { failure: :invalid_attributes }` works. `#deconstruct_keys` honors Ruby's `keys` argument and only computes the requested entries (relevant for `:transitions`, which allocates a duped array).
@@ -500,6 +509,7 @@ First release under the `u-case` name (renamed from `u-service`).
 - `Micro::Service::Result` with `Success`/`Failure` factories and helper methods for returning typed results from services.
 - Runtime dependency on `u-attributes` for service input declaration.
 
+[5.7.1]: https://github.com/serradura/u-case/compare/v5.7.0...v5.7.1
 [5.7.0]: https://github.com/serradura/u-case/compare/v5.6.0...v5.7.0
 [5.6.0]: https://github.com/serradura/u-case/compare/v5.5.0...v5.6.0
 [5.5.0]: https://github.com/serradura/u-case/compare/v5.4.0...v5.5.0
