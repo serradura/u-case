@@ -51,13 +51,13 @@ That's the whole shape: `attributes`, a `call!` method, `Success(...)` or `Failu
 
 ## What you get <!-- omit in toc -->
 
-- **Easy** — input → process → output. A use case is a small class with `attributes` and a `call!` method that returns a result.
-- **Immutable & callback-free** — no `before` / `after` / `around` lifecycle callbacks. Data flows forward; nothing mutates in place.
-- **Composable three ways** — chain use cases via [`Micro::Cases.flow`](#flows), the [class-level `flow` macro](#flows), or inline [`Result#then`](#internal-steps--resultthen-chains) chains.
-- **Typed results** — every call returns a [`Micro::Case::Result`](#working-with-results) with a `success?`/`failure?` discriminant, a `:type` symbol, and a `data` hash.
-- **Pattern matching** — Ruby `case`/`in` works on results out of the box ([Pattern matching](#pattern-matching)).
-- **Result contracts** — declare which result types and keys your use case can return; [misuse fails loudly](#result-contracts).
-- **Inspectable execution** — every flow records each step's input, output, and accessible attributes in [`result.transitions`](#inspecting-execution-with-resulttransitions). Debug, log, or audit how any result was produced.
+- **Easy** — input → process → output. A use case is a class with `attributes`, a `call!` method, and returns a `Result`.
+- **Immutable & callback-free** — no lifecycle callbacks. Data flows forward; nothing mutates in place.
+- **Composable three ways** — chain use cases via [`flows`](#flows) or [`Result#then`](#internal-steps--resultthen-chains).
+- **Typed results** — every call returns a [`Result`](#working-with-results).
+- **Pattern matching** — Ruby `case`/`in` works out of the box. (See [Pattern matching](#pattern-matching)).
+- **Result contracts** — declare which types and values a use case can return. (See [Result contracts](#result-contracts)).
+- **Inspectable execution** — every flow records each step's input, output. (See [`transitions`](#inspecting-execution-with-resulttransitions)).
 - ⚡ **Transactions on demand** — wrap a use case, a [`flow`](#transactions), or an inline `Result#then` chain in an `ActiveRecord` transaction.
 - **Exception-safe by opt-in** — [`Micro::Case::Safe`](#safe-mode--capturing-exceptions) turns unhandled exceptions into `:exception` failures.
 - **Fast** — Check out the [benchmarks](#performance), with no global state.
