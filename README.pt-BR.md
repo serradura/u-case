@@ -39,8 +39,8 @@ Slugify.call(title: 'Hello, World!')
 
 Slugify
   .call(title: 42)
-  .on_success { |r| puts r[:slug] }
-  .on_failure(:invalid_attributes) { |r| warn r[:errors] }
+  .on_success { puts it[:slug] }
+  .on_failure(:invalid_attributes) { warn it[:errors] }
 # warn: { "title" => "expected to be a kind of String" }
 ```
 
@@ -250,8 +250,8 @@ result.type                                 # => :exception
 result.data                                 # => { exception: #<JSON::ParserError ...> }
 result[:exception].is_a?(JSON::ParserError) # => true
 
-result.on_failure(:exception) do |r|
-  AppLogger.error(r[:exception].message)
+result.on_failure(:exception) do
+  AppLogger.error(it[:exception].message)
 end
 ```
 
@@ -306,9 +306,9 @@ end
 
 ParseJsonPayload
   .call(payload: 'not-valid-json')
-  .on_success { |r| puts r[:data].inspect }
+  .on_success { puts it[:data].inspect }
   .on_exception(Encoding::CompatibilityError) { puts 'Encoding mismatch.' }
-  .on_exception(JSON::ParserError) { |_e| puts 'Malformed JSON.' }
+  .on_exception(JSON::ParserError) { puts 'Malformed JSON.' }
   .on_exception { |_e, _use_case|  puts 'Something went wrong.' }
 # Malformed JSON.
 # Something went wrong.
@@ -429,7 +429,7 @@ class PublishPost < Micro::Case
     return Failure(:missing_content)   if post.body.to_s.strip.empty?
 
     post.update!(status: :published, published_at: Time.current)
-    Success result: { post: post }
+    Success result: { post: }
   end
 end
 
@@ -476,20 +476,20 @@ class ChangePassword < Micro::Case
     return Failure(:reused, result: { msg: 'password recently used' }) if user.recently_used?(new_password)
 
     user.update_password!(new_password)
-    Success result: { user: user }
+    Success result: { user: }
   end
 end
 
 ChangePassword
   .call(user: ada, new_password: 'long-enough-1')
-  .on_success { |r| audit "password updated for #{r[:user].id}" }
-  .on_failure(:weak)   { |r| raise ArgumentError, r[:msg] }
-  .on_failure(:reused) { |r| raise ArgumentError, r[:msg] }
+  .on_success { audit "password updated for #{it[:user].id}" }
+  .on_failure(:weak)   { raise ArgumentError, it[:msg] }
+  .on_failure(:reused) { raise ArgumentError, it[:msg] }
 
 ChangePassword
   .call(user: ada, new_password: 'short')
   .on_failure { |_r, use_case| audit "#{use_case.class.name} failed" }   # 1. ChangePassword failed
-  .on_failure(:weak)   { |r| raise ArgumentError, r[:msg] }              # 2. ArgumentError
+  .on_failure(:weak)   { raise ArgumentError, it[:msg] }                 # 2. ArgumentError
 ```
 
 > O caso de uso responsável pelo resultado está sempre disponível como o segundo argumento do bloco do hook.
@@ -515,10 +515,10 @@ calls = 0
 result = ChangePassword.call(user: ada, new_password: 'long-enough-1')
 
 result
-  .on_success     { |_r| calls += 1 }
-  .on_success     { |_r| calls += 1 }
-  .on_success(:ok) { |_r| calls += 1 }
-  .on_success(:ok) { |_r| calls += 1 }
+  .on_success      { calls += 1 }
+  .on_success      { calls += 1 }
+  .on_success(:ok) { calls += 1 }
+  .on_success(:ok) { calls += 1 }
 
 calls # => 4
 ```
@@ -590,11 +590,11 @@ class FindActiveUser < Micro::Case
   attribute :email
 
   def call!
-    user = User.active.find_by(email: email)
+    user = User.active.find_by(email:)
 
-    return Success result: { user: user } if user
+    return Success result: { user: } if user
 
-    Failure result: { email: email }
+    Failure result: { email: }
   end
 end
 
@@ -602,7 +602,7 @@ class GenerateInviteToken < Micro::Case
   attribute :user
 
   def call!
-    Success result: { user: user, token: SecureRandom.hex(16) }
+    Success result: { user:, token: SecureRandom.hex(16) }
   end
 end
 
@@ -618,14 +618,14 @@ class FindUser < Micro::Case
   attribute :email
 
   def call!
-    user = User.find_by(email: email)
+    user = User.find_by(email:)
 
-    user ? Success(result: { user: user }) : Failure(:not_found)
+    user ? Success(result: { user: }) : Failure(:not_found)
   end
 end
 
-FindUser.call(email: 'ada@example.com').then  { |r| r.success? ? r[:user].id : nil } # => 42
-FindUser.call(email: 'unknown@example.com').then { |r| r.success? ? r[:user].id : nil } # => nil
+FindUser.call(email: 'ada@example.com').then  { it.success? ? it[:user].id : nil } # => 42
+FindUser.call(email: 'unknown@example.com').then { it.success? ? it[:user].id : nil } # => nil
 ```
 
 Passe um `Hash` extra para injetar atributos no próximo caso de uso:
@@ -635,7 +635,7 @@ Todo::FindAllForUser
   .call(user: current_user, params: params)
   .then(Paginate)
   .then(Serialize::PaginatedRelationAsJson, serializer: Todo::Serializer)
-  .on_success { |r| render_json(200, data: r[:todos]) }
+  .on_success { render_json(200, data: it[:todos]) }
 ```
 
 > `Result#then` também aceita um `Symbol`, um objeto `Method`, ou uma `Lambda` — veja [Steps internos](#steps-internos--cadeias-com-resultthen).
@@ -689,7 +689,7 @@ class CreatePost < Micro::Case
   def call!
     return Failure :invalid_attributes, result: { errors: self.errors } if invalid?
 
-    Success result: { post: Post.create!(title: title, body: body) }
+    Success result: { post: Post.create!(title:, body:) }
   end
 end
 ```
@@ -713,7 +713,7 @@ class CreatePost < Micro::Case
   validates :title, length: { maximum: 120 }
 
   def call!
-    Success result: { post: Post.create!(title: title, body: body) }
+    Success result: { post: Post.create!(title:, body:) }
   end
 end
 ```
@@ -801,7 +801,7 @@ module Steps
 
   class StripHashPrefix < Micro::Case::Strict
     attribute :tags
-    def call!; Success result: { tags: tags.map { |t| t.sub(/\A#/, '') } }; end
+    def call!; Success result: { tags: tags.map { it.sub(/\A#/, '') } }; end
   end
 
   class RemoveDuplicates < Micro::Case::Strict
@@ -829,7 +829,7 @@ end
 
 NormalizeTags
   .call(tags: 42)
-  .on_failure { |r| puts r[:message] }
+  .on_failure { puts it[:message] }
 # => "tags must be a comma-separated String"
 ```
 
@@ -853,7 +853,7 @@ StrippedAndDeduped     = Micro::Cases.flow([Steps::ParseTags, Steps::StripHashPr
 
 DowncaseAndDedupedTags
   .call(tags: 'Ruby, Rails, RUBY')
-  .on_success { |r| p r[:tags] } # => ["ruby", "rails"]
+  .on_success { p it[:tags] } # => ["ruby", "rails"]
 ```
 
 > Veja [`test/micro/cases/flow/blend_test.rb`](https://github.com/serradura/u-case/blob/main/test/micro/cases/flow/blend_test.rb) para todas as combinações possíveis.
@@ -868,9 +868,9 @@ module Users
     attribute :email
 
     def call!
-      user = User.find_by(email: email)
+      user = User.find_by(email:)
 
-      return Success result: { user: user } if user
+      return Success result: { user: } if user
 
       Failure(:user_not_found)
     end
@@ -892,7 +892,7 @@ end
 
 Users::Authenticate
   .call(email: 'somebody@test.com', password: 'password')
-  .on_success { |r| sign_in(r[:user]) }
+  .on_success { sign_in(it[:user]) }
   .on_failure(:wrong_password)  { render status: 401 }
   .on_failure(:user_not_found)  { render status: 404 }
 ```
@@ -1032,7 +1032,7 @@ class CreateBlogPost < Micro::Case
 
   def slugify(title:, separator:, **)
     slug = title.downcase.gsub(/[^a-z0-9]+/, separator)
-    Success :slugified, result: { title: title, slug: slug }
+    Success :slugified, result: { title:, slug: }
   end
 end
 
@@ -1112,15 +1112,15 @@ class CreateUserWithProfileInline < Micro::Case
   private
 
   def create_user
-    user = User.create(name: name)
-    Success result: { user: user }
+    user = User.create(name:)
+    Success result: { user: }
   end
 
   def create_profile(user:, **)
-    profile = UserProfile.create(user_id: user.id, info: info)
+    profile = UserProfile.create(user_id: user.id, info:)
     return Failure(:invalid_profile) if profile.errors.any?
 
-    Success result: { user: user, profile: profile }
+    Success result: { user:, profile: }
   end
 end
 
@@ -1270,15 +1270,15 @@ class CreateUserWithProfileInline < Micro::Case
   private
 
   def create_user
-    user = User.create(name: name)
-    Success result: { user: user }
+    user = User.create(name:)
+    Success result: { user: }
   end
 
   def create_profile(user:, **)
-    profile = UserProfile.create(user_id: user.id, info: info)
+    profile = UserProfile.create(user_id: user.id, info:)
     return Failure(:invalid_profile) if profile.errors.any?
 
-    Success result: { user: user, profile: profile }
+    Success result: { user:, profile: }
   end
 end
 
@@ -1409,7 +1409,7 @@ Memory profiling:
 Configure `disable_runtime_checks = true` para um pequeno ganho de alguns por cento em produção uma vez que seu test suite tenha exercitado os code paths:
 
 ```ruby
-Micro::Case.config { |c| c.disable_runtime_checks = true }
+Micro::Case.config { it.disable_runtime_checks = true }
 ```
 
 Os ganhos medidos (veja [`benchmarks/perfomance/runtime_checks/compare.rb`](https://github.com/serradura/u-case/blob/main/benchmarks/perfomance/runtime_checks/compare.rb)) dependem do JIT: dentro do ruído no Ruby puro, ~3–5% no Ruby 3.2 +YJIT, ~4–7% no Ruby 4.0 +PRISM.
@@ -1444,7 +1444,7 @@ class NormalizeParams < Micro::Case
 
     return Failure(:invalid_params) if name.empty? || email.empty?
 
-    Success result: { name: name, email: email }
+    Success result: { name:, email: }
   end
 end
 
@@ -1457,11 +1457,11 @@ class CreateUser < Micro::Case
   end
 
   def call!
-    user = User.create(name: name, email: email)
+    user = User.create(name:, email:)
 
     return Failure(:invalid_user, result: { errors: user.errors }) if user.errors.any?
 
-    Success result: { user: user }
+    Success result: { user: }
   end
 end
 
@@ -1478,7 +1478,7 @@ class CreateProfile < Micro::Case
 
     return Failure(:invalid_profile, result: { errors: profile.errors }) if profile.errors.any?
 
-    Success result: { profile: profile }
+    Success result: { profile: }
   end
 end
 
@@ -1490,10 +1490,10 @@ SignUp = Micro::Cases.flow(transaction: true, steps: [
 
 SignUp
   .call(params: { name: 'Ada', email: 'ADA@EXAMPLE.com' })
-  .on_success                   { |r| render json: { user_id: r[:user].id } }
-  .on_failure(:invalid_params)  {     render status: 422 }
-  .on_failure(:invalid_user)    { |r| render status: 422, json: { errors: r[:errors] } }
-  .on_failure(:invalid_profile) { |r| render status: 422, json: { errors: r[:errors] } }
+  .on_success                   { render json: { user_id: it[:user].id } }
+  .on_failure(:invalid_params)  { render status: 422 }
+  .on_failure(:invalid_user)    { render status: 422, json: { errors: it[:errors] } }
+  .on_failure(:invalid_profile) { render status: 422, json: { errors: it[:errors] } }
 ```
 
 Se `CreateProfile` falha, a linha de `User` inserida por `CreateUser` é revertida — esse é o `transaction: true` fazendo seu trabalho. O resultado surfaceia `:invalid_profile`, o hook dispara, e o banco fica limpo.
@@ -1525,7 +1525,7 @@ class CreateOrder < Micro::Case
   end
 
   def call!
-    Success result: { order: Order.create!(id: id, customer_id: customer.id) }
+    Success result: { order: Order.create!(id:, customer_id: customer.id) }
   end
 end
 
@@ -1555,7 +1555,7 @@ class CreateProfile < Micro::Case
   attribute :address, accept: Address
 
   def call!
-    Success result: { profile: Profile.create!(name: name, address: address.to_h) }
+    Success result: { profile: Profile.create!(name:, address: address.to_h) }
   end
 end
 
