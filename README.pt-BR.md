@@ -1509,7 +1509,7 @@ Se `CreateProfile` falha, a linha de `User` inserida por `CreateUser` é reverti
 
 ## Indo além com `u-attributes`
 
-As macros `attribute` / `attributes` do `Micro::Case` vêm do [`u-attributes`](https://github.com/serradura/u-attributes), e todo recurso que aquela gem suporta está disponível em todo caso de uso. Dois padrões que vale conhecer:
+As macros `attribute` / `attributes` do `Micro::Case` vêm do [`u-attributes`](https://github.com/serradura/u-attributes), e todo recurso que aquela gem suporta está disponível em todo caso de uso. Dois padrões que vale conhecer — **ambos requerem [`u-attributes >= 3.1`](https://github.com/serradura/u-attributes)**:
 
 ### Atributos aninhados (forma com bloco)
 

@@ -1508,7 +1508,7 @@ If `CreateProfile` fails, the `User` row inserted by `CreateUser` is rolled back
 
 ## Going further with `u-attributes`
 
-`Micro::Case`'s `attribute` / `attributes` macros come from [`u-attributes`](https://github.com/serradura/u-attributes), and every feature that gem supports is available on every use case. Two patterns worth knowing:
+`Micro::Case`'s `attribute` / `attributes` macros come from [`u-attributes`](https://github.com/serradura/u-attributes), and every feature that gem supports is available on every use case. Two patterns worth knowing — **both require [`u-attributes >= 3.1`](https://github.com/serradura/u-attributes)**:
 
 ### Nested attributes (block form)
 
