@@ -46,6 +46,9 @@ Slugify
 
 That's the whole shape: `attributes`, a `call!` method, `Success(...)` or `Failure(...)`. Everything else in this README is a way to make that shape easier to **compose**, **validate**, **observe**, and **transact**.
 
+> [!TIP]
+> Attributes can nest. `attribute :customer do … end` declares structured input inline, and `accept:` can target another attribute class for auto-coercion. See [Going further with `u-attributes`](#going-further-with-u-attributes) at the end of this README.
+
 ## What you get <!-- omit in toc -->
 
 - **Easy** — input → process → output. A use case is a small class with `attributes` and `call!`.
@@ -123,6 +126,9 @@ That's the whole shape: `attributes`, a `call!` method, `Success(...)` or `Failu
 - [Examples](#examples)
   - [An end-to-end sign-up flow](#an-end-to-end-sign-up-flow)
   - [More examples](#more-examples)
+- [Going further with `u-attributes`](#going-further-with-u-attributes)
+  - [Nested attributes (block form)](#nested-attributes-block-form)
+  - [Accepting another attribute class](#accepting-another-attribute-class)
 - [Development](#development)
 - [Contributing](#contributing)
 - [License](#license)
@@ -1496,6 +1502,69 @@ If `CreateProfile` fails, the `User` row inserted by `CreateUser` is rolled back
 - **[Rails app (API)](https://github.com/serradura/from-fat-controllers-to-use-cases)** — different architectures across commits; the last one uses `Micro::Case` for the business logic.
 - **[CLI calculator](https://github.com/serradura/u-case/tree/main/examples/calculator)** — Rake tasks demonstrating user-input handling and failure-type-driven control flow.
 - **[Rescuing exceptions](https://github.com/serradura/u-case/blob/main/examples/rescuing_exceptions.rb)** — patterns for exception handling inside use cases.
+
+[⬆️ Back to Top](#table-of-contents-)
+
+## Going further with `u-attributes`
+
+`Micro::Case`'s `attribute` / `attributes` macros come from [`u-attributes`](https://github.com/serradura/u-attributes), and every feature that gem supports is available on every use case. Two patterns worth knowing:
+
+### Nested attributes (block form)
+
+Declare an attribute that itself has attributes — useful when your input is a structured object instead of a flat hash. `accept:` on the inner attributes still participates in the parent's `:invalid_attributes` failure:
+
+```ruby
+class CreateOrder < Micro::Case
+  attribute :id, accept: Integer
+
+  attribute :customer do
+    attribute :name,  accept: String
+    attribute :email, accept: String
+  end
+
+  def call!
+    Success result: { order: Order.create!(id: id, customer_id: customer.id) }
+  end
+end
+
+CreateOrder
+  .call(id: 42, customer: { name: 'Ada', email: 'ada@example.com' })
+  .success? # => true
+
+CreateOrder
+  .call(id: 42, customer: { name: 42, email: 'ada@example.com' })
+  .type     # => :invalid_attributes
+```
+
+The nested hash is accessible as `customer.name`, `customer.email`.
+
+### Accepting another attribute class
+
+`accept:` can target another class — incoming hashes auto-coerce into instances of it:
+
+```ruby
+class CreateProfile < Micro::Case
+  Address = Micro::Attributes.new do
+    attribute :city,   accept: String
+    attribute :postal, accept: String
+  end
+
+  attribute :name,    accept: String
+  attribute :address, accept: Address
+
+  def call!
+    Success result: { profile: Profile.create!(name: name, address: address.to_h) }
+  end
+end
+
+CreateProfile.call(
+  name: 'Rodrigo',
+  address: { city: 'Rio', postal: '20000-000' }
+)
+# => Success — `address` is an Address instance inside `call!`
+```
+
+For defaults, `allow_nil:`, custom validators, and the rest of the feature set, see the [`u-attributes`](https://github.com/serradura/u-attributes) README.
 
 [⬆️ Back to Top](#table-of-contents-)
 
