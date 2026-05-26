@@ -51,16 +51,16 @@ Esse é o formato inteiro: `attributes`, um método `call!`, e `Success(...)` ou
 
 ## Recursos <!-- omit in toc -->
 
-- **Fácil** — entrada → processamento → saída. Um caso de uso é uma classe pequena com `attributes` e `call!`.
-- **Imutável e sem callbacks** — nada de hooks `before` / `after` / `around`. Os dados fluem adiante; nada é mutado in place.
+- **Fácil** — entrada → processamento → saída. Um caso de uso é uma classe pequena com `attributes` e um método `call!` que retorna um resultado.
+- **Imutável e sem callbacks** — nada de callbacks de ciclo de vida `before` / `after` / `around`. Os dados fluem adiante; nada é mutado in place.
 - **Componível de três formas** — encadeie casos de uso via [`Micro::Cases.flow`](#flows), via [macro `flow` no nível da classe](#flows), ou via cadeias inline de [`Result#then`](#steps-internos--cadeias-com-resultthen).
-- **Resultados tipados** — toda chamada retorna um [`Micro::Case::Result`](#trabalhando-com-resultados) com `success?` / `failure?` / `type` / `data`, além dos hooks de resultado.
-- **Pattern matching** — o `case`/`in` do Ruby funciona em resultados direto, via `deconstruct` e `deconstruct_keys`. Faça match em `success:` / `failure:` / `type:` / `data:` / `use_case:` / `transitions:` ([Pattern matching](#pattern-matching)).
-- **Contratos de resultado** — declare quais tipos de resultado e quais chaves seu caso de uso pode retornar; usos incorretos falham loudly ([`results do |on| ... end`](#contratos-de-resultado)).
+- **Resultados tipados** — toda chamada retorna um [`Micro::Case::Result`](#trabalhando-com-resultados) com um discriminante `success?`/`failure?`, um símbolo `:type` e um hash `data`.
+- **Pattern matching** — o `case`/`in` do Ruby funciona em resultados direto ([Pattern matching](#pattern-matching)).
+- **Contratos de resultado** — declare quais tipos de resultado e quais chaves seu caso de uso pode retornar; [usos incorretos falham loudly](#contratos-de-resultado).
 - **Execução inspecionável** — todo flow registra a entrada, a saída e os atributos acessíveis de cada step em [`result.transitions`](#inspecionando-a-execução-com-resulttransitions). Debug, log ou audite como qualquer resultado foi produzido.
-- ⚡ **Transações sob demanda** — envolva um caso de uso ou um flow inteiro em uma transação `ActiveRecord` com um único kwarg ([`transaction: true`](#transações)). Suporte a multi-database, callback global de classe padrão e um helper inline `transaction { ... }` em bloco.
+- ⚡ **Transações sob demanda** — envolva um caso de uso, um [`flow`](#transações) ou uma cadeia inline com `Result#then` em uma transação `ActiveRecord`.
 - **Tratamento de exceções opt-in** — [`Micro::Case::Safe`](#modo-seguro--capturando-exceções) converte exceções não tratadas em falhas do tipo `:exception`.
-- **Rápido** — segundo mais rápido depois do `Dry::Monads` nos [benchmarks](#performance), sem estado global.
+- **Rápido** — Confira os [benchmarks](#performance), sem estado global.
 
 > Veja uma aplicação Rails real que usa essa gem: [from-fat-controllers-to-use-cases](https://github.com/serradura/from-fat-controllers-to-use-cases).
 

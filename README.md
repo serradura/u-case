@@ -51,16 +51,16 @@ That's the whole shape: `attributes`, a `call!` method, `Success(...)` or `Failu
 
 ## What you get <!-- omit in toc -->
 
-- **Easy** — input → process → output. A use case is a small class with `attributes` and `call!`.
-- **Immutable & callback-free** — no `before` / `after` / `around` hooks. Data flows forward; nothing mutates in place.
+- **Easy** — input → process → output. A use case is a small class with `attributes` and a `call!` method that returns a result.
+- **Immutable & callback-free** — no `before` / `after` / `around` lifecycle callbacks. Data flows forward; nothing mutates in place.
 - **Composable three ways** — chain use cases via [`Micro::Cases.flow`](#flows), the [class-level `flow` macro](#flows), or inline [`Result#then`](#internal-steps--resultthen-chains) chains.
-- **Typed results** — every call returns a [`Micro::Case::Result`](#working-with-results) with `success?` / `failure?` / `type` / `data`, plus result hooks.
-- **Pattern matching** — Ruby `case`/`in` works on results out of the box via `deconstruct` and `deconstruct_keys`. Match on `success:` / `failure:` / `type:` / `data:` / `use_case:` / `transitions:` ([Pattern matching](#pattern-matching)).
-- **Result contracts** — declare which result types and keys your use case can return; misuse fails loudly ([`results do |on| ... end`](#result-contracts)).
+- **Typed results** — every call returns a [`Micro::Case::Result`](#working-with-results) with a `success?`/`failure?` discriminant, a `:type` symbol, and a `data` hash.
+- **Pattern matching** — Ruby `case`/`in` works on results out of the box ([Pattern matching](#pattern-matching)).
+- **Result contracts** — declare which result types and keys your use case can return; [misuse fails loudly](#result-contracts).
 - **Inspectable execution** — every flow records each step's input, output, and accessible attributes in [`result.transitions`](#inspecting-execution-with-resulttransitions). Debug, log, or audit how any result was produced.
-- ⚡ **Transactions on demand** — wrap a use case or a whole flow in an `ActiveRecord` transaction with one kwarg ([`transaction: true`](#transactions)). Multi-database support, global default callback, and an inline `transaction { ... }` block helper.
+- ⚡ **Transactions on demand** — wrap a use case, a [`flow`](#transactions), or an inline `Result#then` chain in an `ActiveRecord` transaction.
 - **Exception-safe by opt-in** — [`Micro::Case::Safe`](#safe-mode--capturing-exceptions) turns unhandled exceptions into `:exception` failures.
-- **Fast** — second-fastest after `Dry::Monads` in the [benchmarks](#performance), with no global state.
+- **Fast** — Check out the [benchmarks](#performance), with no global state.
 
 > See a real Rails app using this gem: [from-fat-controllers-to-use-cases](https://github.com/serradura/from-fat-controllers-to-use-cases).
 
