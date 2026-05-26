@@ -128,6 +128,36 @@ Veja [Compondo casos de uso](#compondo-casos-de-uso) e [Indo além com `u-attrib
 | 5.7.1      | https://github.com/serradura/u-case/blob/v5.x/README.pt-BR.md |
 | 4.5.2      | https://github.com/serradura/u-case/blob/v4.x/README.pt-BR.md |
 
+## Uma nota sobre sintaxe <!-- omit in toc -->
+
+Os exemplos neste README usam dois recursos modernos do Ruby. A gem em si suporta Ruby `>= 2.7`, então se você está em um runtime mais antigo, aqui está como interpretá-los na forma clássica.
+
+**[Parâmetro de bloco `it`](https://docs.ruby-lang.org/en/3.4/syntax/methods_rdoc.html#label-Numbered+parameters)** — Ruby 3.4+
+
+```ruby
+# Moderno (Ruby >= 3.4) — o que você verá ao longo deste README
+attribute :title, accept: -> { it.is_a?(String) && !it.empty? }
+Slugify.call(title: 'Olá').on_success { puts it[:slug] }
+
+# Clássico — equivalente em todo Ruby suportado
+attribute :title, accept: ->(value) { value.is_a?(String) && !value.empty? }
+Slugify.call(title: 'Olá').on_success { |data| puts data[:slug] }
+```
+
+**[Omissão de valor em hash](https://docs.ruby-lang.org/en/3.1/syntax/literals_rdoc.html#label-Hash+Literals)** — Ruby 3.1+
+
+Quando a chave de um hash coincide com o nome de uma variável local (ou método) no escopo, você pode omitir o valor:
+
+```ruby
+slug = 'ola-mundo'
+
+# Moderno (Ruby >= 3.1)
+Success(result: { slug: })
+
+# Clássico — equivalente em todo Ruby suportado
+Success(result: { slug: slug })
+```
+
 ## Índice <!-- omit in toc -->
 
 - [Compatibilidade](#compatibilidade)

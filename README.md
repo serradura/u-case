@@ -142,6 +142,36 @@ See [Composing use cases](#composing-use-cases) and [Going further with `u-attri
 | 5.7.1      | https://github.com/serradura/u-case/blob/v5.x/README.md |
 | 4.5.2      | https://github.com/serradura/u-case/blob/v4.x/README.md |
 
+## A note on syntax <!-- omit in toc -->
+
+Examples in this README use two modern Ruby features. The gem itself supports Ruby `>= 2.7`, so if you're on an older runtime, here's how to read them back to the classic form.
+
+**[`it` block parameter](https://docs.ruby-lang.org/en/3.4/syntax/methods_rdoc.html#label-Numbered+parameters)** — Ruby 3.4+
+
+```ruby
+# Modern (Ruby >= 3.4) — what you'll see throughout this README
+attribute :title, accept: -> { it.is_a?(String) && !it.empty? }
+Slugify.call(title: 'Hello').on_success { puts it[:slug] }
+
+# Classic — equivalent on every supported Ruby
+attribute :title, accept: ->(value) { value.is_a?(String) && !value.empty? }
+Slugify.call(title: 'Hello').on_success { |data| puts data[:slug] }
+```
+
+**[Hash value omission](https://docs.ruby-lang.org/en/3.1/syntax/literals_rdoc.html#label-Hash+Literals)** — Ruby 3.1+
+
+When a hash key matches an in-scope local variable (or method) name, you can drop the value:
+
+```ruby
+slug = 'hello-world'
+
+# Modern (Ruby >= 3.1)
+Success(result: { slug: })
+
+# Classic — equivalent on every supported Ruby
+Success(result: { slug: slug })
+```
+
 ## Table of Contents <!-- omit in toc -->
 
 - [Compatibility](#compatibility)

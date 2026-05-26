@@ -2,6 +2,16 @@
 
 Notes for AI assistants working in `u-case`.
 
+## Golden rule: no breaking API changes — ever
+
+`u-case`'s public API and runtime contracts are **frozen**. Every change must keep existing code working — the gem's role is to remain a stable, backward-compatible foundation for the projects that already depend on it (and for everything that transitively depends on them).
+
+Any "next major" rethink of the abstractions belongs in [`solid-process`](https://github.com/solid-process/solid-process) — a redesign that applies what we've learned since `u-case` was created — **not** in a future `u-case` 6.x.
+
+Major version bumps are reserved for dependency-floor changes (dropping a Ruby or Rails version from the supported matrix) per SemVer. They do **not** signal a behavior break.
+
+If a task as stated would require a breaking change to honor it, stop and surface that — propose a backward-compatible path, or flag that the request can't be satisfied without violating this rule. Don't ship the break.
+
 ## How to work in this repo
 
 ### 1. Think before coding
