@@ -7,9 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This gem was originally published as `u-service` (versions 0.1.0 – 1.0.0) and renamed to `u-case` starting with `u-case 1.0.0` on 2019-09-15.
 
-## [5.7.1] - 2026-05-25
+## [5.7.1] - 2026-05-26
+### Added
+- A `[!IMPORTANT]` GitHub alert at the top of the English README surfacing the **no-breaking-changes** policy (see [issue #131](https://github.com/serradura/u-case/issues/131#issuecomment-4531231882)) — the gem will remain a stable, backward-compatible foundation; redesigns belong in [`solid-process`](https://github.com/solid-process/solid-process).
+
 ### Changed
 - English README restructured for clearer onboarding and reference. Top-level reorganization: added a 30-second taste snippet and a refreshed "What you get" value-prop, promoted result contracts and pattern matching out of nested Result subsections, grouped flows / internal-step `Result#then` chains / transactions under a new "Composing use cases" umbrella, framed `accept:` / `reject:` as the default validation story with ActiveModel as the opt-in Rails-integration layer, condensed the benchmarks section, and added an inline end-to-end sign-up flow under Examples. Heading style is now uniformly declarative (FAQ-style "Is it possible…?" / "How to…?" titles removed) and several `[⬆️ Back to Top]` link occurrences were thinned out. Documented previously-undocumented `Micro::Case.config.set_activemodel_validation_errors_failure`. No API or behavior changes — purely documentation. The pt-BR README will be brought in lockstep in a follow-up commit before release.
+- All math-based example classes throughout the English README were rewritten with realistic, non-math use cases that span the same API surface: `Multiply` / `Divide` / `Double` / `Add` / `Square` / `Add2` / `Add3` / `SumHalf` / `DoSomeSum` / `ForbidNegativeNumber` / `ConvertTextToNumber(s)` are replaced by `Slugify`, `ValidateEmail`, `FormatGreeting`, `ParseJsonPayload`, `FetchUser`, `MergeTags`, `PublishPost`, `CreateComment`, `ChangePassword`, `FindActiveUser` / `GenerateInviteToken` / `FindUser`, `CreatePost` / `CountPosts`, the `Steps` module's tag-normalization pipeline (`ParseTags` / `Downcase` / `StripHashPrefix` / `RemoveDuplicates`), `CleanTags` + `ParseTagsString` + `JoinTagsArray`, and `CreateBlogPost` + `CapitalizeTitle`. Same teaching points; idioms a Rails/Ruby reader recognizes on first glance.
 
 ## [5.7.0] - 2026-05-25
 ### Added
