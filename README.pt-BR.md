@@ -21,9 +21,11 @@
 >
 > Veja a declaração completa na [issue #131](https://github.com/serradura/u-case/issues/131#issuecomment-4531231882).
 
-## Em 30 segundos <!-- omit in toc -->
+## Quick start <!-- omit in toc -->
 
 ```ruby
+require 'u-case'
+
 class Slugify < Micro::Case
   attribute :title, accept: String
 
@@ -42,12 +44,66 @@ Slugify
   .on_success { puts it[:slug] }
   .on_failure(:invalid_attributes) { warn it[:errors] }
 # warn: { "title" => "expected to be a kind of String" }
+
+# ---------------------------------------------
+# Ramificando em cima do resultado? Use pattern matching:
+# ---------------------------------------------
+case Slugify.call(title: 'Hello, World!')
+in { success: _,                   result: { slug: } }
+  redirect_to "/posts/#{slug}"
+in { failure: :invalid_attributes, result: { errors: } }
+  render status: 422, json: { errors: }
+in { failure: :blank_title }
+  render status: 422, json: { error: 'title required' }
+end
 ```
 
 Esse é o formato inteiro: `attributes`, um método `call!`, e `Success(...)` ou `Failure(...)`. Todo o resto deste README é uma forma de tornar esse formato mais fácil de **compor**, **validar**, **observar** e **transacionar**.
 
-> [!TIP]
-> Atributos podem ser aninhados. `attribute :customer do … end` declara entrada estruturada inline, e `accept:` pode apontar para outra classe de atributos para coerção automática. Veja [Indo além com `u-attributes`](#indo-além-com-u-attributes) no fim deste README.
+Precisa de uma entrada estruturada? Declare atributos com um bloco — os atributos filhos herdam o mix de features do host (veja [Indo além com `u-attributes`](#indo-além-com-u-attributes)):
+
+```ruby
+class CreateOrder < Micro::Case
+  attribute :id, accept: Integer
+
+  attribute :customer do
+    attribute :name,  accept: String
+    attribute :email, accept: String
+  end
+
+  def call!
+    transaction do
+      customer = Customer.find_or_create_by!(name: customer.name, email: customer.email)
+
+      order = Order.create!(id:, customer_id: customer.id)
+
+      Success result: { customer:, order: }
+    end
+  end
+end
+```
+
+Precisa de trabalho atômico em múltiplos steps? Envolva um flow inteiro em uma transação com um único kwarg, ou escope uma `ActiveRecord::Base.transaction` num único `call!`:
+
+```ruby
+# Um flow transacional — todos os steps dentro da mesma transação:
+SignUp = Micro::Cases.flow(transaction: true, steps: [
+  NormalizeParams,
+  CreateUser,
+  CreateProfile
+])
+
+# Uma transação inline { ... } dentro do call!:
+class CreateUserWithProfile < Micro::Case
+  def call!
+    transaction {
+      call(CreateUser).then(CreateProfile)
+    }
+  end
+end
+```
+
+Veja [Compondo casos de uso](#compondo-casos-de-uso) e [Indo além com `u-attributes`](#indo-além-com-u-attributes) para a história completa.
 
 ## Recursos <!-- omit in toc -->
 

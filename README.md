@@ -21,9 +21,11 @@
 >
 > See the full statement on [issue #131](https://github.com/serradura/u-case/issues/131#issuecomment-4531231882).
 
-## A 30-second taste <!-- omit in toc -->
+## Quick start <!-- omit in toc -->
 
 ```ruby
+require 'u-case'
+
 class Slugify < Micro::Case
   attribute :title, accept: String
 
@@ -42,12 +44,80 @@ Slugify
   .on_success { puts it[:slug] }
   .on_failure(:invalid_attributes) { warn it[:errors] }
 # warn: { "title" => "expected to be a kind of String" }
+
+# ---------------------------------------------
+# Branching on the result? Pattern-match on it:
+# ---------------------------------------------
+case Slugify.call(title: 'Hello, World!')
+in { success: _, result: { slug: } }
+  redirect_to "/posts/#{slug}"
+in { failure: :invalid_attributes, result: { errors: } }
+  render status: 422, json: { errors: }
+in { failure: :blank_title }
+  render status: 422, json: { error: 'title required' }
+end
 ```
 
 That's the whole shape: `attributes`, a `call!` method, `Success(...)` or `Failure(...)`. Everything else in this README is a way to make that shape easier to **compose**, **validate**, **observe**, and **transact**.
 
-> [!TIP]
-> Attributes can nest. `attribute :customer do … end` declares structured input inline, and `accept:` can target another attribute class for auto-coercion. See [Going further with `u-attributes`](#going-further-with-u-attributes) at the end of this README.
+Need a structured input? Declare attributes with a block — child attributes inherit the host's feature mix (see [Going further with `u-attributes`](#going-further-with-u-attributes)):
+
+```ruby
+class CreateOrder < Micro::Case
+  UUID = -> { it.is?(String) && it.match?(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/) }
+
+  attribute :uuid, accept: UUID
+
+  attribute :customer do
+    attribute :name,  accept: String
+    attribute :email, accept: String
+  end
+
+  def call!
+    transaction do
+      customer = Customer.create_or_find_by!(email: customer.email) { it.name = customer.name }
+
+      order = Order.create!(uuid:, customer_id: customer.id)
+
+      Success result: { customer:, order: }
+    end
+  end
+end
+```
+
+Need atomic, multi-step work? Wrap a whole flow in a transaction with one kwarg, or scope an `ActiveRecord::Base.transaction` to a single `call!`:
+
+```ruby
+# A transactional flow — every step inside the same transaction:
+SignUp = Micro::Cases.flow(transaction: true, steps: [
+  NormalizeParams,
+  CreateUser,
+  CreateProfile
+])
+
+# An inline transaction { ... } inside call!:
+class CreateUserWithProfile < Micro::Case
+  attribute :name, accept: String
+  attribute :email, accept: String
+  attribute :password, accept: String
+  attribute :password_confirmation, accept: String
+
+  def call!
+    transaction {
+      create_user
+      .then(CreateProfile)
+    }
+  end
+
+  def create_user
+    user = User.create(name:, email:, password:, password_confirmation:)
+
+    user.persisted? ? Success(result: { user: }) : Failure(result: { user: })
+  end
+end
+```
+
+See [Composing use cases](#composing-use-cases) and [Going further with `u-attributes`](#going-further-with-u-attributes) for the full story.
 
 ## What you get <!-- omit in toc -->
 
