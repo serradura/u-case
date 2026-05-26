@@ -54,7 +54,8 @@ That's the whole shape: `attributes`, a `call!` method, `Success(...)` or `Failu
 - **Easy** — input → process → output. A use case is a small class with `attributes` and `call!`.
 - **Immutable & callback-free** — no `before` / `after` / `around` hooks. Data flows forward; nothing mutates in place.
 - **Composable three ways** — chain use cases via [`Micro::Cases.flow`](#flows), the [class-level `flow` macro](#flows), or inline [`Result#then`](#internal-steps--resultthen-chains) chains.
-- **Typed results** — every call returns a [`Micro::Case::Result`](#working-with-results) with `success?` / `failure?` / `type` / `data`, hooks, and [pattern matching](#pattern-matching).
+- **Typed results** — every call returns a [`Micro::Case::Result`](#working-with-results) with `success?` / `failure?` / `type` / `data`, plus result hooks.
+- **Pattern matching** — Ruby `case`/`in` works on results out of the box via `deconstruct` and `deconstruct_keys`. Match on `success:` / `failure:` / `type:` / `data:` / `use_case:` / `transitions:` ([Pattern matching](#pattern-matching)).
 - **Result contracts** — declare which result types and keys your use case can return; misuse fails loudly ([`results do |on| ... end`](#result-contracts)).
 - **Inspectable execution** — every flow records each step's input, output, and accessible attributes in [`result.transitions`](#inspecting-execution-with-resulttransitions). Debug, log, or audit how any result was produced.
 - ⚡ **Transactions on demand** — wrap a use case or a whole flow in an `ActiveRecord` transaction with one kwarg ([`transaction: true`](#transactions)). Multi-database support, global default callback, and an inline `transaction { ... }` block helper.

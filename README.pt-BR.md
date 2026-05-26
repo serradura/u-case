@@ -1,6 +1,6 @@
 <p align="center">
   <h1 align="center" id="-case"><img src="./assets/ucase_logo_v1.png" alt="μ-case" height="150"></h1>
-  <p align="center"><i>Represente casos de uso de forma simples e poderosa ao escrever código modular, expressivo e sequencialmente lógico.</i></p>
+  <p align="center"><i>Represente casos de uso de forma simples e poderosa: escreva código modular, expressivo e sequencialmente lógico.</i></p>
   <p align="center">
     <a href="https://badge.fury.io/rb/u-case"><img src="https://badge.fury.io/rb/u-case.svg" alt="Gem Version" height="18"></a>
     <a href="https://github.com/serradura/u-case/actions/workflows/ci.yml"><img alt="Build Status" src="https://github.com/serradura/u-case/actions/workflows/ci.yml/badge.svg"></a>
@@ -11,25 +11,66 @@
     <img src="https://img.shields.io/badge/Ruby%20%3E%3D%202.7%2C%20%3C%3D%20Head-ruby.svg?colorA=444&colorB=333" alt="Ruby">
     <img src="https://img.shields.io/badge/Rails%20%3E%3D%206.0%2C%20%3C%3D%20Edge-rails.svg?colorA=444&colorB=333" alt="Rails">
   </p>
+  <p align="center">🇺🇸 <a href="https://github.com/serradura/u-case/blob/main/README.md">Read this README in English</a></p>
 </p>
 
-Principais objetivos deste projeto:
+> [!IMPORTANT]
+> **Sem breaking changes na API — nunca.** Daqui em diante, a API pública e os contratos de runtime do `u-case` não vão quebrar. O papel da gem é continuar sendo uma base estável e retrocompatível para os projetos que já dependem dela. Qualquer "próximo major" que repense as abstrações pertence ao [`solid-process`](https://github.com/solid-process/solid-process) (um redesign que aplica o que aprendemos desde a criação do `u-case`), e **não** a um futuro `u-case` 6.x.
+>
+> Bumps de versão major sinalizam apenas que uma versão do Ruby ou do Rails deixou de ser suportada.
+>
+> Veja a declaração completa na [issue #131](https://github.com/serradura/u-case/issues/131#issuecomment-4531231882).
 
-1. Fácil de usar e aprender ( entrada **>>** processamento **>>** saída ).
-2. Promover imutabilidade (transformar dados ao invés de modificar) e integridade de dados.
-3. Nada de callbacks (ex: before, after, around) para evitar indireções no código que possam comprometer o estado e entendimento dos fluxos da aplicação.
-4. Resolver regras de negócio complexas, ao permitir uma composição de casos de uso (criação de fluxos).
-5. Ser rápido e otimizado (verifique a [seção de benchmarks](#benchmarks)).
+## Em 30 segundos <!-- omit in toc -->
 
-> **Nota:** Verifique o repo https://github.com/serradura/from-fat-controllers-to-use-cases para ver uma aplicação Ruby on Rails que utiliza esta gem para resolver as regras de negócio.
+```ruby
+class Slugify < Micro::Case
+  attribute :title, accept: String
+
+  def call!
+    slug = title.downcase.strip.gsub(/[^a-z0-9]+/, '-').gsub(/^-|-$/, '')
+
+    slug.empty? ? Failure(:blank_title) : Success(result: { slug: })
+  end
+end
+
+Slugify.call(title: 'Hello, World!')
+# => #<Micro::Case::Result success? type=:ok data={ slug: "hello-world" }>
+
+Slugify
+  .call(title: 42)
+  .on_success { |r| puts r[:slug] }
+  .on_failure(:invalid_attributes) { |r| warn r[:errors] }
+# warn: { "title" => "expected to be a kind of String" }
+```
+
+Esse é o formato inteiro: `attributes`, um método `call!`, e `Success(...)` ou `Failure(...)`. Todo o resto deste README é uma forma de tornar esse formato mais fácil de **compor**, **validar**, **observar** e **transacionar**.
+
+> [!TIP]
+> Atributos podem ser aninhados. `attribute :customer do … end` declara entrada estruturada inline, e `accept:` pode apontar para outra classe de atributos para coerção automática. Veja [Indo além com `u-attributes`](#indo-além-com-u-attributes) no fim deste README.
+
+## Recursos <!-- omit in toc -->
+
+- **Fácil** — entrada → processamento → saída. Um caso de uso é uma classe pequena com `attributes` e `call!`.
+- **Imutável e sem callbacks** — nada de hooks `before` / `after` / `around`. Os dados fluem adiante; nada é mutado in place.
+- **Componível de três formas** — encadeie casos de uso via [`Micro::Cases.flow`](#flows), via [macro `flow` no nível da classe](#flows), ou via cadeias inline de [`Result#then`](#steps-internos--cadeias-com-resultthen).
+- **Resultados tipados** — toda chamada retorna um [`Micro::Case::Result`](#trabalhando-com-resultados) com `success?` / `failure?` / `type` / `data`, além dos hooks de resultado.
+- **Pattern matching** — o `case`/`in` do Ruby funciona em resultados direto, via `deconstruct` e `deconstruct_keys`. Faça match em `success:` / `failure:` / `type:` / `data:` / `use_case:` / `transitions:` ([Pattern matching](#pattern-matching)).
+- **Contratos de resultado** — declare quais tipos de resultado e quais chaves seu caso de uso pode retornar; usos incorretos falham loudly ([`results do |on| ... end`](#contratos-de-resultado)).
+- **Execução inspecionável** — todo flow registra a entrada, a saída e os atributos acessíveis de cada step em [`result.transitions`](#inspecionando-a-execução-com-resulttransitions). Debug, log ou audite como qualquer resultado foi produzido.
+- ⚡ **Transações sob demanda** — envolva um caso de uso ou um flow inteiro em uma transação `ActiveRecord` com um único kwarg ([`transaction: true`](#transações)). Suporte a multi-database, callback global de classe padrão e um helper inline `transaction { ... }` em bloco.
+- **Tratamento de exceções opt-in** — [`Micro::Case::Safe`](#modo-seguro--capturando-exceções) converte exceções não tratadas em falhas do tipo `:exception`.
+- **Rápido** — segundo mais rápido depois do `Dry::Monads` nos [benchmarks](#performance), sem estado global.
+
+> Veja uma aplicação Rails real que usa essa gem: [from-fat-controllers-to-use-cases](https://github.com/serradura/from-fat-controllers-to-use-cases).
 
 ## Documentação <!-- omit in toc -->
 
-| Versão     | Documentação                                            |
-| ---------- | ------------------------------------------------------- |
-| unreleased | https://github.com/serradura/u-case/blob/main/README.md |
-| 5.6.0      | https://github.com/serradura/u-case/blob/v5.x/README.md |
-| 4.5.2      | https://github.com/serradura/u-case/blob/v4.x/README.md |
+| Versão     | Documentação                                                  |
+| ---------- | ------------------------------------------------------------- |
+| unreleased | https://github.com/serradura/u-case/blob/main/README.pt-BR.md |
+| 5.7.1      | https://github.com/serradura/u-case/blob/v5.x/README.pt-BR.md |
+| 4.5.2      | https://github.com/serradura/u-case/blob/v4.x/README.pt-BR.md |
 
 ## Índice <!-- omit in toc -->
 
@@ -37,66 +78,58 @@ Principais objetivos deste projeto:
 - [Dependências](#dependências)
 - [Instalação](#instalação)
 - [Uso](#uso)
-  - [`Micro::Case` - Como definir um caso de uso?](#microcase---como-definir-um-caso-de-uso)
-  - [`Micro::Case::Result` - O que é o resultado de um caso de uso?](#microcaseresult---o-que-é-o-resultado-de-um-caso-de-uso)
-    - [O que são os tipos de resultados?](#o-que-são-os-tipos-de-resultados)
-    - [Como definir tipos customizados de resultados?](#como-definir-tipos-customizados-de-resultados)
-    - [É possível definir um tipo sem definir os dados do resultado?](#é-possível-definir-um-tipo-sem-definir-os-dados-do-resultado)
-    - [Como declarar um contrato de resultados?](#como-declarar-um-contrato-de-resultados)
-    - [Como utilizar os hooks dos resultados?](#como-utilizar-os-hooks-dos-resultados)
-    - [Por que o hook sem um tipo definido expõe o próprio resultado?](#por-que-o-hook-sem-um-tipo-definido-expõe-o-próprio-resultado)
-      - [Usando decomposição para acessar os dados e tipo do resultado](#usando-decomposição-para-acessar-os-dados-e-tipo-do-resultado)
-      - [Usando pattern matching para desestruturar um resultado](#usando-pattern-matching-para-desestruturar-um-resultado)
-    - [O que acontece se um hook de resultado for declarado múltiplas vezes?](#o-que-acontece-se-um-hook-de-resultado-for-declarado-múltiplas-vezes)
-    - [Como usar o método `Micro::Case::Result#then`?](#como-usar-o-método-microcaseresultthen)
-      - [O que acontece quando um `Micro::Case::Result#then` recebe um bloco?](#o-que-acontece-quando-um-microcaseresultthen-recebe-um-bloco)
-      - [Como fazer injeção de dependência usando este recurso?](#como-fazer-injeção-de-dependência-usando-este-recurso)
-    - [Steps internos — construindo um flow inline dentro do `call!`](#steps-internos--construindo-um-flow-inline-dentro-do-call)
-      - [O que `Result#then` (e `|`) aceitam](#o-que-resultthen-e--aceitam)
+  - [Definindo um caso de uso](#definindo-um-caso-de-uso)
+    - [O básico](#o-básico)
+    - [Modo estrito — atributos obrigatórios](#modo-estrito--atributos-obrigatórios)
+    - [Modo seguro — capturando exceções](#modo-seguro--capturando-exceções)
+      - [Flows seguros](#flows-seguros)
+      - [`Result#on_exception`](#resulton_exception)
+      - [Desabilitando o Safe](#desabilitando-o-safe)
+  - [Trabalhando com resultados](#trabalhando-com-resultados)
+    - [A API do Result](#a-api-do-result)
+    - [Tipos de resultado padrão e customizados](#tipos-de-resultado-padrão-e-customizados)
+    - [Contratos de resultado](#contratos-de-resultado)
+    - [Hooks de resultado](#hooks-de-resultado)
+    - [Pattern matching](#pattern-matching)
+    - [Decomposição](#decomposição)
+    - [Continuações dinâmicas com `Result#then`](#continuações-dinâmicas-com-resultthen)
+  - [Validando atributos](#validando-atributos)
+    - [`accept:` e `reject:` (padrão)](#accept-e-reject-padrão)
+    - [Integração com ActiveModel (opt-in)](#integração-com-activemodel-opt-in)
+      - [Desabilitando a auto-validação em um caso específico](#desabilitando-a-auto-validação-em-um-caso-específico)
+      - [`Kind::Validator`](#kindvalidator)
+  - [Compondo casos de uso](#compondo-casos-de-uso)
+    - [Flows](#flows)
+      - [Compondo flows entre si](#compondo-flows-entre-si)
+      - [Acumulação de dados através de um flow](#acumulação-de-dados-através-de-um-flow)
+      - [Inspecionando a execução com `result.transitions`](#inspecionando-a-execução-com-resulttransitions)
+      - [Compondo um flow que inclui a si mesmo](#compondo-um-flow-que-inclui-a-si-mesmo)
+    - [Steps internos — cadeias com `Result#then`](#steps-internos--cadeias-com-resultthen)
+      - [Formas aceitas de elo](#formas-aceitas-de-elo)
       - [Um exemplo mínimo](#um-exemplo-mínimo)
-      - [O alias `|` (pipe)](#o-alias--pipe)
-      - [Formas lambda / `Method`](#formas-lambda--method)
-      - [Uma falha interrompe a cadeia](#uma-falha-interrompe-a-cadeia)
+      - [Alias `|` (pipe)](#alias--pipe)
+      - [Formas Lambda / `Method`](#formas-lambda--method)
+      - [`Failure` interrompe a cadeia](#failure-interrompe-a-cadeia)
       - [Usando um caso com steps internos dentro de um flow externo](#usando-um-caso-com-steps-internos-dentro-de-um-flow-externo)
-      - [Steps internos **sem** transações](#steps-internos-sem-transações)
-  - [`Micro::Cases::Flow` - Como compor casos de uso?](#microcasesflow---como-compor-casos-de-uso)
-    - [É possível compor um fluxo com outros fluxos?](#é-possível-compor-um-fluxo-com-outros-fluxos)
-    - [É possível que um fluxo acumule sua entrada e mescle cada resultado de sucesso para usar como argumento dos próximos casos de uso?](#é-possível-que-um-fluxo-acumule-sua-entrada-e-mescle-cada-resultado-de-sucesso-para-usar-como-argumento-dos-próximos-casos-de-uso)
-    - [Como entender o que aconteceu durante a execução de um flow?](#como-entender-o-que-aconteceu-durante-a-execução-de-um-flow)
-      - [`Micro::Case::Result#transitions` schema](#microcaseresulttransitions-schema)
-      - [É possível desabilitar o `Micro::Case::Result#transitions`?](#é-possível-desabilitar-o-microcaseresulttransitions)
-    - [É possível declarar um fluxo que inclui o próprio caso de uso?](#é-possível-declarar-um-fluxo-que-inclui-o-próprio-caso-de-uso)
-    - [Como executar um caso de uso ou flow dentro de uma transação de banco de dados?](#como-executar-um-caso-de-uso-ou-flow-dentro-de-uma-transação-de-banco-de-dados)
-      - [`Micro::Case#transaction` — transações inline dentro do `call!`](#microcasetransaction--transações-inline-dentro-do-call)
+      - [Persistência sem transação](#persistência-sem-transação)
+    - [Transações](#transações)
+      - [`transaction { ... }` inline dentro do `call!`](#transaction----inline-dentro-do-call)
       - [`transaction with: …` — declarando o padrão para um caso](#transaction-with---declarando-o-padrão-para-um-caso)
-      - [`Micro::Cases.flow(transaction: …, steps: [...])` — transações no nível do flow](#microcasesflowtransaction--steps---transações-no-nível-do-flow)
-      - [`config.default_transaction_class { … }` — padrão global](#configdefault_transaction_class-----padrão-global)
+      - [Transações no nível do flow](#transações-no-nível-do-flow)
+      - [Padrão global — `config.default_transaction_class { … }`](#padrão-global--configdefault_transaction_class---)
       - [Flows com steps internos sob transações](#flows-com-steps-internos-sob-transações)
       - [Observações de comportamento](#observações-de-comportamento)
-  - [`Micro::Case::Strict` - O que é um caso de uso estrito?](#microcasestrict---o-que-é-um-caso-de-uso-estrito)
-  - [`Micro::Case::Safe` - Existe algum recurso para lidar automaticamente com exceções dentro de um caso de uso ou fluxo?](#microcasesafe---existe-algum-recurso-para-lidar-automaticamente-com-exceções-dentro-de-um-caso-de-uso-ou-fluxo)
-    - [`Micro::Cases::Safe::Flow`](#microcasessafeflow)
-    - [`Micro::Case::Result#on_exception`](#microcaseresulton_exception)
-    - [Desabilitando o mecanismo "safe"](#desabilitando-o-mecanismo-safe)
-  - [Validando atributos com `accept:` / `reject:`](#validando-atributos-com-accept--reject)
-  - [`u-case/with_activemodel_validation` - Como validar os atributos do caso de uso?](#u-casewith_activemodel_validation---como-validar-os-atributos-do-caso-de-uso)
-    - [Se eu habilitei a validação automática, é possível desabilitá-la apenas em casos de uso específicos?](#se-eu-habilitei-a-validação-automática-é-possível-desabilitá-la-apenas-em-casos-de-uso-específicos)
-    - [`Kind::Validator`](#kindvalidator)
-- [`Micro::Case.config`](#microcaseconfig)
-- [Benchmarks](#benchmarks)
-  - [`Micro::Case`](#microcase)
-    - [Success results](#success-results)
-    - [Failure results](#failure-results)
-  - [`Micro::Cases::Flow`](#microcasesflow)
-  - [Execuntando os benchmarks](#execuntando-os-benchmarks)
-    - [Performance (Benchmarks IPS)](#performance-benchmarks-ips)
-    - [Memory profiling](#memory-profiling)
+- [Configuração](#configuração)
+- [Performance](#performance)
+  - [Executando os benchmarks](#executando-os-benchmarks)
+  - [Desabilitando os checks em runtime](#desabilitando-os-checks-em-runtime)
   - [Comparações](#comparações)
 - [Exemplos](#exemplos)
-  - [1️⃣ Criação de usuários](#1️⃣-criação-de-usuários)
-  - [2️⃣ Rails App (API)](#2️⃣-rails-app-api)
-  - [3️⃣ CLI calculator](#3️⃣-cli-calculator)
-  - [4️⃣ Interceptando exceções dentro dos casos de uso](#4️⃣-interceptando-exceções-dentro-dos-casos-de-uso)
+  - [Um flow completo de cadastro](#um-flow-completo-de-cadastro)
+  - [Mais exemplos](#mais-exemplos)
+- [Indo além com `u-attributes`](#indo-além-com-u-attributes)
+  - [Atributos aninhados (forma com bloco)](#atributos-aninhados-forma-com-bloco)
+  - [Aceitando outra classe de atributos](#aceitando-outra-classe-de-atributos)
 - [Desenvolvimento](#desenvolvimento)
 - [Contribuindo](#contribuindo)
 - [Licença](#licença)
@@ -107,7 +140,7 @@ Principais objetivos deste projeto:
 | u-case     | branch | ruby     | activemodel    | u-attributes  |
 | ---------- | ------ | -------- | -------------- | ------------- |
 | unreleased | main   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0 |
-| 5.6.0      | v5.x   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0 |
+| 5.7.1      | v5.x   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0 |
 | 4.5.2      | v4.x   | >= 2.2.0 | >= 3.2, <= 8.1 | >= 2.7, < 3.0 |
 
 Esta biblioteca é testada (matriz de CI) contra:
@@ -123,20 +156,12 @@ Esta biblioteca é testada (matriz de CI) contra:
 | 4.x          |     |     |     |     |     |     | ✅  | ✅   |
 | Head         |     |     |     |     |     |     | ✅  | ✅   |
 
-> Nota: O activemodel é uma dependência opcional, esse módulo que [pode ser habilitado](#u-casewith_activemodel_validation---como-validar-os-atributos-do-caso-de-uso) para validar os atributos dos casos de uso.
+> ActiveModel é uma dependência opcional — habilite [`u-case/with_activemodel_validation`](#integração-com-activemodel-opt-in) apenas se quiser.
 
 ## Dependências
 
-1. Gem [`kind`](https://github.com/serradura/kind).
-
-   Sistema de tipos simples (em runtime) para Ruby.
-
-   É usado para validar os inputs de alguns métodos do u-case, além de expor um validador de tipos através do [`activemodel validation`](https://github.com/serradura/kind#kindvalidator-activemodelvalidations) ([veja como habilitar](<(#u-casewith_activemodel_validation---how-to-validate-use-case-attributes)>)).
-
-2. [`u-attributes`](https://github.com/serradura/u-attributes) gem.
-
-   Essa gem permite definir atributos de leitura (read-only), ou seja, os seus objetos só terão getters para acessar os dados dos seus atributos.
-   Ela é usada para definir os atributos dos casos de uso.
+1. **[`kind`](https://github.com/serradura/kind)** — um sistema de tipos em runtime para Ruby, usado para validar alguns inputs internos do `u-case`. Também expõe o [`Kind::Validator`](https://github.com/serradura/kind#kindvalidator-activemodelvalidations) que vem junto do [`u-case/with_activemodel_validation`](#integração-com-activemodel-opt-in). Os exemplos abaixo usam `Kind.of?(SomeClass, *values)` como um atalho para checagem de tipos em runtime — equivalente a `values.all? { |v| v.is_a?(SomeClass) }`.
+2. **[`u-attributes`](https://github.com/serradura/u-attributes)** — declarações de atributos read-only (somente getters). Usada para os `attributes` do caso de uso.
 
 ## Instalação
 
@@ -146,392 +171,368 @@ Adicione essa linha ao Gemfile da sua aplicação:
 gem 'u-case', '~> 5.0'
 ```
 
-E então execute:
-
-    $ bundle
-
-Ou instale manualmente:
-
-    $ gem install u-case
+Então execute `bundle`, ou instale manualmente com `gem install u-case`.
 
 ## Uso
 
-### `Micro::Case` - Como definir um caso de uso?
+### Definindo um caso de uso
+
+#### O básico
 
 ```ruby
-class Multiply < Micro::Case
-  # 1. Defina o input como atributos
-  attributes :a, :b
+class ValidateEmail < Micro::Case
+  # 1. Declare a entrada como atributos
+  attribute :address
 
-  # 2. Defina o método `call!` com a regra de negócio
+  # 2. Implemente call! com a regra de negócio
   def call!
-
-    # 3. Envolva o resultado do caso de uso com os métodos `Success(result: *)` ou `Failure(result: *)`
-    if a.is_a?(Numeric) && b.is_a?(Numeric)
-      Success result: { number: a * b }
+    # 3. Envolva o resultado com Success(...) ou Failure(...)
+    if address.is_a?(String) && address.match?(/\A[^@\s]+@[^@\s]+\.[^@\s]+\z/)
+      Success result: { address: address.downcase }
     else
-      Failure result: { message: '`a` and `b` attributes must be numeric' }
+      Failure result: { message: '`address` must be a valid email' }
     end
   end
 end
 
-#===========================#
-# Executando um caso de uso #
-#===========================#
+result = ValidateEmail.call(address: 'Ada@Example.com')
+result.success? # => true
+result.data     # => { address: "ada@example.com" }
 
-# Resultado de sucesso
-
-result = Multiply.call(a: 2, b: 2)
-
-result.success? # true
-result.data     # { number: 4 }
-
-# Resultado de falha
-
-bad_result = Multiply.call(a: 2, b: '2')
-
-bad_result.failure? # true
-bad_result.data     # { message: "`a` and `b` attributes must be numeric" }
-
-# Nota:
-# ----
-# O resultado de um Micro::Case.call é uma instância de Micro::Case::Result
+bad_result = ValidateEmail.call(address: 'not-an-email')
+bad_result.failure? # => true
+bad_result.data     # => { message: "`address` must be a valid email" }
 ```
 
-[⬆️ Voltar para o índice](#índice-)
+O objeto retornado por `.call` é um [`Micro::Case::Result`](#trabalhando-com-resultados) — assunto da próxima seção.
 
-### `Micro::Case::Result` - O que é o resultado de um caso de uso?
+#### Modo estrito — atributos obrigatórios
 
-Um `Micro::Case::Result` armazena os dados de output de um caso de uso. Esses são seus métodos:
-
-- `#success?` retorna `true` se for um resultado de sucesso.
-- `#failure?` retorna `true` se for um resultado de falha.
-- `#use_case` retorna o caso de uso responsável pelo resultado. Essa funcionalidade é útil para lidar com falhas em flows (esse tópico será abordado mais a frente).
-- `#type` retorna um Symbol que dá significado ao resultado, isso é útil para declarar diferentes tipos de falha e sucesso.
-- `#data` os dados do resultado (um `Hash`).
-- `#[]` e `#values_at` são atalhos para acessar as propriedades do `#data`.
-- `#fetch` e `#fetch_values` são outras maneiras de acessar os valores contidos em `#data`, porém se alguma chave não existir, é levantado um `KeyError`.
-- `#keys` retorna uma array com as chaves presentes no resultado.
-- `#key?` retorna `true` se a chave estiver presente no `#data`.
-- `#value?` retorna `true` se o valor estiver presente no `#data`.
-- `#slice` retorna um novo `Hash` que inclui apenas as chaves fornecidas. Se as chaves fornecidas não existirem, um `Hash` vazio será retornado.
-- `#on_success` or `#on_failure` são métodos de hooks que te auxiliam a definir o fluxo da aplicação.
-- `#then` este método permite aplicar novos casos de uso ao resultado atual se ele for sucesso. A ideia dessa feature é a criação de fluxos dinâmicos.
-- `#transitions` retorna um array com todas as transformações que um resultado [teve durante um flow](#como-entender-o-que-aconteceu-durante-a-execução-de-um-flow).
-
-> **Nota:** por conta de retrocompatibilidade, você pode usar o método `#value` como um alias para o método `#data`.
-
-[⬆️ Voltar para o índice](#índice-)
-
-#### O que são os tipos de resultados?
-
-Todo resultado tem um tipo (`#type`), e estes são os valores padrões:
-
-- `:ok` em casos de sucesso;
-- `:error` ou `:exception` em casos de falhas.
+`Micro::Case::Strict` exige que todos os atributos declarados sejam passados em `.call`. Keywords faltantes lançam `ArgumentError`:
 
 ```ruby
-class Divide < Micro::Case
-  attributes :a, :b
+class FormatGreeting < Micro::Case::Strict
+  attributes :name, :time_of_day
 
   def call!
-    if invalid_attributes.empty?
-      Success result: { number: a / b }
-    else
-      Failure result: { invalid_attributes: invalid_attributes }
-    end
+    Success result: { message: "Good #{time_of_day}, #{name}!" }
+  end
+end
+
+FormatGreeting.call(name: 'Ada')
+# => ArgumentError (missing keyword: :time_of_day)
+```
+
+Use quando você quer que input ausente falhe loudly em vez de deixar `time_of_day` chegar como `nil` e produzir uma mensagem silenciosamente errada.
+
+#### Modo seguro — capturando exceções
+
+`Micro::Case::Safe` é outra classe base. Ela intercepta automaticamente qualquer exceção lançada dentro do `call!` e a converte em um `Failure` com `type: :exception`. A exceção em si fica disponível em `result[:exception]`:
+
+```ruby
+require 'json'
+require 'logger'
+
+AppLogger = Logger.new(STDOUT)
+
+class ParseJsonPayload < Micro::Case::Safe
+  attribute :payload
+
+  def call!
+    return Failure(:blank_payload) if payload.to_s.empty?
+
+    Success result: { data: JSON.parse(payload) }
+  end
+end
+
+result = ParseJsonPayload.call(payload: 'not-valid-json')
+result.type                                 # => :exception
+result.data                                 # => { exception: #<JSON::ParserError ...> }
+result[:exception].is_a?(JSON::ParserError) # => true
+
+result.on_failure(:exception) do |r|
+  AppLogger.error(r[:exception].message)
+end
+```
+
+Para decidir o que fazer em função da classe da exceção, use `case`/`when` (ou [pattern matching](#pattern-matching)) dentro do hook:
+
+```ruby
+result.on_failure(:exception) do |data, use_case|
+  case (e = data[:exception])
+  when JSON::ParserError then AppLogger.error("malformed JSON: #{e.message}")
+  else                        AppLogger.debug("#{use_case.class.name} raised #{e.class}")
+  end
+end
+```
+
+Você ainda pode capturar exceções explicitamente com `rescue` dentro de um caso de uso Safe — veja [estes exemplos de teste](https://github.com/serradura/u-case/blob/main/test/micro/case/safe_test.rb).
+
+##### Flows seguros
+
+Um flow seguro intercepta exceções em qualquer um de seus steps:
+
+```ruby
+module Users
+  Create = Micro::Cases.safe_flow([
+    ProcessParams,
+    ValidateParams,
+    Persist,
+    SendToCRM
+  ])
+
+  # Ou como uma classe:
+  class Create < Micro::Case::Safe
+    flow ProcessParams,
+         ValidateParams,
+         Persist,
+         SendToCRM
+  end
+end
+```
+
+##### `Result#on_exception`
+
+Exceções ficam mais fáceis de acompanhar quando são tratadas como qualquer outra falha. `Result#on_exception` é um hook que dispara quando o `type` é `:exception` — funciona igual a `on_failure(:exception)`, mas torna a intenção explícita:
+
+```ruby
+class ParseJsonPayload < Micro::Case::Safe
+  attribute :payload
+
+  def call!
+    Success result: { data: JSON.parse(payload) }
+  end
+end
+
+ParseJsonPayload
+  .call(payload: 'not-valid-json')
+  .on_success { |r| puts r[:data].inspect }
+  .on_exception(Encoding::CompatibilityError) { puts 'Encoding mismatch.' }
+  .on_exception(JSON::ParserError) { |_e| puts 'Malformed JSON.' }
+  .on_exception { |_e, _use_case|  puts 'Something went wrong.' }
+# Malformed JSON.
+# Something went wrong.
+```
+
+> Tanto o `on_exception(JSON::ParserError)` tipado quanto o `on_exception` genérico disparam — como todos os hooks do u-case, todo match executa na ordem em que foi declarado (veja [Hooks de resultado](#hooks-de-resultado)).
+
+##### Desabilitando o Safe
+
+O mecanismo Safe é opinativo: qualquer exceção não tratada vira uma falha `:exception`. Essa conveniência pode fragmentar uma codebase — algumas exceções tratadas com `rescue` dentro de `call!`, outras com `on_exception` depois. Se você prefere uma única convenção explícita (apenas `rescue` puro), desabilite o Safe inteiro:
+
+```ruby
+Micro::Case.config do |config|
+  config.disable_safe_features = true
+end
+```
+
+Quando setado para `true`, os itens abaixo lançam `Micro::Case::Error::SafeFeaturesDisabled`:
+
+- herdar de `Micro::Case::Safe`
+- chamar `Micro::Cases.safe_flow(...)`
+- chamar `Micro::Case::Result#on_exception`
+
+[⬆️ Voltar ao topo](#índice-)
+
+### Trabalhando com resultados
+
+Um `Micro::Case::Result` carrega a saída do caso de uso. Os métodos que você mais vai usar:
+
+#### A API do Result
+
+- `#success?` / `#failure?` — discriminantes booleanos.
+- `#type` — `Symbol` que descreve o resultado (`:ok`, `:error`, `:exception`, ou qualquer tipo customizado).
+- `#data` — o hash de dados do resultado. `#value` é um alias retrocompatível.
+- `#[]`, `#values_at`, `#fetch`, `#fetch_values`, `#keys`, `#key?`, `#value?`, `#slice` — acesso similar a `Hash` em cima de `#data`.
+- `#use_case` — a instância do caso de uso que produziu o resultado (útil para diagnóstico de falhas dentro de um flow).
+- `#on_success` / `#on_failure` / `#on_exception` — hooks para ramificar em função do resultado.
+- `#then` — aplica outro caso de uso (ou lambda / method / símbolo) a um resultado de sucesso; é a base dos [steps internos](#steps-internos--cadeias-com-resultthen) e das [continuações dinâmicas](#continuações-dinâmicas-com-resultthen).
+- `#transitions` — array com cada step que produziu esse resultado; veja [inspecionando a execução](#inspecionando-a-execução-com-resulttransitions).
+
+Objetos `Result` também suportam [pattern matching](#pattern-matching) e [decomposição em array](#decomposição).
+
+#### Tipos de resultado padrão e customizados
+
+Todo resultado carrega um tipo. Os padrões:
+
+- `:ok` — para `Success(...)`.
+- `:error` — para `Failure(...)` cujo payload é um `Hash`.
+- `:exception` — para `Failure(result: some_exception)` (uma instância de `Exception`).
+
+```ruby
+class FetchUser < Micro::Case
+  attribute :id
+
+  def call!
+    return Failure(result: { errors: { id: 'must be an Integer' } }) unless id.is_a?(Integer)
+
+    Success result: { user: User.find(id) }
   rescue => exception
     Failure result: exception
   end
-
-  private def invalid_attributes
-    attributes.select { |_key, value| !value.is_a?(Numeric) }
-  end
 end
 
-# Resultado de sucesso
-
-result = Divide.call(a: 2, b: 2)
-
-result.type     # :ok
-result.data     # { number: 1 }
-result.success? # true
-result.use_case # #<Divide:0x0000 @__attributes={"a"=>2, "b"=>2}, @a=2, @b=2, @__result=...>
-
-# Resultado de falha (type == :error)
-
-bad_result = Divide.call(a: 2, b: '2')
-
-bad_result.type     # :error
-bad_result.data     # { invalid_attributes: { "b"=>"2" } }
-bad_result.failure? # true
-bad_result.use_case # #<Divide:0x0000 @__attributes={"a"=>2, "b"=>"2"}, @a=2, @b="2", @__result=...>
-
-# Resultado de falha (type == :exception)
-
-err_result = Divide.call(a: 2, b: 0)
-
-err_result.type     # :exception
-err_result.data     # { exception: <ZeroDivisionError: divided by 0> }
-err_result.failure? # true
-err_result.use_case # #<Divide:0x0000 @__attributes={"a"=>2, "b"=>0}, @a=2, @b=0, @__result=#<Micro::Case::Result:0x0000 @use_case=#<Divide:0x0000 ...>, @type=:exception, @value=#<ZeroDivisionError: divided by 0>, @success=false>
-
-# Nota:
-# ----
-# Toda instância de Exception será envolvida pelo método
-# Failure(result: *) que receberá o tipo `:exception` ao invés de `:error`.
+FetchUser.call(id: 1).type        # => :ok
+FetchUser.call(id: 'x').type      # => :error
+FetchUser.call(id: 999_999).type  # => :exception   (ActiveRecord::RecordNotFound)
 ```
 
-[⬆️ Voltar para o índice](#índice-)
-
-#### Como definir tipos customizados de resultados?
-
-Resposta: Use um `Symbol` com argumento dos métodos `Success()`, `Failure()` e declare o `result:` keyword para definir os dados do resultado.
+Passe um símbolo como primeiro argumento de `Success(...)` / `Failure(...)` para dar ao resultado um tipo customizado:
 
 ```ruby
-class Multiply < Micro::Case
-  attributes :a, :b
+class MergeTags < Micro::Case
+  attributes :primary, :secondary
 
   def call!
-    if a.is_a?(Numeric) && b.is_a?(Numeric)
-      Success result: { number: a * b }
+    if primary.is_a?(Array) && secondary.is_a?(Array)
+      Success result: { tags: (primary + secondary).uniq }
     else
-      Failure :invalid_data, result: {
-        attributes: attributes.reject { |_, input| input.is_a?(Numeric) }
+      Failure :invalid_input, result: {
+        attributes: attributes.reject { |_, v| v.is_a?(Array) }
       }
     end
   end
 end
 
-# Resultado de sucesso
-
-result = Multiply.call(a: 3, b: 2)
-
-result.type     # :ok
-result.data     # { number: 6 }
-result.success? # true
-
-# Resultado de falha
-
-bad_result = Multiply.call(a: 3, b: '2')
-
-bad_result.type     # :invalid_data
-bad_result.data     # { attributes: {"b"=>"2"} }
-bad_result.failure? # true
+MergeTags.call(primary: %w[ruby], secondary: 'rails').type # => :invalid_input
 ```
 
-[⬆️ Voltar para o índice](#índice-)
-
-#### É possível definir um tipo sem definir os dados do resultado?
-
-Resposta: Sim, é possível. Mas isso terá um comportamento especial por conta dos dados do resultado ser um hash com o tipo definido como chave e `true` como o valor.
+Passar apenas o símbolo (sem `result:`) é válido — o data vira `{ <símbolo> => true }`. Esse formato é útil como discriminante rápido dentro de um flow:
 
 ```ruby
-class Multiply < Micro::Case
-  attributes :a, :b
+def call!
+  return Failure(:invalid_input) unless primary.is_a?(Array) && secondary.is_a?(Array)
 
-  def call!
-    if a.is_a?(Numeric) && b.is_a?(Numeric)
-      Success result: { number: a * b }
-    else
-      Failure(:invalid_data)
-    end
-  end
+  Success result: { tags: (primary + secondary).uniq }
 end
 
-result = Multiply.call(a: 2, b: '2')
-
-result.failure?            # true
-result.data                # { :invalid_data => true }
-result.type                # :invalid_data
-result.use_case.attributes # {"a"=>2, "b"=>"2"}
-
-# Nota:
-# ----
-# Essa funcionalidade será muito útil para lidar com resultados de falha de um Flow
-# (este tópico será coberto em breve).
+# result.data => { invalid_input: true }
 ```
 
-[⬆️ Voltar para o índice](#índice-)
+#### Contratos de resultado
 
-#### Como declarar um contrato de resultados?
-
-Resposta: Utilize a macro `results do |on| ... end` para declarar quais tipos de resultado o caso de uso pode retornar e quais chaves cada um exige. Quando há um contrato declarado, chamadas a `Success(...)` / `Failure(...)` que usem um tipo não declarado levantam `Micro::Case::Error::UnexpectedResultType`, e chamadas que omitam uma chave obrigatória declarada levantam `Micro::Case::Error::MissingResultKeys`.
+Use a macro `results do |on| ... end` para declarar quais tipos de resultado seu caso de uso pode produzir e quais chaves cada um deles exige. Chamadas que usam um tipo não declarado lançam `Micro::Case::Error::UnexpectedResultType`; chamadas que omitem uma chave obrigatória declarada lançam `Micro::Case::Error::MissingResultKeys`.
 
 ```ruby
-class Divide < Micro::Case
-  attributes :a, :b
+class PublishPost < Micro::Case
+  attribute :post
 
   results do |on|
-    on.failure(:attributes_must_be_numbers)
-    on.failure(:division_by_zero)
+    on.failure(:already_published)
+    on.failure(:missing_content)
 
-    on.success(result: [:division])
+    on.success(result: [:post])
   end
 
   def call!
-    return Failure(:attributes_must_be_numbers) unless Kind.of?(Numeric, a, b)
-    return Failure(:division_by_zero) if b == 0
+    return Failure(:already_published) if post.published?
+    return Failure(:missing_content)   if post.body.to_s.strip.empty?
 
-    Success result: { division: a / b }
+    post.update!(status: :published, published_at: Time.current)
+    Success result: { post: post }
   end
 end
 
-Divide.call(a: 10, b: 2).data # => { division: 5 }
-Divide.call(a: 10, b: 0).type # => :division_by_zero
-Divide.call(a: 'x', b: 2).type # => :attributes_must_be_numbers
+PublishPost.call(post: ready_post).data        # => { post: #<Post ...> }
+PublishPost.call(post: empty_post).type        # => :missing_content
+PublishPost.call(post: already_live_post).type # => :already_published
 ```
 
-Um tipo declarado em `on.success` / `on.failure` sem o argumento `result:` é aceito sem chaves obrigatórias (qualquer payload — inclusive o implícito `{ tipo => true }` de `Failure(:meu_tipo)` — é aceito). Quando `result: [:chave_1, :chave_2]` é informado, essas chaves precisam estar presentes no hash de resultado; chaves extras são permitidas.
+Um tipo passado sem `result:` é declarado sem chaves obrigatórias (qualquer payload — incluindo o `{ type => true }` implícito de `Failure(:my_type)` — é aceito). Com `result: [:key1, :key2]`, essas chaves precisam estar presentes no hash de resultado; chaves extras são permitidas.
 
 ```ruby
-class Wrong < Micro::Case
+class CreateComment < Micro::Case
   results do |on|
-    on.success(result: [:value])
-    on.failure(:known)
+    on.success(result: [:comment])
+    on.failure(:spam)
   end
 
   def call!
-    Success(:other, result: { value: 1 })   # levanta Micro::Case::Error::UnexpectedResultType
-    # Success(result: { wrong: 1 })         # levanta Micro::Case::Error::MissingResultKeys
-    # Failure(:other)                       # levanta Micro::Case::Error::UnexpectedResultType
+    Success(:moderated, result: { comment: ... }) # lança Micro::Case::Error::UnexpectedResultType
+    # Success(result: { body: '...' })            # lança Micro::Case::Error::MissingResultKeys
+    # Failure(:rate_limited)                      # lança Micro::Case::Error::UnexpectedResultType
   end
 end
 ```
 
-Notas:
+Observações:
 
-- Casos de uso sem o bloco `results` mantêm o comportamento anterior sem restrições — o contrato é opt-in.
-- Subclasses herdam o contrato declarado na classe pai.
-- Exceções capturadas em `Micro::Case::Safe` (que geram `Failure(result: exception)` automaticamente) são exemptas do contrato.
+- Casos de uso sem um bloco `results` mantêm o comportamento irrestrito anterior — o contrato é opt-in.
+- Subclasses herdam o contrato do pai.
+- A auto-falha produzida pela validação de atributos via [`accept:` / `reject:`](#accept-e-reject-padrão) escapa do contrato — combinar `results` com validação de atributos **não** exige declarar `:invalid_attributes`.
+- Exceções capturadas pelo [`Micro::Case::Safe`](#modo-seguro--capturando-exceções) (que produzem `Failure(result: exception)`) também escapam do contrato.
+- Contratos são independentes de [hooks](#hooks-de-resultado) e [pattern matching](#pattern-matching): o contrato dispara no momento da chamada `Success(...)` / `Failure(...)`, dentro do `call!`. Uma vez que o `Result` existe, quem chama consome ele normalmente — não há enforcement no lado de quem chama.
 
-[⬆️ Voltar para o índice](#índice-)
+#### Hooks de resultado
 
-#### Como utilizar os hooks dos resultados?
-
-Como [mencionando anteriormente](#microcaseresult---o-que-é-o-resultado-de-um-caso-de-uso), o `Micro::Case::Result` tem dois métodos para melhorar o controle do fluxo da aplicação. São eles:
-`#on_success`, `on_failure`.
-
-Os exemplos abaixo os demonstram em uso:
+`on_success` e `on_failure` ramificam em função do tipo do resultado. Passe um símbolo para casar com um tipo específico, ou nenhum argumento para casar com qualquer um:
 
 ```ruby
-class Double < Micro::Case
-  attribute :number
+class ChangePassword < Micro::Case
+  attributes :user, :new_password
 
   def call!
-    return Failure :invalid, result: { msg: 'number must be a numeric value' } unless number.is_a?(Numeric)
-    return Failure :lte_zero, result: { msg: 'number must be greater than 0' } if number <= 0
+    return Failure(:weak,   result: { msg: 'password too short' }) unless new_password.is_a?(String) && new_password.length >= 8
+    return Failure(:reused, result: { msg: 'password recently used' }) if user.recently_used?(new_password)
 
-    Success result: { number: number * 2 }
+    user.update_password!(new_password)
+    Success result: { user: user }
   end
 end
 
-#================================#
-# Imprimindo o output se sucesso #
-#================================#
+ChangePassword
+  .call(user: ada, new_password: 'long-enough-1')
+  .on_success { |r| audit "password updated for #{r[:user].id}" }
+  .on_failure(:weak)   { |r| raise ArgumentError, r[:msg] }
+  .on_failure(:reused) { |r| raise ArgumentError, r[:msg] }
 
-Double
-  .call(number: 3)
-  .on_success { |result| p result[:number] }
-  .on_failure(:invalid) { |result| raise TypeError, result[:msg] }
-  .on_failure(:lte_zero) { |result| raise ArgumentError, result[:msg] }
-
-# O output será:
-#   6
-
-#===================================#
-# Lançando um erro em caso de falha #
-#===================================#
-
-Double
-  .call(number: -1)
-  .on_success { |result| p result[:number] }
-  .on_failure { |_result, use_case| puts "#{use_case.class.name} was the use case responsible for the failure" }
-  .on_failure(:invalid) { |result| raise TypeError, result[:msg] }
-  .on_failure(:lte_zero) { |result| raise ArgumentError, result[:msg] }
-
-# O output será:
-#
-# 1. Imprimirá a mensagem: Double was the use case responsible for the failure
-# 2. Lançará a exception: ArgumentError (the number must be greater than 0)
-
-# Nota:
-# ----
-# O caso de uso responsável estará sempre acessível como o segundo argumento do hook
+ChangePassword
+  .call(user: ada, new_password: 'short')
+  .on_failure { |_r, use_case| audit "#{use_case.class.name} failed" }   # 1. ChangePassword failed
+  .on_failure(:weak)   { |r| raise ArgumentError, r[:msg] }              # 2. ArgumentError
 ```
 
-#### Por que o hook sem um tipo definido expõe o próprio resultado?
+> O caso de uso responsável pelo resultado está sempre disponível como o segundo argumento do bloco do hook.
 
-Resposta: Para permitir que você defina o controle de fluxo da aplicação usando alguma estrutura condicional como um `if` ou `case when`.
+Sem um tipo explícito, o bloco recebe o resultado inteiro, então você pode ramificar com um `case`:
 
 ```ruby
-class Double < Micro::Case
-  attribute :number
-
-  def call!
-    return Failure(:invalid) unless number.is_a?(Numeric)
-    return Failure :lte_zero, result: attributes(:number) if number <= 0
-
-    Success result: { number: number * 2 }
-  end
-end
-
-Double
-  .call(number: -1)
+ChangePassword
+  .call(user: ada, new_password: 'short')
   .on_failure do |result, use_case|
     case result.type
-    when :invalid then raise TypeError, "number must be a numeric value"
-    when :lte_zero then raise ArgumentError, "number `#{result[:number]}` must be greater than 0"
+    when :weak   then raise ArgumentError, 'password too short'
+    when :reused then raise ArgumentError, 'password recently used'
     else raise NotImplementedError
     end
   end
-
-# O output será uma exception:
-#
-# ArgumentError (number `-1` must be greater than 0)
 ```
 
-> **Nota:** O mesmo que foi feito no exemplo anterior poderá ser feito com o hook `#on_success`!
-
-##### Usando decomposição para acessar os dados e tipo do resultado
-
-A sintaxe para decompor um Array pode ser usada na declaração de variáveis e nos argumentos de métodos/blocos.
-Se você não sabia disso, confira a [documentação do Ruby](https://ruby-doc.org/core-2.2.0/doc/syntax/assignment_rdoc.html#label-Array+Decomposition).
+Se o mesmo hook for declarado múltiplas vezes, todo match dispara:
 
 ```ruby
-# O objeto exposto em hook sem um tipo é um Micro::Case::Result e ele pode ser decomposto. Exemplo:
+calls = 0
+result = ChangePassword.call(user: ada, new_password: 'long-enough-1')
 
-Double
-  .call(number: -2)
-  .on_failure do |(data, type), use_case|
-    case type
-    when :invalid then raise TypeError, 'number must be a numeric value'
-    when :lte_zero then raise ArgumentError, "number `#{data[:number]}` must be greater than 0"
-    else raise NotImplementedError
-    end
-  end
+result
+  .on_success     { |_r| calls += 1 }
+  .on_success     { |_r| calls += 1 }
+  .on_success(:ok) { |_r| calls += 1 }
+  .on_success(:ok) { |_r| calls += 1 }
 
-# O output será a exception:
-#
-# ArgumentError (the number `-2` must be greater than 0)
+calls # => 4
 ```
 
-> **Nota:** O que mesmo pode ser feito com o `#on_success` hook!
+#### Pattern matching
 
-[⬆️ Voltar para o índice](#índice-)
-
-##### Usando pattern matching para desestruturar um resultado
-
-`Micro::Case::Result` implementa [`deconstruct`](https://docs.ruby-lang.org/en/3.4/syntax/pattern_matching_rdoc.html) e [`deconstruct_keys`](https://docs.ruby-lang.org/en/3.4/syntax/pattern_matching_rdoc.html), então o pattern matching do Ruby (`case`/`in`) funciona de forma nativa (requer Ruby `>= 2.7`).
+`Micro::Case::Result` implementa [`deconstruct`](https://docs.ruby-lang.org/en/3.4/syntax/pattern_matching_rdoc.html) e [`deconstruct_keys`](https://docs.ruby-lang.org/en/3.4/syntax/pattern_matching_rdoc.html), então o `case`/`in` do Ruby funciona direto (requer Ruby ≥ 2.7):
 
 ```ruby
-result = Divide.call(a: 10, b: 2)
-
 case result
 in { success: _, data: { number: Numeric => number } }
-  puts "deu #{number}"
+  puts "got #{number}"
 in { failure: :invalid_attributes, data: { invalid_attributes: errors } }
-  warn "entrada inválida: #{errors.keys.join(", ")}"
+  warn "bad input: #{errors.keys.join(", ")}"
 in { failure: :exception, data: { exception: } }
   warn "boom: #{exception.message}"
 end
@@ -539,19 +540,17 @@ end
 
 Os hash patterns expõem essas chaves:
 
-| Chave          | Presente em       | Valor                                                                              |
-| -------------- | ----------------- | ---------------------------------------------------------------------------------- |
-| `success:`     | apenas em sucesso | o `type` do resultado (ex.: `:ok`)                                                 |
-| `failure:`     | apenas em falha   | o `type` do resultado (ex.: `:invalid_attributes`)                                 |
-| `type:`        | sempre            | o `type` do resultado                                                              |
-| `data:`        | sempre            | o hash de `data` do resultado                                                      |
-| `result:`      | sempre            | apelido de `data:` (combina com a keyword `result:` usada em `Success(result: …)`) |
-| `use_case:`    | sempre            | a instância de caso de uso que produziu o resultado                                |
-| `transitions:` | sempre            | o array de `transitions` do resultado                                              |
+| Chave          | Presente em   | Valor                                                                               |
+| -------------- | ------------- | ----------------------------------------------------------------------------------- |
+| `success:`     | só em sucesso | o `type` do resultado (ex. `:ok`)                                                   |
+| `failure:`     | só em falha   | o `type` do resultado (ex. `:invalid_attributes`)                                   |
+| `type:`        | sempre        | o `type` do resultado                                                               |
+| `data:`        | sempre        | o hash de `data` do resultado                                                       |
+| `result:`      | sempre        | alias de `data:` (espelha a keyword `Success(result: …)` usada no local da criação) |
+| `use_case:`    | sempre        | a instância do caso de uso que produziu o resultado                                 |
+| `transitions:` | sempre        | o array de `transitions` do resultado                                               |
 
-> **Nota:** No lado de **leitura**, `Result#data` também é acessível como `Result#value` (apelido existente). No lado de **pattern matching**, a chave `data:` também é acessível como `result:` — ambas se referem ao mesmo payload.
-
-`Result#deconstruct` retorna um array de três elementos `[status, type, data]`, onde `status` é `:success` ou `:failure`. Isso permite que array patterns usem o status como discriminante — espelhando como bibliotecas com classes `Success`/`Failure` separadas fazem pattern matching, mesmo que `Micro::Case::Result` seja uma classe única:
+`Result#deconstruct` retorna um array de três elementos `[status, type, data]` onde `status` é `:success` ou `:failure`, então array patterns podem usar o status como discriminante — espelhando como bibliotecas com classes `Success` / `Failure` separadas são pattern-matched, mesmo que `Micro::Case::Result` seja uma única classe:
 
 ```ruby
 case result
@@ -564,262 +563,498 @@ in [:failure, :exception, { exception: }]
 end
 ```
 
-> **Nota:** `Result#to_ary` permanece inalterado e ainda retorna `[data, type]` (usado pela atribuição múltipla, ex.: `data, type = result`). O pattern matching do Ruby usa `#deconstruct`, então os dois hooks intencionalmente retornam shapes diferentes.
+> `Result#to_ary` continua igual e retorna `[data, type]` (usado em multi-assignment, ex. `data, type = result`). O pattern matching do Ruby usa `#deconstruct`, então os dois métodos intencionalmente retornam formatos diferentes.
 
-[⬆️ Voltar para o índice](#índice-)
+#### Decomposição
 
-#### O que acontece se um hook de resultado for declarado múltiplas vezes?
-
-Resposta: Se o tipo do resultado for identificado o hook será sempre executado.
+Dentro de um hook sem tipo, o resultado também pode ser decomposto em array `[data, type]`:
 
 ```ruby
-class Double < Micro::Case
-  attributes :number
-
-  def call!
-    if number.is_a?(Numeric)
-      Success :computed, result: { number: number * 2 }
-    else
-      Failure :invalid, result: { msg: 'number must be a numeric value' }
+ChangePassword
+  .call(user: ada, new_password: 'short')
+  .on_failure do |(data, type), use_case|
+    case type
+    when :weak   then raise ArgumentError, data[:msg]
+    when :reused then raise ArgumentError, data[:msg]
+    else raise NotImplementedError
     end
   end
-end
-
-result = Double.call(number: 3)
-result.data         # { number: 6 }
-result[:number] * 4 # 24
-
-accum = 0
-
-result
-  .on_success { |result| accum += result[:number] }
-  .on_success { |result| accum += result[:number] }
-  .on_success(:computed) { |result| accum += result[:number] }
-  .on_success(:computed) { |result| accum += result[:number] }
-
-accum # 24
-
-result[:number] * 4 == accum # true
 ```
 
-#### Como usar o método `Micro::Case::Result#then`?
+#### Continuações dinâmicas com `Result#then`
 
-Este método permite você criar fluxos dinâmicos. Com ele, você pode adicionar novos casos de uso ou fluxos para continuar a transformação de um resultado. Exemplo:
+`Result#then` aplica outro caso de uso (ou callable) a um resultado de sucesso — `Failure` curto-circuita. Use para construir continuações dinâmicas a partir de um resultado que já existe:
 
 ```ruby
-class ForbidNegativeNumber < Micro::Case
-  attribute :number
+class FindActiveUser < Micro::Case
+  attribute :email
 
   def call!
-    return Success result: attributes if number >= 0
+    user = User.active.find_by(email: email)
 
-    Failure result: attributes
+    return Success result: { user: user } if user
+
+    Failure result: { email: email }
   end
 end
 
-class Add3 < Micro::Case
-  attribute :number
+class GenerateInviteToken < Micro::Case
+  attribute :user
 
   def call!
-    Success result: { number: number + 3 }
+    Success result: { user: user, token: SecureRandom.hex(16) }
   end
 end
 
-result1 =
-  ForbidNegativeNumber
-    .call(number: -1)
-    .then(Add3)
-
-result1.data    # {'number' => -1}
-result1.failure? # true
-
-# ---
-
-result2 =
-  ForbidNegativeNumber
-    .call(number: 1)
-    .then(Add3)
-
-result2.data     # {'number' => 4}
-result2.success? # true
+FindActiveUser.call(email: 'unknown@example.com').then(GenerateInviteToken).failure? # => true
+FindActiveUser.call(email: 'ada@example.com').then(GenerateInviteToken).data
+# => { user: #<User ...>, token: "9f2b…" }
 ```
 
-> **Nota:** este método altera o [`Micro::Case::Result#transitions`](#como-entender-o-que-aconteceu-durante-a-execução-de-um-flow).
-
-[⬆️ Voltar para o índice](#índice-)
-
-##### O que acontece quando um `Micro::Case::Result#then` recebe um bloco?
-
-Ele passará o próprio resultado (uma instância do `Micro::Case::Result`) como argumento do bloco, e retornará o output do bloco ao invés dele mesmo. e.g:
+Passar um bloco yielda `self` (um `Micro::Case::Result`) e retorna o valor do bloco — útil para desembrulhar em um tipo não-Result:
 
 ```ruby
-class Add < Micro::Case
-  attributes :a, :b
+class FindUser < Micro::Case
+  attribute :email
 
   def call!
-    if Kind.of?(Numeric, a, b)
-      Success result: { sum: a + b }
-    else
-      Failure(:attributes_arent_numbers)
-    end
+    user = User.find_by(email: email)
+
+    user ? Success(result: { user: user }) : Failure(:not_found)
   end
 end
 
-# --
-
-success_result =
-  Add
-    .call(a: 2, b: 2)
-    .then { |result| result.success? ? result[:sum] : 0 }
-
-puts success_result # 4
-
-# --
-
-failure_result =
-  Add
-    .call(a: 2, b: '2')
-    .then { |result| result.success? ? result[:sum] : 0 }
-
-puts failure_result # 0
+FindUser.call(email: 'ada@example.com').then  { |r| r.success? ? r[:user].id : nil } # => 42
+FindUser.call(email: 'unknown@example.com').then { |r| r.success? ? r[:user].id : nil } # => nil
 ```
 
-[⬆️ Voltar para o índice](#índice-)
-
-##### Como fazer injeção de dependência usando este recurso?
-
-Passe um `Hash` como segundo argumento do método `Micro::Case::Result#then`.
+Passe um `Hash` extra para injetar atributos no próximo caso de uso:
 
 ```ruby
 Todo::FindAllForUser
   .call(user: current_user, params: params)
   .then(Paginate)
   .then(Serialize::PaginatedRelationAsJson, serializer: Todo::Serializer)
-  .on_success { |result| render_json(200, data: result[:todos]) }
+  .on_success { |r| render_json(200, data: r[:todos]) }
 ```
 
-[⬆️ Voltar para o índice](#índice-)
+> `Result#then` também aceita um `Symbol`, um objeto `Method`, ou uma `Lambda` — veja [Steps internos](#steps-internos--cadeias-com-resultthen).
 
-#### Steps internos — construindo um flow inline dentro do `call!`
+[⬆️ Voltar ao topo](#índice-)
 
-`Result#then` (e seu alias `|`) é a **terceira forma de compor um
-flow** no u-case, lado a lado com `Micro::Cases.flow(...)` e a macro
-de nível de classe `flow ...`. Em vez de ligar casos de uso entre si,
-você mantém o encadeamento _dentro_ do `call!` de um único caso de
-uso: cada elo é um método, lambda ou outra classe de caso de uso;
-cada elo retorna um `Micro::Case::Result`; os dados do `Success` de
-cada elo viram os argumentos nomeados do próximo; e cada elo
-contribui com uma linha em `result.transitions` — exatamente como um
-step em um flow de nível superior.
+### Validando atributos
 
-##### O que `Result#then` (e `|`) aceitam
+#### `accept:` e `reject:` (padrão)
 
-| Formato                     | Exemplo                                          |
+Desde a 5.2.0, todo caso de uso inclui a [extensão `accept` do `u-attributes`](https://github.com/serradura/u-attributes). Declare uma expectativa de tipo (ou qualquer predicado) no atributo, e o caso de uso falha automaticamente com `type: :invalid_attributes` quando um atributo é rejeitado — sem precisar validar dentro do `call!`:
+
+```ruby
+class CreateUser < Micro::Case
+  attribute :name,  accept: String
+  attribute :email, accept: ->(v) { v.is_a?(String) && v.include?('@') }
+  attribute :age,   accept: Integer, allow_nil: true
+
+  def call!
+    Success result: { user: User.create!(attributes) }
+  end
+end
+
+CreateUser.call(name: 'Bob', email: 'bob@example.com')
+# => #<Success type=:ok ...>
+
+CreateUser.call(name: 42, email: 'not-an-email')
+# => #<Failure type=:invalid_attributes data={
+#       errors: {
+#         "name"  => "expected to be a kind of String",
+#         "email" => "is invalid"
+#       }
+#     }>
+```
+
+O tipo da falha segue a mesma configuração usada pela integração com ActiveModel — veja `set_activemodel_validation_errors_failure` em [Configuração](#configuração).
+
+#### Integração com ActiveModel (opt-in)
+
+Você pode sobrepor regras estilo Rails (`validates`) em cima de `accept:` / `reject:` para validações mais ricas (`presence`, `numericality`, `format`, validators customizados…). Requer [`activemodel >= 6.0`](https://rubygems.org/gems/activemodel) na sua aplicação.
+
+A forma mais simples — `validates` está disponível em todo caso de uso, e você falha manualmente:
+
+```ruby
+class CreatePost < Micro::Case
+  attributes :title, :body
+
+  validates :title, :body, presence: true
+  validates :title, length: { maximum: 120 }
+
+  def call!
+    return Failure :invalid_attributes, result: { errors: self.errors } if invalid?
+
+    Success result: { post: Post.create!(title: title, body: body) }
+  end
+end
+```
+
+Para fazer casos de uso **falharem automaticamente** quando `invalid?` é `true`, require o entry point de auto-validação:
+
+```ruby
+# Gemfile
+gem 'u-case', require: 'u-case/with_activemodel_validation'
+```
+
+…ou habilite via [Configuração](#configuração). O exemplo então colapsa:
+
+```ruby
+require 'u-case/with_activemodel_validation'
+
+class CreatePost < Micro::Case
+  attributes :title, :body
+
+  validates :title, :body, presence: true
+  validates :title, length: { maximum: 120 }
+
+  def call!
+    Success result: { post: Post.create!(title: title, body: body) }
+  end
+end
+```
+
+Quando tanto `accept:` quanto validações do ActiveModel estão presentes, a ordem de execução é:
+
+1. `u-attributes` resolve o default de cada atributo.
+2. `u-attributes` roda as checagens de `accept:` / `reject:`.
+3. `u-case` roda as validações do ActiveModel **apenas se** todos os atributos foram aceitos.
+
+> A auto-validação também é herdada por `Micro::Case::Strict` e `Micro::Case::Safe`.
+
+##### Desabilitando a auto-validação em um caso específico
+
+Use a macro `disable_auto_validation`:
+
+```ruby
+require 'u-case/with_activemodel_validation'
+
+class CountPosts < Micro::Case
+  disable_auto_validation
+
+  attribute :user
+  validates :user, presence: true
+
+  def call!
+    Success result: { count: user.posts.count }
+  end
+end
+
+CountPosts.call(user: nil)
+# => NoMethodError (undefined method `posts' for nil:NilClass)
+```
+
+##### `Kind::Validator`
+
+A [gem `kind`](https://github.com/serradura/kind) traz um [`Kind::Validator`](https://github.com/serradura/kind#kindvalidator-activemodelvalidations) para o ActiveModel que valida tipos usando seu sistema de tipos em runtime. Requerer `'u-case/with_activemodel_validation'` também carrega o `Kind::Validator`:
+
+```ruby
+class Todo::List::AddItem < Micro::Case
+  attributes :user, :params
+
+  validates :user,   kind: User
+  validates :params, kind: ActionController::Parameters
+
+  def call!
+    todo_params = params.require(:todo).permit(:title, :due_at)
+    todo = user.todos.create(todo_params)
+
+    Success result: { todo: todo }
+  rescue ActionController::ParameterMissing => e
+    Failure :parameter_missing, result: { message: e.message }
+  end
+end
+```
+
+[⬆️ Voltar ao topo](#índice-)
+
+### Compondo casos de uso
+
+Uma composição encadeia casos de uso de forma que os dados do `Success` de cada step alimentam a entrada do próximo step. Há duas formas de compor: [Flows](#flows) — que cobrem tanto `Micro::Cases.flow(...)` quanto a macro `flow ...` no nível da classe — e [Steps internos](#steps-internos--cadeias-com-resultthen) (a cadeia `Result#then` / `|` dentro de um único `call!`). Qualquer uma das formas pode ser envolvida em uma [Transação](#transações).
+
+#### Flows
+
+Um `Micro::Cases::Flow` é uma composição independente. Construa um com `Micro::Cases.flow([...])` ou com a macro `flow ...` no nível da classe:
+
+```ruby
+module Steps
+  class ParseTags < Micro::Case
+    attribute :tags
+
+    def call!
+      if tags.is_a?(String)
+        Success result: { tags: tags.split(',').map(&:strip) }
+      else
+        Failure result: { message: 'tags must be a comma-separated String' }
+      end
+    end
+  end
+
+  class Downcase < Micro::Case::Strict
+    attribute :tags
+    def call!; Success result: { tags: tags.map(&:downcase) }; end
+  end
+
+  class StripHashPrefix < Micro::Case::Strict
+    attribute :tags
+    def call!; Success result: { tags: tags.map { |t| t.sub(/\A#/, '') } }; end
+  end
+
+  class RemoveDuplicates < Micro::Case::Strict
+    attribute :tags
+    def call!; Success result: { tags: tags.uniq }; end
+  end
+end
+
+# Usando o construtor a nível de módulo:
+DowncaseTags = Micro::Cases.flow([
+  Steps::ParseTags,
+  Steps::Downcase
+])
+
+DowncaseTags.call(tags: 'Ruby, Rails, RUBY').data
+# => { tags: ["ruby", "rails", "ruby"] }
+
+# Usando uma classe:
+class NormalizeTags < Micro::Case
+  flow Steps::ParseTags,
+       Steps::Downcase,
+       Steps::StripHashPrefix,
+       Steps::RemoveDuplicates
+end
+
+NormalizeTags
+  .call(tags: 42)
+  .on_failure { |r| puts r[:message] }
+# => "tags must be a comma-separated String"
+```
+
+Quando um flow falha, `Result#use_case` aponta para o step responsável:
+
+```ruby
+result = NormalizeTags.call(tags: 42)
+result.failure?                          # => true
+result.use_case.is_a?(Steps::ParseTags)  # => true
+```
+
+##### Compondo flows entre si
+
+Flows podem ser steps dentro de outros flows. Misture qualquer um dos três estilos de composição:
+
+```ruby
+DowncaseTags           = Micro::Cases.flow([Steps::ParseTags, Steps::Downcase])
+DedupedTags            = Micro::Cases.flow([Steps::ParseTags, Steps::RemoveDuplicates])
+DowncaseAndDedupedTags = Micro::Cases.flow([DowncaseTags, Steps::RemoveDuplicates])
+StrippedAndDeduped     = Micro::Cases.flow([Steps::ParseTags, Steps::StripHashPrefix, Steps::RemoveDuplicates])
+
+DowncaseAndDedupedTags
+  .call(tags: 'Ruby, Rails, RUBY')
+  .on_success { |r| p r[:tags] } # => ["ruby", "rails"]
+```
+
+> Veja [`test/micro/cases/flow/blend_test.rb`](https://github.com/serradura/u-case/blob/main/test/micro/cases/flow/blend_test.rb) para todas as combinações possíveis.
+
+##### Acumulação de dados através de um flow
+
+A saída de `Success` de cada step é mesclada em um hash de atributos corrente, que se torna a entrada do próximo step. Os steps não precisam encadear inputs manualmente — eles apenas declaram o que precisam:
+
+```ruby
+module Users
+  class FindByEmail < Micro::Case
+    attribute :email
+
+    def call!
+      user = User.find_by(email: email)
+
+      return Success result: { user: user } if user
+
+      Failure(:user_not_found)
+    end
+  end
+
+  class ValidatePassword < Micro::Case::Strict
+    attributes :user, :password
+
+    def call!
+      return Failure(:user_must_be_persisted) if user.new_record?
+      return Failure(:wrong_password)         if user.wrong_password?(password)
+
+      Success result: attributes(:user)
+    end
+  end
+
+  Authenticate = Micro::Cases.flow([FindByEmail, ValidatePassword])
+end
+
+Users::Authenticate
+  .call(email: 'somebody@test.com', password: 'password')
+  .on_success { |r| sign_in(r[:user]) }
+  .on_failure(:wrong_password)  { render status: 401 }
+  .on_failure(:user_not_found)  { render status: 404 }
+```
+
+`ValidatePassword` declara `:user` como um dos seus atributos mas não recebe ele explicitamente — herda do resultado de sucesso de `FindByEmail`. Esse é o contrato de acumulação: saída → entrada.
+
+##### Inspecionando a execução com `result.transitions`
+
+Cada caso de uso (e cada step interno) contribui com uma entrada para `result.transitions`. Use para debugar, rastrear ou testar a execução de um flow:
+
+```ruby
+user_authenticated = Users::Authenticate.call(email: 'rodrigo@test.com', password: '...')
+
+user_authenticated.transitions
+# => [
+#   {
+#     use_case: {
+#       class:      Users::FindByEmail,
+#       attributes: { email: 'rodrigo@test.com' }
+#     },
+#     success: { type: :ok, result: { user: #<User ...> } },
+#     accessible_attributes: [ :email, :password ]
+#   },
+#   {
+#     use_case: {
+#       class:      Users::ValidatePassword,
+#       attributes: { user: #<User ...>, password: '...' }
+#     },
+#     success: { type: :ok, result: { user: #<User ...> } },
+#     accessible_attributes: [ :email, :password, :user ]
+#   }
+# ]
+```
+
+Schema:
+
+```ruby
+[
+  {
+    use_case: {
+      class:      <Micro::Case>,        # o caso de uso executado
+      attributes: <Hash>                # entrada
+    },
+    [success:, failure:] => {           # saída (um dos dois)
+      type:   <Symbol>,                 # :ok / :error / :exception / customizado
+      result: <Hash>                    # data
+    },
+    accessible_attributes: <Array>      # atributos acessíveis neste step
+                                        # (cresce a cada sucesso)
+  }
+]
+```
+
+`accessible_attributes` cresce conforme a saída de `Success` de cada step é mesclada nos dados correntes. [`Result#then`](#continuações-dinâmicas-com-resultthen) também contribui com uma transition.
+
+Para desabilitar transitions globalmente (economiza um hash por step), veja [Configuração](#configuração).
+
+##### Compondo um flow que inclui a si mesmo
+
+Uma classe pode usar ela mesma como um step na sua própria declaração de `flow` via `self.call!`:
+
+```ruby
+class ParseTagsString < Micro::Case
+  attribute :input
+  def call!; Success result: { tags: input.split(',').map(&:strip) }; end
+end
+
+class JoinTagsArray < Micro::Case
+  attribute :tags
+  def call!; Success result: { input: tags.join(', ') }; end
+end
+
+class CleanTags < Micro::Case
+  flow ParseTagsString,
+       self.call!,
+       JoinTagsArray
+
+  attribute :tags
+
+  def call!
+    Success result: { tags: tags.map(&:downcase).uniq }
+  end
+end
+
+CleanTags.call(input: 'Ruby, RUBY, Rails').data[:input] # => "ruby, rails"
+```
+
+Funciona com `Micro::Case::Safe` também — veja [`test/micro/case/safe/with_inner_flow_test.rb`](https://github.com/serradura/u-case/blob/main/test/micro/case/safe/with_inner_flow_test.rb).
+
+#### Steps internos — cadeias com `Result#then`
+
+`Result#then` (e seu alias `|` pipe) é a **terceira forma de compor um flow** do u-case — ao lado de `Micro::Cases.flow(...)` e da macro `flow ...` no nível da classe. Em vez de conectar casos de uso irmãos, você mantém a cadeia _dentro_ do `call!` de um único caso de uso. Cada elo é um método, lambda, ou outra classe de caso de uso; cada elo retorna um `Micro::Case::Result`; os dados de `Success` de cada elo viram os keyword arguments do próximo; cada elo contribui com uma linha em `result.transitions`.
+
+##### Formas aceitas de elo
+
+| Formato do argumento        | Exemplo                                          |
 | --------------------------- | ------------------------------------------------ |
-| `Symbol` (nome de método)   | `result.then(:sum_a_and_b)`                      |
-| Objeto `Method` ligado      | `result.then(method(:sum_a_and_b))`              |
-| `Lambda` / `Proc`           | `result.then(-> data { sum_a_and_b(**data) })`   |
-| Classe de caso de uso       | `result.then(SumHalf)`                           |
+| `Symbol` (nome de método)   | `result.then(:strip_title)`                      |
+| Objeto `Method` bound       | `result.then(method(:strip_title))`              |
+| `Lambda` / `Proc`           | `result.then(-> data { strip_title(**data) })`   |
+| Classe de caso de uso       | `result.then(CapitalizeTitle)`                   |
 | `Symbol` + Hash de defaults | `result.then(:add, number: 3)`                   |
 | Bloco                       | `result.then { \|r\| r.success? ? r[:sum] : 0 }` |
 
-O método conectado **precisa** retornar um `Micro::Case::Result`.
-Qualquer outro retorno levanta `Micro::Case::Error::UnexpectedResult`
-— por exemplo um método que devolve um `Hash` será rejeitado com uma
-mensagem do tipo `MeuCase#method(:foo) must return an instance of
-Micro::Case::Result`.
+O método conectado **precisa** retornar um `Micro::Case::Result`. Qualquer outra coisa levanta `Micro::Case::Error::UnexpectedResult` (ex. um método que retorna um `Hash` simples é rejeitado com `MyCase#method(:foo) must return an instance of Micro::Case::Result`).
 
 ##### Um exemplo mínimo
 
 ```ruby
-class SumHalf < Micro::Case
-  attribute :sum
+class CapitalizeTitle < Micro::Case
+  attribute :title
 
   def call!
-    Success :third_sum, result: { sum: sum + 0.5 }
+    Success :capitalized, result: { title: title.split.map(&:capitalize).join(' ') }
   end
 end
 
-class DoSomeSum < Micro::Case
-  attributes :a, :b
+class CreateBlogPost < Micro::Case
+  attributes :raw_title, :body
 
   def call!
-    validate_numbers
-      .then(:sum_a_and_b)
-      .then(:add, number: 3)
-      .then(SumHalf)
+    validate_input
+      .then(:strip_title)
+      .then(:slugify, separator: '-')
+      .then(CapitalizeTitle)
   end
 
   private
 
-  def validate_numbers
-    Kind.of?(Numeric, a, b) ? Success(:valid) : Failure()
+  def validate_input
+    Kind.of?(String, raw_title, body) ? Success(:valid) : Failure()
   end
 
-  def sum_a_and_b
-    Success :first_sum, result: { sum: a + b }
+  def strip_title
+    Success :stripped, result: { title: raw_title.strip }
   end
 
-  def add(sum:, number:, **)
-    Success :second_sum, result: { sum: sum + number }
+  def slugify(title:, separator:, **)
+    slug = title.downcase.gsub(/[^a-z0-9]+/, separator)
+    Success :slugified, result: { title: title, slug: slug }
   end
 end
 
-result = DoSomeSum.call(a: 1, b: 2)
-
-result.success?    # true
-result.data        # { sum: 6.5 }
-result.transitions # 4 entradas — veja abaixo
+CreateBlogPost.call(raw_title: '  hello world  ', body: 'lorem ipsum').data
+# => { title: "Hello World" }
 ```
 
-`result.transitions` para a chamada acima:
+Elos baseados em símbolos, métodos e lambdas todos rodam **como o caso de uso hospedeiro**, então eles reportam `class: CreateBlogPost` em `result.transitions`. Só o elo `CapitalizeTitle` (outra classe de caso de uso) contribui com uma transition com `use_case.class` diferente. `accessible_attributes` cresce conforme a saída de `Success` de cada elo é mesclada nos dados correntes — quando `CapitalizeTitle` roda, `slug` também já está acessível upstream.
 
-```ruby
-[
-  { use_case: { class: DoSomeSum, attributes: { a: 1, b: 2 } },
-    success: { type: :valid,       result: { valid: true } },
-    accessible_attributes: [:a, :b] },
+##### Alias `|` (pipe)
 
-  { use_case: { class: DoSomeSum, attributes: { a: 1, b: 2 } },
-    success: { type: :first_sum,   result: { sum: 3 } },
-    accessible_attributes: [:a, :b, :valid] },
-
-  { use_case: { class: DoSomeSum, attributes: { a: 1, b: 2 } },
-    success: { type: :second_sum,  result: { sum: 6 } },
-    accessible_attributes: [:a, :b, :valid, :number, :sum] },
-
-  { use_case: { class: SumHalf,   attributes: { sum: 6 } },
-    success: { type: :third_sum,  result: { sum: 6.5 } },
-    accessible_attributes: [:a, :b, :valid, :number, :sum] }
-]
-```
-
-Elos baseados em `Symbol`, `Method` e `lambda` rodam **como o caso de
-uso hospedeiro**, portanto as três primeiras transições reportam
-`class: DoSomeSum`. Apenas o elo `SumHalf`, que é outra classe de
-caso de uso, contribui com uma transição com `use_case.class`
-diferente. O `accessible_attributes` cresce conforme o `Success` de
-cada elo é mesclado nos dados acumulados.
-
-##### O alias `|` (pipe)
-
-`|` é açúcar para `.then(...)`. O exemplo anterior fica:
+`|` é açúcar sintático para `.then(...)`. O exemplo anterior fica:
 
 ```ruby
 def call!
-  validate_numbers | :sum_a_and_b | :add | SumHalf
+  validate_input | :strip_title | :slugify | CapitalizeTitle
 end
 ```
 
-Ambas as formas produzem `result.data` e `result.transitions`
-idênticos.
+As duas formas produzem o mesmo `result.data` e o mesmo `result.transitions`.
 
-> **Encadeamento estilo Elixir com `it` (Ruby ≥ 3.4):** como o Ruby
-> 3.4 expõe `it` como o primeiro parâmetro implícito do corpo de um
-> bloco/lambda, é possível escrever uma cadeia que se lê quase
-> exatamente como o operador `|>` do Elixir. Cada lambda recebe o
-> hash de dados acumulados como `it` e ainda precisa terminar em
-> uma chamada `Success(...)` / `Failure(...)`:
+> **Cadeias estilo Elixir com `it` (Ruby ≥ 3.4):** o Ruby 3.4 expõe `it` como o primeiro parâmetro implícito do corpo de um bloco/lambda, então uma cadeia pode ficar quase idêntica ao `|>` do Elixir. Cada lambda recebe o hash de dados acumulado como `it` e ainda precisa terminar em `Success(...)` / `Failure(...)`:
 >
 > ```ruby
 > def call!
@@ -829,74 +1064,49 @@ idênticos.
 > end
 > ```
 >
-> No Ruby 2.7 – 3.3 (onde `it` é apenas um identificador
-> indefinido), use a forma explícita portátil
-> `->(data) { do_something_with(**data) }` mostrada na próxima seção.
+> No Ruby 2.7 – 3.3 (onde `it` é só um identificador indefinido), use a forma explícita `->(data) { do_something_with(**data) }`.
 
-##### Formas lambda / `Method`
+##### Formas Lambda / `Method`
 
-Lambdas (e objetos `Method` ligados) recebem os dados acumulados
-**posicionalmente** como um único `Hash`:
+Lambdas (e objetos `Method` bound) recebem os dados acumulados **posicionalmente** como um único Hash:
 
 ```ruby
 def call!
-  validate_numbers
-    .then(method(:sum_a_and_b))
-    .then(->(data) { add(**data, number: 3) })
-    .then(SumHalf)
+  validate_input
+    .then(method(:strip_title))
+    .then(->(data) { slugify(**data, separator: '-') })
+    .then(CapitalizeTitle)
 end
 ```
 
-##### Uma falha interrompe a cadeia
+##### `Failure` interrompe a cadeia
 
-Retornar `Failure(...)` em qualquer elo interrompe o restante da
-cadeia imediatamente — exatamente como um step de um flow de nível
-superior retornando uma falha. Os demais elos `.then(...)` / `|` não
-são invocados, e o `result` final é a falha:
-
-```ruby
-DoSomeSum.call(a: 1, b: '2')
-
-# validate_numbers retorna Failure() → :sum_a_and_b, :add e SumHalf
-# nunca rodam. result.failure? == true, result.transitions tem 1
-# entrada.
-```
+Retornar `Failure(...)` de qualquer elo interrompe o resto da cadeia imediatamente — exatamente como um step em um flow top-level retornando uma falha. Os `.then(...)` / `|` restantes não são invocados; o `result` final é a falha.
 
 ##### Usando um caso com steps internos dentro de um flow externo
 
-Um caso de uso que compõe internamente com `.then(...)` continua
-sendo apenas um caso de uso, portanto pode ser colocado em qualquer
-construtor de flow:
+Um caso de uso que compõe internamente é só um caso de uso, então cabe em qualquer flow:
 
 ```ruby
-SignUp = Micro::Cases.flow([
-  NormalizeParams,
-  DoSomeSum,          # ← usa .then(:method) internamente
+PublishWorkflow = Micro::Cases.flow([
+  AuthorizePublisher,
+  CreateBlogPost,     # ← usa .then(:método) internamente
   EnqueueIndexingJob
 ])
 ```
 
-As transições internas da classe hospedeira são intercaladas com as
-transições dos steps externos na ordem de execução. Se `DoSomeSum`
-produz 4 transições internas e o flow externo tem 2 outros steps,
-`result.transitions` final tem 6 entradas.
+As transitions internas do hospedeiro são intercaladas com as transitions folha do flow externo na ordem de execução. Se `CreateBlogPost` produz 4 transitions internas e o flow externo tem 2 outros steps folha, o `result.transitions` final tem 6 entradas.
 
-##### Steps internos **sem** transações
+##### Persistência sem transação
 
-Por padrão — isto é, quando nem a classe hospedeira nem o flow
-externo usam `transaction: true` — os steps internos se comportam
-como qualquer outro código em `call!`: efeitos colaterais feitos por
-elos anteriores **persistem** mesmo se um elo posterior retornar
-`Failure`. A cadeia é interrompida, mas tudo que já foi escrito no
-banco permanece escrito:
+Por padrão — quando nem a classe hospedeira nem o flow externo usam `transaction: true` — steps internos se comportam como qualquer outro código em `call!`: efeitos colaterais de elos anteriores **persistem** mesmo se um elo posterior retornar `Failure`. A cadeia para, mas o que já foi escrito fica escrito:
 
 ```ruby
 class CreateUserWithProfileInline < Micro::Case
   attributes :name, :info
 
   def call!
-    create_user
-      .then(:create_profile)
+    create_user.then(:create_profile)
   end
 
   private
@@ -915,391 +1125,19 @@ class CreateUserWithProfileInline < Micro::Case
 end
 
 CreateUserWithProfileInline.call(name: 'Rodrigo', info: '')
-# create_user já INSERIU a linha do user; create_profile falhou.
-# user está persistido; profile não. Não há rollback automático.
+# create_user já fez INSERT na linha do user; create_profile falhou.
+# user está persistido; profile não. Sem rollback automático.
 ```
 
-Se você precisar que os efeitos colaterais parciais sejam desfeitos,
-envolva a cadeia em uma transação. Como steps internos são apenas
-outra forma de expressar um flow (um flow _interno_), a história
-transacional é exatamente a que já está documentada em
-[Como executar um caso de uso ou flow dentro de uma transação de banco de dados?](#como-executar-um-caso-de-uso-ou-flow-dentro-de-uma-transação-de-banco-de-dados)
-abaixo — a subseção "Flows com steps internos sob transações" lá
-percorre tanto a forma inline `transaction { ... }` quanto a forma
-com `transaction: true` para um caso hospedeiro de steps internos.
+Para reverter os writes parciais, envolva a cadeia em uma [transação](#transações).
 
-> **Nota:** Veja `test/micro/case/internal_steps/with_symbols_test.rb`,
-> `with_methods_test.rb` e `with_lambdas_test.rb` para exemplos
-> completos de cada forma, e
-> `test/micro/cases/flow/internal_steps_in_flows_test.rb` para a
-> interação com flows e transações (acumulação, transições e
-> rollback em todos os níveis de aninhamento).
+#### Transações
 
-[⬆️ Voltar para o índice](#índice-)
+O `u-case` traz dois helpers complementares para envolver trabalho em uma `ActiveRecord::Base.transaction`. Ambos são opt-in — `active_record` **não** é requerido pela gem, então você carrega o ActiveRecord por conta própria (aplicações Rails já fazem isso).
 
-### `Micro::Cases::Flow` - Como compor casos de uso?
+##### `transaction { ... }` inline dentro do `call!`
 
-Chamamos de **fluxo** uma composição de casos de uso. A ideia principal desse recurso é usar/reutilizar casos de uso como etapas de um novo caso de uso. Exemplo:
-
-```ruby
-module Steps
-  class ConvertTextToNumbers < Micro::Case
-    attribute :numbers
-
-    def call!
-      if numbers.all? { |value| String(value) =~ /\d+/ }
-        Success result: { numbers: numbers.map(&:to_i) }
-      else
-        Failure result: { message: 'numbers must contain only numeric types' }
-      end
-    end
-  end
-
-  class Add2 < Micro::Case::Strict
-    attribute :numbers
-
-    def call!
-      Success result: { numbers: numbers.map { |number| number + 2 } }
-    end
-  end
-
-  class Double < Micro::Case::Strict
-    attribute :numbers
-
-    def call!
-      Success result: { numbers: numbers.map { |number| number * 2 } }
-    end
-  end
-
-  class Square < Micro::Case::Strict
-    attribute :numbers
-
-    def call!
-      Success result: { numbers: numbers.map { |number| number * number } }
-    end
-  end
-end
-
-#-----------------------------------------#
-# Criando um flow com Micro::Cases.flow() #
-#-----------------------------------------#
-
-Add2ToAllNumbers = Micro::Cases.flow([
-  Steps::ConvertTextToNumbers,
-  Steps::Add2
-])
-
-result = Add2ToAllNumbers.call(numbers: %w[1 1 2 2 3 4])
-
-result.success? # true
-result.data    # {:numbers => [3, 3, 4, 4, 5, 6]}
-
-#--------------------------------#
-# Criando um flow usando classes #
-#--------------------------------#
-
-class DoubleAllNumbers < Micro::Case
-  flow Steps::ConvertTextToNumbers,
-       Steps::Double
-end
-
-DoubleAllNumbers.
-  call(numbers: %w[1 1 b 2 3 4]).
-  on_failure { |result| puts result[:message] } # "numbers must contain only numeric types"
-```
-
-Ao ocorrer uma falha, o caso de uso responsável ficará acessível no resultado. Exemplo:
-
-```ruby
-result = DoubleAllNumbers.call(numbers: %w[1 1 b 2 3 4])
-
-result.failure?                                    # true
-result.use_case.is_a?(Steps::ConvertTextToNumbers) # true
-
-result.on_failure do |_message, use_case|
-  puts "#{use_case.class.name} was the use case responsible for the failure" # Steps::ConvertTextToNumbers was the use case responsible for the failure
-end
-```
-
-[⬆️ Voltar para o índice](#índice-)
-
-#### É possível compor um fluxo com outros fluxos?
-
-Resposta: Sim, é possível.
-
-```ruby
-module Steps
-  class ConvertTextToNumbers < Micro::Case
-    attribute :numbers
-
-    def call!
-      if numbers.all? { |value| String(value) =~ /\d+/ }
-        Success result: { numbers: numbers.map(&:to_i) }
-      else
-        Failure result: { message: 'numbers must contain only numeric types' }
-      end
-    end
-  end
-
-  class Add2 < Micro::Case::Strict
-    attribute :numbers
-
-    def call!
-      Success result: { numbers: numbers.map { |number| number + 2 } }
-    end
-  end
-
-  class Double < Micro::Case::Strict
-    attribute :numbers
-
-    def call!
-      Success result: { numbers: numbers.map { |number| number * 2 } }
-    end
-  end
-
-  class Square < Micro::Case::Strict
-    attribute :numbers
-
-    def call!
-      Success result: { numbers: numbers.map { |number| number * number } }
-    end
-  end
-end
-
-DoubleAllNumbers =
-  Micro::Cases.flow([Steps::ConvertTextToNumbers, Steps::Double])
-
-SquareAllNumbers =
-  Micro::Cases.flow([Steps::ConvertTextToNumbers, Steps::Square])
-
-DoubleAllNumbersAndAdd2 =
-  Micro::Cases.flow([DoubleAllNumbers, Steps::Add2])
-
-SquareAllNumbersAndAdd2 =
-  Micro::Cases.flow([SquareAllNumbers, Steps::Add2])
-
-SquareAllNumbersAndDouble =
-  Micro::Cases.flow([SquareAllNumbersAndAdd2, DoubleAllNumbers])
-
-DoubleAllNumbersAndSquareAndAdd2 =
-  Micro::Cases.flow([DoubleAllNumbers, SquareAllNumbersAndAdd2])
-
-SquareAllNumbersAndDouble
-  .call(numbers: %w[1 1 2 2 3 4])
-  .on_success { |result| p result[:numbers] } # [6, 6, 12, 12, 22, 36]
-
-DoubleAllNumbersAndSquareAndAdd2
-  .call(numbers: %w[1 1 2 2 3 4])
-  .on_success { |result| p result[:numbers] } # [6, 6, 18, 18, 38, 66]
-```
-
-> **Nota:** Você pode mesclar qualquer [approach](#é-possível-compor-um-fluxo-com-outros-fluxos) para criar flows - [exemplos](https://github.com/serradura/u-case/blob/714c6b658fc6aa02617e6833ddee09eddc760f2a/test/micro/cases/flow/blend_test.rb#L5-L35).
-
-[⬆️ Voltar para o índice](#índice-)
-
-#### É possível que um fluxo acumule sua entrada e mescle cada resultado de sucesso para usar como argumento dos próximos casos de uso?
-
-Resposta: Sim, é possível! Veja o exemplo abaixo para entender como funciona o acúmulo de dados dentro da execução de um fluxo.
-
-```ruby
-module Users
-  class FindByEmail < Micro::Case
-    attribute :email
-
-    def call!
-      user = User.find_by(email: email)
-
-      return Success result: { user: user } if user
-
-      Failure(:user_not_found)
-    end
-  end
-end
-
-module Users
-  class ValidatePassword < Micro::Case::Strict
-    attributes :user, :password
-
-    def call!
-      return Failure(:user_must_be_persisted) if user.new_record?
-      return Failure(:wrong_password) if user.wrong_password?(password)
-
-      return Success result: attributes(:user)
-    end
-  end
-end
-
-module Users
-  Authenticate = Micro::Cases.flow([
-    FindByEmail,
-    ValidatePassword
-  ])
-end
-
-Users::Authenticate
-  .call(email: 'somebody@test.com', password: 'password')
-  .on_success { |result| sign_in(result[:user]) }
-  .on_failure(:wrong_password) { render status: 401 }
-  .on_failure(:user_not_found) { render status: 404 }
-```
-
-Primeiro, vamos ver os atributos usados por cada caso de uso:
-
-```ruby
-class Users::FindByEmail < Micro::Case
-  attribute :email
-end
-
-class Users::ValidatePassword < Micro::Case
-  attributes :user, :password
-end
-```
-
-Como você pode ver, `Users::ValidatePassword` espera um usuário como sua entrada. Então, como ele recebe o usuário?
-R: Ele recebe o usuário do resultado de sucesso `Users::FindByEmail`!
-
-E este é o poder da composição de casos de uso porque o output de uma etapa irá compor a entrada do próximo caso de uso no fluxo!
-
-> input **>>** processamento **>>** output
-
-> **Nota:** Verifique esses exemplos de teste [Micro::Cases::Flow](https://github.com/serradura/u-case/blob/c96a3650469da40dc9f83ff678204055b7015d01/test/micro/cases/flow/result_transitions_test.rb) e [Micro::Cases::Safe::Flow](https://github.com/serradura/u-case/blob/c96a3650469da40dc9f83ff678204055b7015d01/test/micro/cases/safe/flow/result_transitions_test.rb) para ver diferentes casos de uso tendo acesso aos dados de um fluxo.
-
-[⬆️ Voltar para o índice](#índice-)
-
-#### Como entender o que aconteceu durante a execução de um flow?
-
-Use `Micro::Case::Result#transitions`!
-
-Vamos usar os [exemplos da seção anterior](#is-it-possible-a-flow-accumulates-its-input-and-merges-each-success-result-to-use-as-the-argument-of-the-next-use-cases) para ilustrar como utilizar essa feature.
-
-```ruby
-user_authenticated =
-  Users::Authenticate.call(email: 'rodrigo@test.com', password: user_password)
-
-user_authenticated.transitions
-[
-  {
-    :use_case => {
-      :class      => Users::FindByEmail,
-      :attributes => { :email => "rodrigo@test.com" }
-    },
-    :success => {
-      :type  => :ok,
-      :result => {
-        :user => #<User:0x00007fb57b1c5f88 @email="rodrigo@test.com" ...>
-      }
-    },
-    :accessible_attributes => [ :email, :password ]
-  },
-  {
-    :use_case => {
-      :class      => Users::ValidatePassword,
-      :attributes => {
-        :user     => #<User:0x00007fb57b1c5f88 @email="rodrigo@test.com" ...>
-        :password => "123456"
-      }
-    },
-    :success => {
-      :type  => :ok,
-      :result => {
-        :user => #<User:0x00007fb57b1c5f88 @email="rodrigo@test.com" ...>
-      }
-    },
-    :accessible_attributes => [ :email, :password, :user ]
-  }
-]
-```
-
-O exemplo acima mostra a saída gerada pelas `Micro::Case::Result#transitions`.
-Com ele é possível analisar a ordem de execução dos casos de uso e quais foram os `inputs` fornecidos (`[:attributes]`) e `outputs` (`[:success][:result]`) em toda a execução.
-
-E observe a propriedade `accessible_attributes`, ela mostra quais atributos são acessíveis nessa etapa do fluxo. Por exemplo, na última etapa, você pode ver que os atributos `accessible_attributes` aumentaram devido ao [acúmulo de fluxo de dados](#é-possível-que-um-fluxo-acumule-sua-entrada-e-mescle-cada-resultado-de-sucesso-para-usar-como-argumento-dos-próximos-casos-de-uso).
-
-> **Nota:** O [`Micro::Case::Result#then`](#how-to-use-the-microcaseresultthen-method) incrementa o `Micro::Case::Result#transitions`.
-
-##### `Micro::Case::Result#transitions` schema
-
-```ruby
-[
-  {
-    use_case: {
-      class:      <Micro::Case>,# Caso de uso que será executado
-      attributes: <Hash>        # (Input) Os atributos do caso de uso
-    },
-    [success:, failure:] => {   # (Output)
-      type:  <Symbol>,          # Tipo do resultado. Padrões:
-                                # Success = :ok, Failure = :error or :exception
-      result: <Hash>            # Os dados retornados pelo resultado do use case
-    },
-    accessible_attributes: <Array>, # Propriedades que podem ser acessadas pelos atributos do caso de uso,
-                                    # começando com Hash usado para invocá-lo e que são incrementados
-                                    # com os valores de resultado de cada caso de uso do fluxo.
-  }
-]
-
-```
-
-##### É possível desabilitar o `Micro::Case::Result#transitions`?
-
-Resposta: Sim! Você pode usar o `Micro::Case.config` para fazer isso. [Link para](#microcaseconfig) essa seção.
-
-#### É possível declarar um fluxo que inclui o próprio caso de uso?
-
-Resposta: Sim! Você pode usar a macro `self` ou `self.call!`. Exemplo:
-
-```ruby
-class ConvertTextToNumber < Micro::Case
-  attribute :text
-
-  def call!
-    Success result: { number: text.to_i }
-  end
-end
-
-class ConvertNumberToText < Micro::Case
-  attribute :number
-
-  def call!
-    Success result: { text: number.to_s }
-  end
-end
-
-class Double < Micro::Case
-  flow ConvertTextToNumber,
-       self.call!,
-       ConvertNumberToText
-
-  attribute :number
-
-  def call!
-    Success result: { number: number * 2 }
-  end
-end
-
-result = Double.call(text: '4')
-
-result.success? # true
-result[:number] # "8"
-```
-
-> **Note:** Essa funcionalidade pode ser usada com Micro::Case::Safe. Verifique esse teste para ver um example: https://github.com/serradura/u-case/blob/714c6b658fc6aa02617e6833ddee09eddc760f2a/test/micro/case/safe/with_inner_flow_test.rb
-
-[⬆️ Voltar para o índice](#índice-)
-
-#### Como executar um caso de uso ou flow dentro de uma transação de banco de dados?
-
-O `u-case` traz dois helpers complementares para envolver o trabalho em
-um `ActiveRecord::Base.transaction`. Ambos são opt-in — a gem **não**
-requer `active_record` automaticamente, então você precisa carregar o
-ActiveRecord por conta própria (aplicações Rails já o fazem).
-
-##### `Micro::Case#transaction` — transações inline dentro do `call!`
-
-`Micro::Case#transaction` (e `Micro::Case::Safe#transaction`) é um helper
-privado de instância que envolve um bloco em uma transação de banco e
-dispara um `ActiveRecord::Rollback` sempre que o resultado do bloco for
-um `Failure`. O resultado original é devolvido nos dois casos, permitindo
-continuar encadeando com `Result#then`:
+`Micro::Case#transaction` (e `Micro::Case::Safe#transaction`) é um helper de instância privado que envolve um bloco em uma transação de banco e dispara `ActiveRecord::Rollback` sempre que o resultado do bloco é um `Failure`. O resultado original é retornado de qualquer forma, então você pode continuar encadeando com `Result#then`:
 
 ```ruby
 class CreateUserWithAProfile < Micro::Case
@@ -1311,11 +1149,7 @@ class CreateUserWithAProfile < Micro::Case
 end
 ```
 
-Se o bloco retornar uma falha (ou levantar uma exceção), todas as linhas
-gravadas dentro do bloco serão revertidas. O helper aceita um kwarg
-opcional `with:` para escolher a classe ActiveRecord sobre a qual
-`.transaction` é aberta — útil em aplicações Rails com múltiplos bancos
-(`ApplicationRecord`, `AnalyticsRecord`, `BillingRecord`, …):
+Se o bloco retorna uma falha (ou levanta), todas as linhas escritas dentro do bloco são revertidas. O helper aceita `with:` para escolher a classe ActiveRecord na qual `.transaction` é aberta — útil para aplicações Rails com multi-database (`ApplicationRecord`, `AnalyticsRecord`, `BillingRecord`, …):
 
 ```ruby
 class CreateAuditEntry < Micro::Case
@@ -1327,29 +1161,15 @@ class CreateAuditEntry < Micro::Case
 end
 ```
 
-Quando `with:` é omitido, o helper cai no macro de classe
-(`transaction with: …`) e depois no callback global padrão (veja abaixo),
-que vem com `-> { ::ActiveRecord::Base }`.
+Quando `with:` é omitido, o helper cai para a macro de classe (`transaction with: …`) e depois para o callback global de padrão.
 
-> **Nota:** qualquer classe passada via `with:` (aqui, no macro de classe ou
-> no kwarg `transaction:` de um flow) **precisa ser uma subclasse de
-> `ActiveRecord::Base`**. Classes não-AR são rejeitadas com `ArgumentError`.
-> A validação do macro de classe roda em tempo de class-eval quando o
-> ActiveRecord já está carregado (caso típico de apps Rails); caso
-> contrário, é adiada para runtime, então a ordem de carregamento de
-> initializers não quebra declarações.
-
-> **Compatibilidade retroativa:** a forma posicional pré-5.6.0
-> `transaction(:activerecord) { ... }` continua funcionando como alias de
-> `transaction { ... }`. Qualquer outro valor posicional levanta
-> `ArgumentError` — o helper antigo aceitava apenas `:activerecord`.
+> Qualquer classe passada via `with:` (helper inline, macro de classe ou kwarg de flow) **precisa ser uma subclasse de `ActiveRecord::Base`**. Classes que não sejam AR são rejeitadas com `ArgumentError`.
+>
+> **Retrocompatibilidade:** a forma posicional pré-5.6.0 `transaction(:activerecord) { ... }` continua funcionando como alias de `transaction { ... }`; qualquer outro valor posicional levanta `ArgumentError`.
 
 ##### `transaction with: …` — declarando o padrão para um caso
 
-Um macro no nível de classe permite que um caso declare qual classe
-ActiveRecord deve ser dona de suas transações, para que nem o helper
-inline nem qualquer flow que envolva o caso precise especificá-la em cada
-ponto de chamada. A declaração é herdada por subclasses:
+Uma macro de classe permite que um caso declare qual classe ActiveRecord deve dona das transações dele, então nem o helper inline nem nenhum flow que envolve o caso precisam soletrar isso. A declaração é herdada:
 
 ```ruby
 class ApplicationUseCase < Micro::Case
@@ -1358,36 +1178,30 @@ end
 
 class CreateUserWithAProfile < ApplicationUseCase
   flow(transaction: true, steps: [CreateUser, CreateUserProfile])
-  # transaction: true resolve para ApplicationRecord porque é o que
-  # a classe hospedeira declarou via `transaction with:`.
+  # transaction: true resolve para ApplicationRecord (herdado).
 end
 
 class BillingCase < ApplicationUseCase
   transaction with: BillingRecord
-  # sobrescreve a declaração herdada para este ramo da hierarquia
+  # sobrescreve a declaração herdada para este ramo da árvore
 end
 ```
 
-##### `Micro::Cases.flow(transaction: …, steps: [...])` — transações no nível do flow
+##### Transações no nível do flow
 
-Passe `transaction:` junto com `steps:` para envolver um flow inteiro em
-uma única transação. Se qualquer step retornar uma falha (ou levantar uma
-exceção, no caso de `safe_flow`), todas as escritas realizadas no banco
-durante o flow serão revertidas. O kwarg aceita três formas:
+Passe `transaction:` junto com `steps:` para envolver um flow inteiro em uma única transação. Se qualquer step retorna uma falha (ou levanta, num `safe_flow`), todo write de banco feito durante o flow é revertido. Três formas:
 
 ```ruby
-# Usa o macro de nível de classe (se a classe hospedeira declarou um) ou
-# o padrão global (`ActiveRecord::Base` salvo configuração).
+# Usa a macro de classe (se a classe hospedeira declarou uma) ou o padrão global.
 Micro::Cases.flow(transaction: true, steps: [CreateUser, CreateUserProfile])
 
-# Escolhe uma classe ActiveRecord explícita só para este flow — mesmo
-# vocabulário `with:` usado pelo helper inline e pelo macro de classe.
+# Escolhe uma classe ActiveRecord explícita só para este flow — mesmo vocabulário `with:`.
 Micro::Cases.flow(transaction: { with: AnalyticsRecord }, steps: [
   WriteAuditLog,
   BumpCounter
 ])
 
-# safe_flow faz rollback em falhas E em exceções inesperadas
+# safe_flow reverte em falhas E em exceções inesperadas.
 Micro::Cases.safe_flow(transaction: { with: ApplicationRecord }, steps: [
   CreateUser,
   CreateUserProfile
@@ -1399,9 +1213,7 @@ class CreateUserWithAProfile < Micro::Case
 end
 ```
 
-Para aninhar um flow transacional dentro de outro flow, envolva-o em uma
-classe de caso de uso — `Micro::Cases.flow([...])` achata instâncias de
-`Flow` passadas como steps, mas **não** achata classes:
+Para aninhar um flow transacional dentro de outro flow, envolva ele em uma classe de caso de uso — `Micro::Cases.flow([...])` achata instâncias de `Flow` passadas como steps, mas **não** achata classes:
 
 ```ruby
 class CreateUserAndProfile < Micro::Case
@@ -1416,17 +1228,11 @@ SignUpFlow = Micro::Cases.flow([
 ])
 ```
 
-Se `transaction: true` for usado sem que `ActiveRecord::Base` esteja
-carregado, o flow levantará `Micro::Cases::Error::TransactionAdapterMissing`
-na primeira chamada, sinalizando a configuração incorreta imediatamente.
-Passar `transaction: { with: SomeClass }` pula essa verificação —
-`SomeClass` é considerada confiável e basta responder a `.transaction`.
+Se `transaction: true` for usado enquanto `ActiveRecord::Base` não está carregado, o flow levanta `Micro::Cases::Error::TransactionAdapterMissing` na primeira chamada para que a configuração errada apareça imediatamente. Passar `transaction: { with: SomeClass }` pula essa checagem — `SomeClass` é confiado a responder a `.transaction`.
 
-##### `config.default_transaction_class { … }` — padrão global
+##### Padrão global — `config.default_transaction_class { … }`
 
-Para aplicações Rails que usam um único abstract record
-(`ApplicationRecord`), configure-o uma vez em um initializer em vez de
-declará-lo em cada caso ou flow:
+Para aplicações Rails que usam um único record abstrato (`ApplicationRecord`), configure-o uma vez em um initializer em vez de declarar em cada caso ou flow:
 
 ```ruby
 # config/initializers/u_case.rb
@@ -1435,51 +1241,30 @@ Micro::Case.config do |config|
 end
 ```
 
-O callback (block ou lambda) é invocado **a cada abertura** de transação
-— sem memoização — então é seguro fazer o valor de retorno depender de
-estado em tempo de execução (roteamento por tenant, etc.). O padrão é
-`-> { ::ActiveRecord::Base }`. Ordem de resolução quando uma transação
-abre:
+O callback (bloco ou lambda) é invocado **toda vez** que uma transação abre — sem memoização — então o valor de retorno pode depender de estado em runtime (roteamento por tenant, etc.). O padrão é `-> { ::ActiveRecord::Base }`.
 
-1. **Override no ponto de chamada.** `transaction: { with: X }` no
-   kwarg do flow, ou `transaction(with: X) { ... }` no helper inline.
-2. **Macro `transaction with: X` da classe hospedeira** (sobe pela
-   hierarquia).
-3. **`Micro::Case.config.default_transaction_class.call`** — o callback
-   global (padrão `ActiveRecord::Base`).
+Ordem de resolução, quando uma transação abre:
 
-Uma atribuição não-callable a `default_transaction_class=` levanta
-`ArgumentError` no momento da configuração para que erros como
-`config.default_transaction_class = 'ApplicationRecord'` falhem
-imediatamente em vez de quebrar a primeira transação.
+1. **Override no local de chamada** — `transaction: { with: X }` em um kwarg de flow, ou `transaction(with: X) { ... }` no helper inline.
+2. **Macro `transaction with: X` da classe hospedeira** (caminha pelos ancestrais).
+3. **`Micro::Case.config.default_transaction_class.call`** — o callback global (padrão é `ActiveRecord::Base`).
+
+Uma atribuição não-callable em `default_transaction_class=` levanta `ArgumentError` na hora da configuração para que typos como `config.default_transaction_class = 'ApplicationRecord'` falhem barulhentamente em vez de crasharem na primeira transação.
 
 ##### Flows com steps internos sob transações
 
-Os [steps internos](#steps-internos--construindo-um-flow-inline-dentro-do-call)
-(a forma `Result#then(:symbol)` / `|` construída inline dentro de um
-único `call!`) são a terceira forma do u-case de compor um flow —
-um flow _interno_. Por padrão, um flow interno **não tem rollback
-transacional**: efeitos colaterais de elos `.then(:método)`
-anteriores persistem mesmo quando um elo posterior retorna
-`Failure`.
+[Steps internos](#steps-internos--cadeias-com-resultthen) — a forma `Result#then(:symbol)` / `|` construída inline dentro de um único `call!` — são um flow _interno_. Por padrão eles **não têm rollback transacional**: efeitos colaterais de elos `.then(:method)` anteriores persistem mesmo quando um elo posterior retorna `Failure`.
 
-Existem duas formas naturais de dar rollback transacional a um flow
-interno. Ambas reutilizam os helpers já documentados acima:
+Duas formas naturais de dar rollback:
 
-**1. Envolver o caso hospedeiro em um flow com `transaction: true`.**
-Esta é a forma recomendada assim que o caso hospedeiro é composto
-com o resto do pipeline. A transação cobre a chamada inteira do flow,
-então um `Failure` _em qualquer ponto_ — incluindo de qualquer elo
-`.then(:método)` interno — reverte todas as escritas de banco feitas
-durante a chamada:
+**1. Envolva o caso hospedeiro em um flow `transaction: true`.** Recomendado uma vez que o caso hospedeiro está dentro de um pipeline maior. A transação cobre a chamada inteira do flow, então uma `Failure` _em qualquer lugar_ — incluindo de qualquer elo interno `.then(:method)` — reverte todo write de banco:
 
 ```ruby
 class CreateUserWithProfileInline < Micro::Case
   attributes :name, :info
 
   def call!
-    create_user
-      .then(:create_profile)
+    create_user.then(:create_profile)
   end
 
   private
@@ -1502,697 +1287,303 @@ SignUp = Micro::Cases.flow(transaction: true, steps: [
   CreateUserWithProfileInline,   # ← falha interna agora reverte
   EnqueueIndexingJob
 ])
-
-# Ou no nível de classe:
-class SignUp < Micro::Case
-  flow(transaction: true, steps: [
-    NormalizeParams,
-    CreateUserWithProfileInline,
-    EnqueueIndexingJob
-  ])
-end
 ```
 
-Se `create_profile` (o elo `.then(:create_profile)` interno) retornar
-`Failure(:invalid_profile)`, a linha de `User` inserida antes por
-`create_user` é revertida como parte da mesma
-`ActiveRecord::Base.transaction`. O resultado ainda expõe o tipo da
-falha e as transições parciais, mas nenhuma linha permanece no banco.
+Se `create_profile` retorna `Failure(:invalid_profile)`, a linha de `User` inserida antes é revertida como parte da mesma `ActiveRecord::Base.transaction`. O resultado ainda surfaceia o tipo de falha e as transitions parciais, mas nenhuma linha fica para trás.
 
-**2. Usar o helper inline `Micro::Case#transaction`** para escopar o
-rollback a um único `call!` sem envolver um flow externo:
+**2. Use o helper inline `transaction { ... }`** para escopar o rollback a um único `call!` sem envolver um flow externo:
 
 ```ruby
 class CreateUserWithProfileInline < Micro::Case
   def call!
     transaction {
-      create_user
-        .then(:create_profile)
+      create_user.then(:create_profile)
     }
   end
 end
 ```
 
-Útil quando o caso hospedeiro é invocado isoladamente (não dentro de
-um flow) e você ainda quer que o flow interno seja atômico. O bloco
-`transaction` retorna o `Result` da cadeia como está, então você pode
-continuar compondo com `Result#then` depois dele.
-
-As duas abordagens **se compõem**. Se você colocar
-`CreateUserWithProfileInline` (que já usa `transaction { ... }`
-inline) dentro de um flow externo com `transaction: true`, o
-ActiveRecord junta a transação interna à externa por padrão — uma
-falha externa reverte também as escritas internas. Veja as
-**Observações de comportamento** abaixo para as regras completas de
-aninhamento / achatamento.
+As duas abordagens compõem. Se `CreateUserWithProfileInline` (usando `transaction { ... }` inline) está dentro de um flow externo `transaction: true`, o ActiveRecord junta a transação interna na externa por padrão — uma falha externa reverte os writes da interna também.
 
 ##### Observações de comportamento
 
-- **O resultado não é afetado.** `transaction: true` afeta apenas os
-  efeitos colaterais no banco. `result.data`, `result.type`,
-  `result.transitions` e `result.accessible_attributes` são idênticos
-  aos de um flow equivalente sem transação.
-- **Instâncias de `Flow` são achatadas.** `Micro::Cases.flow([flow_interno,
-Outro])` achata `flow_interno` em seus steps internos, o que faz com
-  que uma instância de `Flow` transacional passada dessa forma **perca
-  sua transação**. Envolva flows transacionais reutilizáveis em uma
-  classe de caso de uso (como no snippet acima) para preservar a
-  transação ao aninhar.
-- **Transações aninhadas se unem à transação externa.** Quando um flow
-  transacional é aninhado dentro de outro flow transacional, o
-  ActiveRecord as une por padrão (sem `requires_new: true`). Uma falha
-  em qualquer ponto da cadeia reverte **tudo** que foi escrito dentro
-  da transação mais externa — incluindo escritas feitas pelo flow
-  interno.
-- **Um externo não-transacional comita o interno.** Se o flow externo
-  não for transacional e o flow transacional interno tiver sucesso, as
-  escritas do interno são comitadas ao final daquele step. Uma falha
-  em um step posterior (não-transacional) **não** desfaz essas
-  escritas.
-- **`Micro::Cases.flow(transaction: true, ...)` simples re-lança
-  exceções.** A transação ainda é revertida, mas o chamador precisa
-  fazer rescue. Use `Micro::Cases.safe_flow(transaction: true, ...)`
-  (ou a forma de classe com `Micro::Case::Safe`) para capturar a
-  exceção como uma falha do tipo `:exception`.
+- **O resultado não é afetado.** `transaction: true` só afeta efeitos colaterais de banco. `result.data`, `result.type`, `result.transitions` e `result.accessible_attributes` são idênticos aos de um flow não-transacional equivalente.
+- **Instâncias de `Flow` são achatadas.** `Micro::Cases.flow([inner_flow, Other])` achata `inner_flow` para seus steps folha — uma instância transacional de `Flow` passada assim **perde sua transação**. Envolva flows transacionais reutilizáveis em uma classe de caso de uso para preservar a transação quando aninhados.
+- **Transações aninhadas se juntam à externa.** O ActiveRecord junta elas por padrão (sem `requires_new: true`). Uma falha em qualquer lugar na cadeia reverte **tudo** escrito dentro da transação mais externa.
+- **Um externo não-transacional commita o interno.** Se o flow externo não é transacional e o flow transacional interno sucede, os writes do interno commitam no final do step interno. Uma falha em um step posterior (não-transacional) **não** desfaz esses writes.
+- **`Micro::Cases.flow(transaction: true, ...)` puro relança exceções.** A transação ainda reverte, mas quem chamou tem que dar `rescue`. Use `Micro::Cases.safe_flow(transaction: true, ...)` (ou a forma a nível de classe com `Micro::Case::Safe`) para capturar a exceção como uma falha `:exception`.
 
-[⬆️ Voltar para o índice](#índice-)
+[⬆️ Voltar ao topo](#índice-)
 
-### `Micro::Case::Strict` - O que é um caso de uso estrito?
+## Configuração
 
-Resposta: é um tipo de caso de uso que exigirá todas as palavras-chave (atributos) em sua inicialização.
-
-```ruby
-class Double < Micro::Case::Strict
-  attribute :numbers
-
-  def call!
-    Success result: { numbers: numbers.map { |number| number * 2 } }
-  end
-end
-
-Double.call({})
-
-# O output será:
-# ArgumentError (missing keyword: :numbers)
-```
-
-[⬆️ Voltar para o índice](#índice-)
-
-### `Micro::Case::Safe` - Existe algum recurso para lidar automaticamente com exceções dentro de um caso de uso ou fluxo?
-
-Sim, assim como `Micro::Case::Strict`, o `Micro::Case::Safe` é outro tipo de caso de uso. Ele tem a capacidade de interceptar automaticamente qualquer exceção como um resultado de falha. Exemplo:
-
-```ruby
-require 'logger'
-
-AppLogger = Logger.new(STDOUT)
-
-class Divide < Micro::Case::Safe
-  attributes :a, :b
-
-  def call!
-    if a.is_a?(Integer) && b.is_a?(Integer)
-      Success result: { number: a / b}
-    else
-      Failure(:not_an_integer)
-    end
-  end
-end
-
-result = Divide.call(a: 2, b: 0)
-result.type == :exception                   # true
-result.data                                 # { exception: #<ZeroDivisionError...> }
-result[:exception].is_a?(ZeroDivisionError) # true
-
-result.on_failure(:exception) do |result|
-  AppLogger.error(result[:exception].message) # E, [2019-08-21T00:05:44.195506 #9532] ERROR -- : divided by 0
-end
-```
-
-Se você precisar lidar com um erro específico, recomendo o uso de uma instrução case. Exemplo:
-
-```ruby
-result.on_failure(:exception) do |data, use_case|
-  case exception = data[:exception]
-  when ZeroDivisionError then AppLogger.error(exception.message)
-  else AppLogger.debug("#{use_case.class.name} was the use case responsible for the exception")
-  end
-end
-```
-
-> **Note:** É possível resgatar uma exceção mesmo quando é um caso de uso seguro. Exemplos: https://github.com/serradura/u-case/blob/714c6b658fc6aa02617e6833ddee09eddc760f2a/test/micro/case/safe_test.rb#L90-L118
-
-[⬆️ Voltar para o índice](#índice-)
-
-#### `Micro::Cases::Safe::Flow`
-
-Como casos de uso seguros, os fluxos seguros podem interceptar uma exceção em qualquer uma de suas etapas. Estas são as maneiras de definir um:
-
-```ruby
-module Users
-  Create = Micro::Cases.safe_flow([
-    ProcessParams,
-    ValidateParams,
-    Persist,
-    SendToCRM
-  ])
-end
-```
-
-Definindo dentro das classes:
-
-```ruby
-module Users
-  class Create < Micro::Case::Safe
-    flow ProcessParams,
-         ValidateParams,
-         Persist,
-         SendToCRM
-  end
-end
-```
-
-[⬆️ Voltar para o índice](#índice-)
-
-#### `Micro::Case::Result#on_exception`
-
-Na programação funcional os erros/exceções são tratados como dados comuns, a ideia é transformar a saída mesmo quando ocorre um comportamento inesperado. Para muitos, [as exceções são muito semelhantes à instrução GOTO](https://softwareengineering.stackexchange.com/questions/189222/are-exceptions-as-control-flow-considered-a-serious-antipattern-if-so-why), pulando o fluxo do programa para caminhos que podem ser difíceis de descobrir como as coisas funcionam em um sistema.
-
-Para resolver isso, o `Micro::Case::Result` tem um hook especial `#on_exception` para ajudá-lo a lidar com o fluxo de controle no caso de exceções.
-
-> **Note**: essa funcionalidade funcionará melhor se for usada com um flow ou caso de uso `Micro::Case::Safe`.
-
-**Como ele funciona?**
-
-```ruby
-class Divide < Micro::Case::Safe
-  attributes :a, :b
-
-  def call!
-    Success result: { division: a / b }
-  end
-end
-
-Divide
-  .call(a: 2, b: 0)
-  .on_success { |result| puts result[:division] }
-  .on_exception(TypeError) { puts 'Please, use only numeric attributes.' }
-  .on_exception(ZeroDivisionError) { |_error| puts "Can't divide a number by 0." }
-  .on_exception { |_error, _use_case| puts 'Oh no, something went wrong!' }
-
-# Output:
-# -------
-# Can't divide a number by 0
-# Oh no, something went wrong!
-
-Divide
-  .call(a: 2, b: '2')
-  .on_success { |result| puts result[:division] }
-  .on_exception(TypeError) { puts 'Please, use only numeric attributes.' }
-  .on_exception(ZeroDivisionError) { |_error| puts "Can't divide a number by 0." }
-  .on_exception { |_error, _use_case| puts 'Oh no, something went wrong!' }
-
-# Output:
-# -------
-# Please, use only numeric attributes.
-# Oh no, something went wrong!
-```
-
-Como você pode ver, este hook tem o mesmo comportamento de `result.on_failure(:exception)`, mas, a ideia aqui é ter uma melhor comunicação no código, fazendo uma referência explícita quando alguma falha acontecer por causa de uma exceção.
-
-[⬆️ Voltar para o índice](#índice-)
-
-#### Desabilitando o mecanismo "safe"
-
-O mecanismo "safe" é opinativo: ele converte qualquer exceção não tratada dentro de um caso de uso (ou em qualquer passo de um fluxo) em um resultado de falha com `type: :exception`. Isso é poderoso, mas também pode gerar uma **base de código fragmentada**, onde algumas exceções são tratadas com `rescue` dentro do `call!` e outras só são tratadas mais tarde via `on_exception` / `on_failure(:exception)` — tornando o fluxo de controle difícil de acompanhar.
-
-Se você prefere uma única convenção explícita para o tratamento de exceções — `rescue` padrão dentro dos seus casos de uso — é possível desabilitar as APIs "safe" por completo:
+`Micro::Case.config` expõe as toggles da gem. Configure uma vez — tipicamente em um initializer do Rails:
 
 ```ruby
 Micro::Case.config do |config|
-  config.disable_safe_features = true
-end
-```
-
-Com isso ativo, os usos abaixo levantarão `Micro::Case::Error::SafeFeaturesDisabled`, garantindo que ninguém na base de código reintroduza o caminho "safe" sem querer:
-
-- Herdar de `Micro::Case::Safe`
-- Chamar `Micro::Cases.safe_flow(...)`
-- Chamar `Micro::Case::Result#on_exception`
-
-Veja [`Micro::Case.config`](#microcaseconfig) para a lista completa de configurações disponíveis.
-
-[⬆️ Voltar para o índice](#índice-)
-
-### Validando atributos com `accept:` / `reject:`
-
-Desde a versão `5.2.0` do `u-case`, todo caso de uso já inclui a [extensão `accept`](https://github.com/serradura/u-attributes#accept-extension) do [`u-attributes`](https://github.com/serradura/u-attributes) (requer `u-attributes >= 2.8`). Você pode declarar a expectativa de tipo (ou qualquer outra verificação) diretamente no atributo, e o caso de uso falhará automaticamente com o tipo `:invalid_attributes` quando algum atributo for rejeitado — sem precisar validar dentro do `call!`.
-
-```ruby
-class CreateUser < Micro::Case
-  attribute :name,  accept: String
-  attribute :email, accept: ->(value) { value.is_a?(String) && value.include?('@') }
-  attribute :age,   accept: Integer, allow_nil: true
-
-  def call!
-    Success result: { user: User.create!(attributes) }
-  end
-end
-
-CreateUser.call(name: 'Bob', email: 'bob@example.com')
-# => #<Success type=:ok ...>
-
-CreateUser.call(name: 42, email: 'not-an-email')
-# => #<Failure type=:invalid_attributes data={
-#       errors: {
-#         "name"  => "expected to be a kind of String",
-#         "email" => "is invalid"
-#       }
-#     }>
-```
-
-O tipo da falha segue a mesma configuração usada pela integração com `ActiveModel` — veja [`Micro::Case.config`](#microcaseconfig) e `set_activemodel_validation_errors_failure`.
-
-Quando combinado com [`u-case/with_activemodel_validation`](#u-casewith_activemodel_validation---como-validar-os-atributos-do-caso-de-uso), a ordem de execução é:
-
-1. O `u-attributes` resolve o valor padrão de cada atributo.
-2. O `u-attributes` executa as verificações de `accept:` / `reject:`.
-3. O `u-case` executa as validações do `ActiveModel` **apenas se** todos os atributos forem aceitos.
-
-[⬆️ Voltar para o índice](#índice-)
-
-### `u-case/with_activemodel_validation` - Como validar os atributos do caso de uso?
-
-**Requisitos:**
-
-Para fazer isso a sua aplicação deverá ter o [activemodel >= 3.2, < 6.1.0](https://rubygems.org/gems/activemodel) como dependência.
-
-Por padrão, se a sua aplicação tiver o ActiveModel como uma dependência, qualquer tipo de caso de uso pode fazer uso dele para validar seus atributos.
-
-```ruby
-class Multiply < Micro::Case
-  attributes :a, :b
-
-  validates :a, :b, presence: true, numericality: true
-
-  def call!
-    return Failure :invalid_attributes, result: { errors: self.errors } if invalid?
-
-    Success result: { number: a * b }
-  end
-end
-```
-
-Mas se você deseja uma maneira automática de falhar seus casos de uso em erros de validação, você poderá fazer:
-
-1. **require 'u-case/with_activemodel_validation'** no Gemfile
-
-```ruby
-gem 'u-case', require: 'u-case/with_activemodel_validation'
-```
-
-2. Usar o `Micro::Case.config` para habilitar ele. [Link para](#microcaseconfig) essa seção.
-
-Usando essa abordagem, você pode reescrever o exemplo anterior com menos código. Exemplo:
-
-```ruby
-require 'u-case/with_activemodel_validation'
-
-class Multiply < Micro::Case
-  attributes :a, :b
-
-  validates :a, :b, presence: true, numericality: true
-
-  def call!
-    Success result: { number: a * b }
-  end
-end
-```
-
-> **Nota:** Após habilitar o modo de validação, as classes `Micro::Case::Strict` e `Micro::Case::Safe` irão herdar este novo comportamento.
-
-#### Se eu habilitei a validação automática, é possível desabilitá-la apenas em casos de uso específicos?
-
-Resposta: Sim, é possível. Para fazer isso, você só precisará usar a macro `disable_auto_validation`. Exemplo:
-
-```ruby
-require 'u-case/with_activemodel_validation'
-
-class Multiply < Micro::Case
-  disable_auto_validation
-
-  attribute :a
-  attribute :b
-  validates :a, :b, presence: true, numericality: true
-
-  def call!
-    Success result: { number: a * b }
-  end
-end
-
-Multiply.call(a: 2, b: 'a')
-
-# O output será:
-# TypeError (String can't be coerced into Integer)
-```
-
-[⬆️ Voltar para o índice](#índice-)
-
-#### `Kind::Validator`
-
-A [gem kind](https://github.com/serradura/kind) possui um módulo para habilitar a validação do tipo de dados através do [`ActiveModel validations`](https://guides.rubyonrails.org/active_model_basics.html#validations). Então, quando você fizer o require do `'u-case/with_activemodel_validation'`, este módulo também irá fazer o require do [`Kind::Validator`](https://github.com/serradura/kind#kindvalidator-activemodelvalidations).
-
-O exemplo abaixo mostra como validar os tipos de atributos.
-
-```ruby
-class Todo::List::AddItem < Micro::Case
-  attributes :user, :params
-
-  validates :user, kind: User
-  validates :params, kind: ActionController::Parameters
-
-  def call!
-    todo_params = params.require(:todo).permit(:title, :due_at)
-
-    todo = user.todos.create(todo_params)
-
-    Success result: { todo: todo }
-  rescue ActionController::ParameterMissing => e
-    Failure :parameter_missing, result: { message: e.message }
-  end
-end
-```
-
-[⬆️ Voltar para o índice](#índice-)
-
-## `Micro::Case.config`
-
-A ideia deste recurso é permitir a configuração de algumas funcionalidades/módulos do `u-case`.
-Eu recomendo que você use apenas uma vez em sua base de código. Exemplo: Em um inicializador do Rails.
-
-Você pode ver abaixo todas as configurações disponíveis com seus valores padrão:
-
-```ruby
-Micro::Case.config do |config|
-  # Use ActiveModel para auto-validar os atributos dos seus casos de uso.
+  # Falha automaticamente casos de uso em erros de validação do ActiveModel.
   config.enable_activemodel_validation = false
 
-  # Use para habilitar/desabilitar o `Micro::Case::Results#transitions`.
+  # Símbolo de tipo usado pela auto-falha quando a validação do ActiveModel
+  # rejeita um atributo (compartilhado com a falha de rejeição de accept:/reject:).
+  # Padrão é :invalid_attributes.
+  config.set_activemodel_validation_errors_failure = :invalid_attributes
+
+  # Registra Micro::Case::Result#transitions em cada step do flow.
+  # Configure para false para economizar a alocação do hash por step em hot paths.
   config.enable_transitions = true
 
-  # Use para proibir as funcionalidades "safe" e garantir uma única forma de tratar
-  # exceções (via `rescue` padrão). Quando `true`, os itens abaixo levantarão
-  # `Micro::Case::Error::SafeFeaturesDisabled`:
-  #   - Herdar de `Micro::Case::Safe`
-  #   - Chamar `Micro::Cases.safe_flow(...)`
-  #   - Chamar `Micro::Case::Result#on_exception`
+  # Proíbe as APIs Safe para impor uma única convenção de tratamento de
+  # exceções (apenas `rescue` dentro dos casos de uso). Quando true, os itens
+  # abaixo levantam Micro::Case::Error::SafeFeaturesDisabled:
+  #   - herdar de Micro::Case::Safe
+  #   - chamar Micro::Cases.safe_flow(...)
+  #   - chamar Micro::Case::Result#on_exception
   config.disable_safe_features = false
 
-  # Use para pular as verificações internas de argumento/contrato da gem (por
-  # exemplo, "isto é um Micro::Case?", "o tipo do resultado é um Symbol?",
-  # "o use case é um tipo de Micro::Case?"). Defina `true` em produção para
-  # um pequeno ganho de performance depois que seus caminhos de código já
-  # estiverem cobertos pela sua suíte de testes. O custo é que usos
-  # incorretos vão aparecer como erros confusos mais à frente, em vez dos
-  # erros curados pela gem (ex.: `Micro::Case::Error::InvalidUseCase`).
+  # Pula os checks internos de argumento/contrato da gem para um pequeno ganho
+  # de performance em produção uma vez que seu test suite tenha exercitado os
+  # code paths. Usos incorretos vão aparecer como erros downstream em vez dos
+  # erros curados da gem.
   config.disable_runtime_checks = false
+
+  # A classe ActiveRecord usada por `transaction: true`. Passe um bloco (ou lambda).
+  # O padrão é `-> { ::ActiveRecord::Base }`. Sobrescreva para usar um record
+  # abstrato por aplicação como ApplicationRecord.
+  config.default_transaction_class { ApplicationRecord }
 end
 ```
 
-Todas as verificações estão consolidadas em `Micro::Case::Check::Enabled` (o
-padrão). Definir `disable_runtime_checks = true` troca `Micro::Case.check` por
-`Micro::Case::Check::Disabled` — um módulo com a mesma assinatura cujos
-métodos não fazem nada — de forma que as validações não são executadas a
-cada chamada.
+Todos os checks internos vivem em `Micro::Case::Check::Enabled` (o padrão). Ativar `disable_runtime_checks = true` troca `Micro::Case.check` para `Micro::Case::Check::Disabled`, cujos métodos são no-ops — as validações em si param de rodar a cada chamada.
 
-[⬆️ Voltar para o índice](#índice-)
+[⬆️ Voltar ao topo](#índice-)
 
-## Benchmarks
+## Performance
 
-### `Micro::Case`
+Em benchmarks contra abstrações comparáveis, `Micro::Case` é o mais rápido depois do `Dry::Monads`:
 
-#### Success results
+| Gem / Abstração        | Success (i/s) | Failure (i/s) |
+| ---------------------- | ------------: | ------------: |
+| Dry::Monads            |     315,635.1 |     135,386.9 |
+| **Micro::Case**        |      75,837.7 |      73,489.3 |
+| Interactor             |      59,745.5 |      27,037.0 |
+| Trailblazer::Operation |      28,423.9 |      29,016.4 |
+| Dry::Transaction       |      10,130.9 |       8,988.6 |
 
-| Gem / Abstração        | Iterações por segundo |          Comparação |
-| ---------------------- | --------------------: | ------------------: |
-| Dry::Monads            |              315635.1 | _**O mais rápido**_ |
-| **Micro::Case**        |               75837.7 |    4.16x mais lento |
-| Interactor             |               59745.5 |    5.28x mais lento |
-| Trailblazer::Operation |               28423.9 |   11.10x mais lento |
-| Dry::Transaction       |               10130.9 |   31.16x mais lento |
+Para flows, o alias `|` pipe é o estilo de composição mais rápido:
 
-<details>
-  <summary>Show the full <a href="https://github.com/evanphx/benchmark-ips">benchmark/ips</a> results.</summary>
+| Estilo de composição         |      Success |      Failure |
+| ---------------------------- | -----------: | -----------: |
+| `Result#\|` (pipe)           |     80,936.2 |     78,280.4 |
+| `Micro::Cases.flow(...)`     |     same-ish |     same-ish |
+| `Result#then`                |     same-ish |     same-ish |
+| Classe com `flow` interno    | 1.72× slower | 1.68× slower |
+| Classe que inclui a si mesma | 1.93× slower | 1.87× slower |
+| `Interactor::Organizer`      | 3.33× slower | 3.22× slower |
 
-```ruby
-# Warming up --------------------------------------
-#           Interactor     5.711k i/100ms
-# Trailblazer::Operation
-#                          2.283k i/100ms
-#          Dry::Monads    31.130k i/100ms
-#     Dry::Transaction   994.000  i/100ms
-#          Micro::Case     7.911k i/100ms
-#    Micro::Case::Safe     7.911k i/100ms
-#  Micro::Case::Strict     6.248k i/100ms
+> `Dry::Monads`, `Dry::Transaction` e `Trailblazer::Operation` não têm uma feature equivalente a flow e ficam fora da tabela de flow.
 
-# Calculating -------------------------------------
-#           Interactor     59.746k (±29.9%) i/s -    274.128k in   5.049901s
-# Trailblazer::Operation
-#                          28.424k (±15.8%) i/s -    141.546k in   5.087882s
-#          Dry::Monads    315.635k (± 6.1%) i/s -      1.588M in   5.048914s
-#     Dry::Transaction     10.131k (± 6.4%) i/s -     50.694k in   5.025150s
-#          Micro::Case     75.838k (± 9.7%) i/s -    379.728k in   5.052573s
-#    Micro::Case::Safe     75.461k (±10.1%) i/s -    379.728k in   5.079238s
-#  Micro::Case::Strict     64.235k (± 9.0%) i/s -    324.896k in   5.097028s
-
-# Comparison:
-#          Dry::Monads:   315635.1 i/s
-#          Micro::Case:    75837.7 i/s - 4.16x  (± 0.00) slower
-#    Micro::Case::Safe:    75461.3 i/s - 4.18x  (± 0.00) slower
-#  Micro::Case::Strict:    64234.9 i/s - 4.91x  (± 0.00) slower
-#           Interactor:    59745.5 i/s - 5.28x  (± 0.00) slower
-# Trailblazer::Operation:    28423.9 i/s - 11.10x  (± 0.00) slower
-#     Dry::Transaction:    10130.9 i/s - 31.16x  (± 0.00) slower
-```
-
-</details>
-
-https://github.com/serradura/u-case/blob/main/benchmarks/perfomance/use_case/success_results.
-
-#### Failure results
-
-| Gem / Abstração        | Iterações por segundo |          Comparação |
-| ---------------------- | --------------------: | ------------------: |
-| Dry::Monads            |              135386.9 | _**O mais rápido**_ |
-| **Micro::Case**        |               73489.3 |    1.85x mais lento |
-| Trailblazer::Operation |               29016.4 |    4.67x mais lento |
-| Interactor             |               27037.0 |    5.01x mais lento |
-| Dry::Transaction       |                8988.6 |   15.06x mais lento |
-
-<details>
-  <summary>Mostrar o resultado completo do <a href="https://github.com/evanphx/benchmark-ips">benchmark/ips</a>.</summary>
-
-```ruby
-# Warming up --------------------------------------
-#           Interactor     2.626k i/100ms
-# Trailblazer::Operation   2.343k i/100ms
-#          Dry::Monads    13.386k i/100ms
-#     Dry::Transaction   868.000  i/100ms
-#          Micro::Case     7.603k i/100ms
-#    Micro::Case::Safe     7.598k i/100ms
-#  Micro::Case::Strict     6.178k i/100ms
-
-# Calculating -------------------------------------
-#           Interactor     27.037k (±24.9%) i/s -    128.674k in   5.102133s
-# Trailblazer::Operation   29.016k (±12.4%) i/s -    145.266k in   5.074991s
-#          Dry::Monads    135.387k (±15.1%) i/s -    669.300k in   5.055356s
-#     Dry::Transaction      8.989k (± 9.2%) i/s -     45.136k in   5.084820s
-#          Micro::Case     73.247k (± 9.9%) i/s -    364.944k in   5.030449s
-#    Micro::Case::Safe     73.489k (± 9.6%) i/s -    364.704k in   5.007282s
-#  Micro::Case::Strict     61.980k (± 8.0%) i/s -    308.900k in   5.014821s
-
-# Comparison:
-#          Dry::Monads:   135386.9 i/s
-#    Micro::Case::Safe:    73489.3 i/s - 1.84x  (± 0.00) slower
-#          Micro::Case:    73246.6 i/s - 1.85x  (± 0.00) slower
-#  Micro::Case::Strict:    61979.7 i/s - 2.18x  (± 0.00) slower
-# Trailblazer::Operation:    29016.4 i/s - 4.67x  (± 0.00) slower
-#           Interactor:    27037.0 i/s - 5.01x  (± 0.00) slower
-#     Dry::Transaction:     8988.6 i/s - 15.06x  (± 0.00) slower
-```
-
-</details>
-
-https://github.com/serradura/u-case/blob/main/benchmarks/perfomance/use_case/failure_results.
-
----
-
-### `Micro::Cases::Flow`
-
-| Gem / Abstração                              | [Resultados de sucesso](https://github.com/serradura/u-case/blob/main/benchmarks/perfomance/flow/success_results.rb) | [Resultados de falha](https://github.com/serradura/u-case/blob/main/benchmarks/perfomance/flow/failure_results.rb) |
-| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------: | -----------------------------------------------------------------------------------------------------------------: |
-| Micro::Case::Result `pipe` method            |                                                                                                          80936.2 i/s |                                                                                                        78280.4 i/s |
-| Micro::Case::Result `then` method            |                                                                                                        0x mais lento |                                                                                                      0x mais lento |
-| Micro::Cases.flow                            |                                                                                                        0x mais lento |                                                                                                      0x mais lento |
-| Micro::Case class with an inner flow         |                                                                                                     1.72x mais lento |                                                                                                   1.68x mais lento |
-| Micro::Case class including itself as a step |                                                                                                     1.93x mais lento |                                                                                                   1.87x mais lento |
-| Interactor::Organizer                        |                                                                                                     3.33x mais lento |                                                                                                   3.22x mais lento |
-
-\* As gems `Dry::Monads`, `Dry::Transaction`, `Trailblazer::Operation` estão fora desta análise por não terem esse tipo de funcionalidade.
-
-<details>
-  <summary><strong>Resultados de sucesso</strong> - Mostrar o resultado completo do benchmark/ips.</summary>
-
-```ruby
-# Warming up --------------------------------------
-# Interactor::Organizer             1.809k i/100ms
-# Micro::Cases.flow([])             7.808k i/100ms
-# Micro::Case flow in a class       4.816k i/100ms
-# Micro::Case including the class   4.094k i/100ms
-# Micro::Case::Result#|             7.656k i/100ms
-# Micro::Case::Result#then          7.138k i/100ms
-
-# Calculating -------------------------------------
-# Interactor::Organizer             24.290k (±24.0%) i/s -    113.967k in   5.032825s
-# Micro::Cases.flow([])             74.790k (±11.1%) i/s -    374.784k in   5.071740s
-# Micro::Case flow in a class       47.043k (± 8.0%) i/s -    235.984k in   5.047477s
-# Micro::Case including the class   42.030k (± 8.5%) i/s -    208.794k in   5.002138s
-# Micro::Case::Result#|             80.936k (±15.9%) i/s -    398.112k in   5.052531s
-# Micro::Case::Result#then          71.459k (± 8.8%) i/s -    356.900k in   5.030526s
-
-# Comparison:
-# Micro::Case::Result#|:            80936.2 i/s
-# Micro::Cases.flow([]):            74790.1 i/s - same-ish: difference falls within error
-# Micro::Case::Result#then:         71459.5 i/s - same-ish: difference falls within error
-# Micro::Case flow in a class:      47042.6 i/s - 1.72x  (± 0.00) slower
-# Micro::Case including the class:  42030.2 i/s - 1.93x  (± 0.00) slower
-# Interactor::Organizer:            24290.3 i/s - 3.33x  (± 0.00) slower
-```
-
-</details>
-
-<details>
-  <summary><strong>Resultados de falha</strong> - Mostrar o resultado completo do benchmark/ips.</summary>
-
-```ruby
-# Warming up --------------------------------------
-# Interactor::Organizer            1.734k i/100ms
-# Micro::Cases.flow([])            7.515k i/100ms
-# Micro::Case flow in a class      4.636k i/100ms
-# Micro::Case including the class  4.114k i/100ms
-# Micro::Case::Result#|            7.588k i/100ms
-# Micro::Case::Result#then         6.681k i/100ms
-
-# Calculating -------------------------------------
-# Interactor::Organizer            24.280k (±24.5%) i/s -    112.710k in   5.013334s
-# Micro::Cases.flow([])            74.999k (± 9.8%) i/s -    375.750k in   5.055777s
-# Micro::Case flow in a class      46.681k (± 9.3%) i/s -    236.436k in   5.105105s
-# Micro::Case including the class  41.921k (± 8.9%) i/s -    209.814k in   5.043622s
-# Micro::Case::Result#|            78.280k (±12.6%) i/s -    386.988k in   5.022146s
-# Micro::Case::Result#then         68.898k (± 8.8%) i/s -    347.412k in   5.080116s
-
-# Comparison:
-# Micro::Case::Result#|:            78280.4 i/s
-# Micro::Cases.flow([]):            74999.4 i/s - same-ish: difference falls within error
-# Micro::Case::Result#then:         68898.4 i/s - same-ish: difference falls within error
-# Micro::Case flow in a class:      46681.0 i/s - 1.68x  (± 0.00) slower
-# Micro::Case including the class:  41920.8 i/s - 1.87x  (± 0.00) slower
-# Interactor::Organizer:            24280.0 i/s - 3.22x  (± 0.00) slower
-```
-
-</details>
-
-https://github.com/serradura/u-case/blob/main/benchmarks/perfomance/flow/
-
-[⬆️ Voltar para o índice](#índice-)
-
-### Execuntando os benchmarks
-
-#### Performance (Benchmarks IPS)
-
-Clone este repositório e acesse a sua pasta, então execute os comandos abaixo:
-
-**Casos de uso**
+### Executando os benchmarks
 
 ```sh
-ruby benchmarks/perfomance/use_case/failure_results.rb
+# Casos de uso
 ruby benchmarks/perfomance/use_case/success_results.rb
-```
+ruby benchmarks/perfomance/use_case/failure_results.rb
 
-**Flows**
-
-```sh
-ruby benchmarks/perfomance/flow/failure_results.rb
+# Flows
 ruby benchmarks/perfomance/flow/success_results.rb
+ruby benchmarks/perfomance/flow/failure_results.rb
 ```
 
-#### Memory profiling
-
-**Casos de uso**
+Memory profiling:
 
 ```sh
 ./benchmarks/memory/use_case/success/with_transitions/analyze.sh
 ./benchmarks/memory/use_case/success/without_transitions/analyze.sh
-```
-
-**Flows**
-
-```sh
 ./benchmarks/memory/flow/success/with_transitions/analyze.sh
 ./benchmarks/memory/flow/success/without_transitions/analyze.sh
 ```
 
-[⬆️ Voltar para o índice](#índice-)
+### Desabilitando os checks em runtime
+
+Configure `disable_runtime_checks = true` para um pequeno ganho de alguns por cento em produção uma vez que seu test suite tenha exercitado os code paths:
+
+```ruby
+Micro::Case.config { |c| c.disable_runtime_checks = true }
+```
+
+Os ganhos medidos (veja [`benchmarks/perfomance/runtime_checks/compare.rb`](https://github.com/serradura/u-case/blob/main/benchmarks/perfomance/runtime_checks/compare.rb)) dependem do JIT: dentro do ruído no Ruby puro, ~3–5% no Ruby 3.2 +YJIT, ~4–7% no Ruby 4.0 +PRISM.
 
 ### Comparações
 
-Confira as implementações do mesmo caso de uso com diferentes gems/abstrações.
+Implementações lado a lado do mesmo caso de uso em outras bibliotecas:
 
-- [interactor](https://github.com/serradura/u-case/blob/main/comparisons/interactor.rb)
+- [Interactor](https://github.com/serradura/u-case/blob/main/comparisons/interactor.rb)
 - [u-case](https://github.com/serradura/u-case/blob/main/comparisons/u-case.rb)
 
-[⬆️ Voltar para o índice](#índice-)
+[⬆️ Voltar ao topo](#índice-)
 
 ## Exemplos
 
-### 1️⃣ Criação de usuários
+### Um flow completo de cadastro
 
-> Um exemplo de fluxo que define etapas para higienizar, validar e persistir seus dados de entrada. Ele tem todas as abordagens possíveis para representar casos de uso com a gem `u-case`.
->
-> Link: https://github.com/serradura/u-case/blob/main/examples/users_creation
+Três casos de uso compostos em um flow transacional, usando validação `accept:`, contratos de resultado e hooks:
 
-### 2️⃣ Rails App (API)
+```ruby
+class NormalizeParams < Micro::Case
+  attribute :params, accept: Hash
 
-> Este projeto mostra diferentes tipos de arquitetura (uma por commit), e na última, como usar a gem `Micro::Case` para lidar com a lógica de negócios da aplicação.
->
-> Link: https://github.com/serradura/from-fat-controllers-to-use-cases
+  results do |on|
+    on.success(result: [:name, :email])
+    on.failure(:invalid_params)
+  end
 
-### 3️⃣ CLI calculator
+  def call!
+    name  = params[:name].to_s.strip
+    email = params[:email].to_s.strip.downcase
 
-> Rake tasks para demonstrar como lidar com os dados do usuário e como usar diferentes tipos de falha para controlar o fluxo do programa.
->
-> Link: https://github.com/serradura/u-case/tree/main/examples/calculator
+    return Failure(:invalid_params) if name.empty? || email.empty?
 
-### 4️⃣ Interceptando exceções dentro dos casos de uso
+    Success result: { name: name, email: email }
+  end
+end
 
-> Link: https://github.com/serradura/u-case/blob/main/examples/rescuing_exceptions.rb
+class CreateUser < Micro::Case
+  attributes :name, :email
 
-[⬆️ Voltar para o índice](#índice-)
+  results do |on|
+    on.success(result: [:user])
+    on.failure(:invalid_user)
+  end
+
+  def call!
+    user = User.create(name: name, email: email)
+
+    return Failure(:invalid_user, result: { errors: user.errors }) if user.errors.any?
+
+    Success result: { user: user }
+  end
+end
+
+class CreateProfile < Micro::Case
+  attributes :user
+
+  results do |on|
+    on.success(result: [:profile])
+    on.failure(:invalid_profile)
+  end
+
+  def call!
+    profile = Profile.create(user_id: user.id)
+
+    return Failure(:invalid_profile, result: { errors: profile.errors }) if profile.errors.any?
+
+    Success result: { profile: profile }
+  end
+end
+
+SignUp = Micro::Cases.flow(transaction: true, steps: [
+  NormalizeParams,
+  CreateUser,
+  CreateProfile
+])
+
+SignUp
+  .call(params: { name: 'Ada', email: 'ADA@EXAMPLE.com' })
+  .on_success                   { |r| render json: { user_id: r[:user].id } }
+  .on_failure(:invalid_params)  {     render status: 422 }
+  .on_failure(:invalid_user)    { |r| render status: 422, json: { errors: r[:errors] } }
+  .on_failure(:invalid_profile) { |r| render status: 422, json: { errors: r[:errors] } }
+```
+
+Se `CreateProfile` falha, a linha de `User` inserida por `CreateUser` é revertida — esse é o `transaction: true` fazendo seu trabalho. O resultado surfaceia `:invalid_profile`, o hook dispara, e o banco fica limpo.
+
+### Mais exemplos
+
+- **[Flow de criação de usuários](https://github.com/serradura/u-case/blob/main/examples/users_creation)** — sanitiza, valida, persiste; demonstra todos os estilos de composição.
+- **[Aplicação Rails (API)](https://github.com/serradura/from-fat-controllers-to-use-cases)** — arquiteturas diferentes em commits diferentes; o último usa `Micro::Case` para a regra de negócio.
+- **[Calculadora CLI](https://github.com/serradura/u-case/tree/main/examples/calculator)** — Rake tasks demonstrando manipulação de input do usuário e fluxo de controle baseado em tipos de falha.
+- **[Capturando exceções](https://github.com/serradura/u-case/blob/main/examples/rescuing_exceptions.rb)** — padrões para tratamento de exceções dentro de casos de uso.
+
+[⬆️ Voltar ao topo](#índice-)
+
+## Indo além com `u-attributes`
+
+As macros `attribute` / `attributes` do `Micro::Case` vêm do [`u-attributes`](https://github.com/serradura/u-attributes), e todo recurso que aquela gem suporta está disponível em todo caso de uso. Dois padrões que vale conhecer:
+
+### Atributos aninhados (forma com bloco)
+
+Declare um atributo que tem atributos por dentro — útil quando seu input é um objeto estruturado em vez de um hash plano. O `accept:` nos atributos internos ainda participa da falha `:invalid_attributes` do pai:
+
+```ruby
+class CreateOrder < Micro::Case
+  attribute :id, accept: Integer
+
+  attribute :customer do
+    attribute :name,  accept: String
+    attribute :email, accept: String
+  end
+
+  def call!
+    Success result: { order: Order.create!(id: id, customer_id: customer.id) }
+  end
+end
+
+CreateOrder
+  .call(id: 42, customer: { name: 'Ada', email: 'ada@example.com' })
+  .success? # => true
+
+CreateOrder
+  .call(id: 42, customer: { name: 42, email: 'ada@example.com' })
+  .type     # => :invalid_attributes
+```
+
+O hash aninhado é acessível como `customer.name`, `customer.email`.
+
+### Aceitando outra classe de atributos
+
+`accept:` pode apontar para outra classe — hashes que chegam são automaticamente convertidos em instâncias dela:
+
+```ruby
+class CreateProfile < Micro::Case
+  Address = Micro::Attributes.new do
+    attribute :city,   accept: String
+    attribute :postal, accept: String
+  end
+
+  attribute :name,    accept: String
+  attribute :address, accept: Address
+
+  def call!
+    Success result: { profile: Profile.create!(name: name, address: address.to_h) }
+  end
+end
+
+CreateProfile.call(
+  name: 'Rodrigo',
+  address: { city: 'Rio', postal: '20000-000' }
+)
+# => Success — `address` é uma instância de Address dentro de `call!`
+```
+
+Para defaults, `allow_nil:`, validators customizados e o resto do conjunto de recursos, veja o README do [`u-attributes`](https://github.com/serradura/u-attributes).
+
+[⬆️ Voltar ao topo](#índice-)
 
 ## Desenvolvimento
 
-Após fazer o checking out do repo, execute `bin/setup` para instalar dependências. Então, execute `./test.sh` para executar os testes. Você pode executar `bin/console` para ter um prompt interativo que permitirá você experimenta-lá.
+Depois de clonar o repo, rode `bin/setup` para instalar as dependências e atualizar os appraisals. Então `bundle exec rake test` roda a suíte padrão, `bundle exec appraisal <nome> rake test` roda um appraisal específico do Rails (veja `Appraisals`), e `bundle exec rake matrix` roda a matriz local completa para o Ruby ativo. `bin/console` abre um prompt interativo.
 
-Para instalar esta gem em sua máquina local, execute `bundle exec rake install`. Para lançar uma nova versão, atualize o número da versão em `version.rb` e execute` bundle exec rake release`, que criará uma tag git para a versão, enviará git commits e tags e enviará o arquivo `.gem`para [rubygems.org](https://rubygems.org).
+Para instalar na sua máquina, rode `bundle exec rake install`. Para lançar uma nova versão, atualize `lib/micro/case/version.rb` e então rode `bundle exec rake release` (cria a tag git, faz push dos commits e tags, e dá push do `.gem` para o [rubygems.org](https://rubygems.org)).
 
 ## Contribuindo
 
-Reportar bugs e solicitar pull requests são bem-vindos no GitHub em https://github.com/serradura/u-case. Este projeto pretende ser um espaço seguro e acolhedor para colaboração, e espera-se que os colaboradores sigam o código de conduta do [Covenant do Contribuidor](http://contributor-covenant.org).
+Bug reports e pull requests são bem-vindos no GitHub em https://github.com/serradura/u-case. Este projeto pretende ser um espaço seguro e acolhedor para colaboração, e os contribuidores devem aderir ao código de conduta do [Contributor Covenant](https://contributor-covenant.org).
 
 ## Licença
 
-A gem está disponível como código aberto nos termos da [licença MIT](https://opensource.org/licenses/MIT).
+Disponível como open source sob os termos da [MIT License](https://opensource.org/licenses/MIT).
 
 ## Código de conduta
 
-Espera-se que todos que interagem com o codebase do projeto `Micro::Case`, issue trackers, chat rooms and mailing lists sigam o [código de conduta](https://github.com/serradura/u-case/blob/main/CODE_OF_CONDUCT.md).
+Todos que interagem com a codebase, issue trackers, salas de chat e listas de email do projeto Micro::Case devem seguir o [código de conduta](https://github.com/serradura/u-case/blob/main/CODE_OF_CONDUCT.md).
