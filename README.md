@@ -69,6 +69,9 @@ That's the whole shape: `attributes`, a `call!` method, `Success(...)` or `Failu
     - [The basics](#the-basics)
     - [Strict mode — required attributes](#strict-mode--required-attributes)
     - [Safe mode — capturing exceptions](#safe-mode--capturing-exceptions)
+      - [Safe flows](#safe-flows)
+      - [`Result#on_exception`](#resulton_exception)
+      - [Opting out of Safe](#opting-out-of-safe)
   - [Working with results](#working-with-results)
     - [The Result API](#the-result-api)
     - [Default and custom result types](#default-and-custom-result-types)
@@ -80,13 +83,37 @@ That's the whole shape: `attributes`, a `call!` method, `Success(...)` or `Failu
   - [Validating attributes](#validating-attributes)
     - [`accept:` and `reject:` (default)](#accept-and-reject-default)
     - [ActiveModel integration (opt-in)](#activemodel-integration-opt-in)
+      - [Disabling auto-validation for a specific use case](#disabling-auto-validation-for-a-specific-use-case)
+      - [`Kind::Validator`](#kindvalidator)
   - [Composing use cases](#composing-use-cases)
     - [Flows](#flows)
+      - [Composing flows together](#composing-flows-together)
+      - [Data accumulation through a flow](#data-accumulation-through-a-flow)
+      - [Inspecting execution with `result.transitions`](#inspecting-execution-with-resulttransitions)
+      - [Composing a flow that includes itself](#composing-a-flow-that-includes-itself)
     - [Internal steps — `Result#then` chains](#internal-steps--resultthen-chains)
+      - [Accepted link shapes](#accepted-link-shapes)
+      - [A minimal example](#a-minimal-example)
+      - [`|` pipe alias](#-pipe-alias)
+      - [Lambda / `Method` forms](#lambda--method-forms)
+      - [`Failure` short-circuits the chain](#failure-short-circuits-the-chain)
+      - [Using an internal-step case inside an outer flow](#using-an-internal-step-case-inside-an-outer-flow)
+      - [Persistence without a transaction](#persistence-without-a-transaction)
     - [Transactions](#transactions)
+      - [Inline `transaction { ... }` inside `call!`](#inline-transaction----inside-call)
+      - [`transaction with: …` — declaring the default for a case](#transaction-with---declaring-the-default-for-a-case)
+      - [Flow-level transactions](#flow-level-transactions)
+      - [Global default — `config.default_transaction_class { … }`](#global-default--configdefault_transaction_class---)
+      - [Internal-step flows under transactions](#internal-step-flows-under-transactions)
+      - [Behavior notes](#behavior-notes)
 - [Configuration](#configuration)
 - [Performance](#performance)
+  - [Running the benchmarks](#running-the-benchmarks)
+  - [Disabling runtime checks](#disabling-runtime-checks)
+  - [Comparisons](#comparisons)
 - [Examples](#examples)
+  - [An end-to-end sign-up flow](#an-end-to-end-sign-up-flow)
+  - [More examples](#more-examples)
 - [Development](#development)
 - [Contributing](#contributing)
 - [License](#license)
@@ -500,15 +527,15 @@ end
 
 The hash patterns expose these keys:
 
-| Key            | Present on   | Value                                                                          |
-| -------------- | ------------ | ------------------------------------------------------------------------------ |
-| `success:`     | success only | the result `type` (e.g. `:ok`)                                                 |
-| `failure:`     | failure only | the result `type` (e.g. `:invalid_attributes`)                                 |
-| `type:`        | always       | the result `type`                                                              |
-| `data:`        | always       | the result `data` hash                                                         |
-| `result:`      | always       | alias of `data:` (matches the `Success(result: …)` keyword at the call site)   |
-| `use_case:`    | always       | the use case instance that produced the result                                 |
-| `transitions:` | always       | the result `transitions` array                                                 |
+| Key            | Present on   | Value                                                                        |
+| -------------- | ------------ | ---------------------------------------------------------------------------- |
+| `success:`     | success only | the result `type` (e.g. `:ok`)                                               |
+| `failure:`     | failure only | the result `type` (e.g. `:invalid_attributes`)                               |
+| `type:`        | always       | the result `type`                                                            |
+| `data:`        | always       | the result `data` hash                                                       |
+| `result:`      | always       | alias of `data:` (matches the `Success(result: …)` keyword at the call site) |
+| `use_case:`    | always       | the use case instance that produced the result                               |
+| `transitions:` | always       | the result `transitions` array                                               |
 
 `Result#deconstruct` returns a three-element array `[status, type, data]` where `status` is `:success` or `:failure`, so array patterns can use the status as a discriminant — mirroring how libraries with separate `Success` / `Failure` classes are pattern-matched, even though `Micro::Case::Result` is a single class:
 
@@ -1315,24 +1342,24 @@ All internal checks live in `Micro::Case::Check::Enabled` (the default). Togglin
 
 In benchmarks against comparable abstractions, `Micro::Case` is the fastest after `Dry::Monads`:
 
-| Gem / Abstraction      |  Success (i/s) |  Failure (i/s) |
-| ---------------------- | -------------: | -------------: |
-| Dry::Monads            |      315,635.1 |      135,386.9 |
-| **Micro::Case**        |       75,837.7 |       73,489.3 |
-| Interactor             |       59,745.5 |       27,037.0 |
-| Trailblazer::Operation |       28,423.9 |       29,016.4 |
-| Dry::Transaction       |       10,130.9 |        8,988.6 |
+| Gem / Abstraction      | Success (i/s) | Failure (i/s) |
+| ---------------------- | ------------: | ------------: |
+| Dry::Monads            |     315,635.1 |     135,386.9 |
+| **Micro::Case**        |      75,837.7 |      73,489.3 |
+| Interactor             |      59,745.5 |      27,037.0 |
+| Trailblazer::Operation |      28,423.9 |      29,016.4 |
+| Dry::Transaction       |      10,130.9 |       8,988.6 |
 
 For flows, the `|` pipe alias is the fastest composition style:
 
-| Composition style                  |       Success |       Failure |
-| ---------------------------------- | ------------: | ------------: |
-| `Result#\|` (pipe)                 |      80,936.2 |      78,280.4 |
-| `Micro::Cases.flow(...)`           |      same-ish |      same-ish |
-| `Result#then`                      |      same-ish |      same-ish |
-| Class with inner `flow`            |  1.72× slower |  1.68× slower |
-| Class including itself as a step   |  1.93× slower |  1.87× slower |
-| `Interactor::Organizer`            |  3.33× slower |  3.22× slower |
+| Composition style                |      Success |      Failure |
+| -------------------------------- | -----------: | -----------: |
+| `Result#\|` (pipe)               |     80,936.2 |     78,280.4 |
+| `Micro::Cases.flow(...)`         |     same-ish |     same-ish |
+| `Result#then`                    |     same-ish |     same-ish |
+| Class with inner `flow`          | 1.72× slower | 1.68× slower |
+| Class including itself as a step | 1.93× slower | 1.87× slower |
+| `Interactor::Organizer`          | 3.33× slower | 3.22× slower |
 
 > `Dry::Monads`, `Dry::Transaction`, and `Trailblazer::Operation` don't ship a flow-equivalent feature and are excluded from the flow table.
 
