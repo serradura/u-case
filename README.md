@@ -128,7 +128,7 @@ See [Composing use cases](#composing-use-cases) and [Going further with `u-attri
 - **Pattern matching** — Ruby `case`/`in` works out of the box. (See [Pattern matching](#pattern-matching)).
 - **Result contracts** — declare which types and values a use case can return. (See [Result contracts](#result-contracts)).
 - **Inspectable execution** — every flow records each step's input, output. (See [`transitions`](#inspecting-execution-with-resulttransitions)).
-- ⚡ **Transactions on demand** — wrap a use case, a [`flow`](#transactions), or an inline `Result#then` chain in an `ActiveRecord` transaction.
+- ⚡ **Transactions on demand** — wrap a use case, a flow, in an [`ActiveRecord` transaction](#transactions).
 - **Exception-safe by opt-in** — [`Micro::Case::Safe`](#safe-mode--capturing-exceptions) turns unhandled exceptions into `:exception` failures.
 - **Fast** — Check out the [benchmarks](#performance), with no global state.
 

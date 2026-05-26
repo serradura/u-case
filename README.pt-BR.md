@@ -114,7 +114,7 @@ Veja [Compondo casos de uso](#compondo-casos-de-uso) e [Indo além com `u-attrib
 - **Pattern matching** — o `case`/`in` do Ruby funciona em resultados direto ([Pattern matching](#pattern-matching)).
 - **Contratos de resultado** — declare quais tipos de resultado e quais chaves seu caso de uso pode retornar; [usos incorretos falham loudly](#contratos-de-resultado).
 - **Execução inspecionável** — todo flow registra a entrada, a saída e os atributos acessíveis de cada step em [`result.transitions`](#inspecionando-a-execução-com-resulttransitions). Debug, log ou audite como qualquer resultado foi produzido.
-- ⚡ **Transações sob demanda** — envolva um caso de uso, um [`flow`](#transações) ou uma cadeia inline com `Result#then` em uma transação `ActiveRecord`.
+- ⚡ **Transações sob demanda** — envolva um caso de uso, um flow em uma [transação `ActiveRecord`](#transações).
 - **Tratamento de exceções opt-in** — [`Micro::Case::Safe`](#modo-seguro--capturando-exceções) converte exceções não tratadas em falhas do tipo `:exception`.
 - **Rápido** — Confira os [benchmarks](#performance), sem estado global.
 
