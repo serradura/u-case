@@ -1,5 +1,5 @@
 <p align="center">
-  <h1 align="center" id="-case"><img src="./assets/ucase_logo_v2.png" alt="μ-case" height="300"></h1>
+  <h1 align="center" id="-case"><img src="./assets/ucase_logo_v2.png" alt="μ-case" height="250"></h1>
   <p align="center"><i>Represente casos de uso de forma simples e poderosa: escreva código modular, expressivo e sequencialmente lógico.</i></p>
   <p align="center">
     <a href="https://badge.fury.io/rb/u-case"><img src="https://badge.fury.io/rb/u-case.svg" alt="Gem Version" height="18"></a>
