@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This gem was originally published as `u-service` (versions 0.1.0 – 1.0.0) and renamed to `u-case` starting with `u-case 1.0.0` on 2019-09-15.
 
+## [5.7.1] - 2026-05-25
+### Changed
+- English README restructured for clearer onboarding and reference. Top-level reorganization: added a 30-second taste snippet and a refreshed "What you get" value-prop, promoted result contracts and pattern matching out of nested Result subsections, grouped flows / internal-step `Result#then` chains / transactions under a new "Composing use cases" umbrella, framed `accept:` / `reject:` as the default validation story with ActiveModel as the opt-in Rails-integration layer, condensed the benchmarks section, and added an inline end-to-end sign-up flow under Examples. Heading style is now uniformly declarative (FAQ-style "Is it possible…?" / "How to…?" titles removed) and several `[⬆️ Back to Top]` link occurrences were thinned out. Documented previously-undocumented `Micro::Case.config.set_activemodel_validation_errors_failure`. No API or behavior changes — purely documentation. The pt-BR README will be brought in lockstep in a follow-up commit before release.
+
 ## [5.7.0] - 2026-05-25
 ### Added
 - Pattern matching support on `Micro::Case::Result` via `#deconstruct` and `#deconstruct_keys` (closes #146). Purely additive — no existing API is changed or removed. `#deconstruct` returns `[status, type, data]` where `status` is `:success` or `:failure`, so array patterns like `in [:failure, :invalid_attributes, { invalid_attributes: errors }]` can use the status as a discriminant — mirroring how libraries with separate `Success`/`Failure` classes are pattern-matched, even though `Micro::Case::Result` is a single class. `#deconstruct_keys` exposes `:type`, `:data`, `:result` (alias of `:data` that matches the `Success(result: …)` creation-site vocabulary), `:use_case` and `:transitions` on every result; `:success` is present only on success results and `:failure` only on failure results, and both carry the result `type` symbol as their value so `in { failure: :invalid_attributes }` works. `#deconstruct_keys` honors Ruby's `keys` argument and only computes the requested entries (relevant for `:transitions`, which allocates a duped array).
@@ -500,6 +504,7 @@ First release under the `u-case` name (renamed from `u-service`).
 - `Micro::Service::Result` with `Success`/`Failure` factories and helper methods for returning typed results from services.
 - Runtime dependency on `u-attributes` for service input declaration.
 
+[5.7.1]: https://github.com/serradura/u-case/compare/v5.7.0...v5.7.1
 [5.7.0]: https://github.com/serradura/u-case/compare/v5.6.0...v5.7.0
 [5.6.0]: https://github.com/serradura/u-case/compare/v5.5.0...v5.6.0
 [5.5.0]: https://github.com/serradura/u-case/compare/v5.4.0...v5.5.0
