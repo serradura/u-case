@@ -176,6 +176,7 @@ Success(result: { slug: slug })
     - [Tipos de resultado padrão e customizados](#tipos-de-resultado-padrão-e-customizados)
     - [Contratos de resultado](#contratos-de-resultado)
     - [Hooks de resultado](#hooks-de-resultado)
+    - [Handler em forma de bloco no local da chamada](#handler-em-forma-de-bloco-no-local-da-chamada)
     - [Pattern matching](#pattern-matching)
     - [Decomposição](#decomposição)
     - [Continuações dinâmicas com `Result#then`](#continuações-dinâmicas-com-resultthen)
@@ -608,6 +609,33 @@ result
 
 calls # => 4
 ```
+
+#### Handler em forma de bloco no local da chamada
+
+`Micro::Case.call(input) { |on| ... }` cede um handler com os ramos `on.success` / `on.failure` / `on.unknown`. O primeiro ramo que casar vence; a chamada retorna o valor do bloco vencedor (ou `Kind::Undefined` se nenhum casou). É o equivalente de `on_success` / `on_failure` no local da chamada, com formato de pattern matching.
+
+```ruby
+output = ChangePassword.call(user: ada, new_password: 'short') do |on|
+  on.success { |data| audit "password updated for #{data[:user].id}"; :ok }
+  on.failure(:weak, :reused) { |data, type| raise ArgumentError, "#{type}: #{data[:msg]}" }
+  on.failure                 { |result| audit "#{result.use_case.class.name} failed"; :failed }
+end
+```
+
+Cada ramo aceita um splat de tipos (`on.success(:ok, :created)`) — casa se `result.type` for qualquer um deles, ou qualquer tipo correspondente quando o splat estiver vazio. A assinatura do bloco é despachada por aridade:
+
+- Um **bloco de aridade 2** (`|data, type|`) recebe o hash `data` e o `type` do resultado — útil para ramos curtos no formato pattern match.
+- Um **bloco de aridade 1** (`|r|`) recebe o `Micro::Case::Result` completo, igual à forma encadeada.
+
+```ruby
+PublishPost.call(post: post) do |on|
+  on.success(:ok, :already_published) { |data, type| redirect_to(data[:post], notice: type) }
+  on.failure(:missing_content)        { |data, type| render :edit, alert: data[:msg] }
+  on.unknown                          { |result| Rails.logger.warn(result.inspect) }
+end
+```
+
+Esta forma complementa a forma encadeada no `Result`: os hooks encadeados retornam o próprio `Result` para que você continue encadeando; a forma em bloco no `Micro::Case.call` retorna o valor do bloco que casou, então compõe inline com atribuições e respostas de controller no Rails.
 
 #### Pattern matching
 

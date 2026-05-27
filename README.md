@@ -190,6 +190,7 @@ Success(result: { slug: slug })
     - [Default and custom result types](#default-and-custom-result-types)
     - [Result contracts](#result-contracts)
     - [Result hooks](#result-hooks)
+    - [Block-form handler at the call site](#block-form-handler-at-the-call-site)
     - [Pattern matching](#pattern-matching)
     - [Decomposition](#decomposition)
     - [Dynamic continuations with `Result#then`](#dynamic-continuations-with-resultthen)
@@ -622,6 +623,33 @@ result
 
 calls # => 4
 ```
+
+#### Block-form handler at the call site
+
+`Micro::Case.call(input) { |on| ... }` yields a handler with `on.success` / `on.failure` / `on.unknown` branches. The first branch that matches wins; the call returns the winning block's value (or `Kind::Undefined` if none matched). It's the call-site equivalent of `on_success` / `on_failure`, shaped like a pattern match.
+
+```ruby
+output = ChangePassword.call(user: ada, new_password: 'short') do |on|
+  on.success { |data| audit "password updated for #{data[:user].id}"; :ok }
+  on.failure(:weak, :reused) { |data, type| raise ArgumentError, "#{type}: #{data[:msg]}" }
+  on.failure                 { |result| audit "#{result.use_case.class.name} failed"; :failed }
+end
+```
+
+Each branch accepts a splat of types (`on.success(:ok, :created)`) — match if `result.type` is any of them, or any matching type when the splat is empty. Block signature dispatches on arity:
+
+- A **2-arity block** (`|data, type|`) receives the result's `data` hash and `type` symbol — handy for terse, pattern-match-shaped branches.
+- A **1-arity block** (`|r|`) receives the full `Micro::Case::Result`, same as the chain form.
+
+```ruby
+PublishPost.call(post: post) do |on|
+  on.success(:ok, :already_published) { |data, type| redirect_to(data[:post], notice: type) }
+  on.failure(:missing_content)        { |data, type| render :edit, alert: data[:msg] }
+  on.unknown                          { |result| Rails.logger.warn(result.inspect) }
+end
+```
+
+This complements the chain form on `Result`: chain hooks return the `Result` so you can keep chaining; the block form on `Micro::Case.call` returns the matching block's value, so it composes inline with assignments and Rails controller responses.
 
 #### Pattern matching
 
