@@ -18,6 +18,8 @@ $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 
 require 'u-case'
 
+require 'micro/case/with_test_doubles'
+
 Micro::Case.config do |config|
   enable_activemodel = ENV.fetch('ACTIVERECORD_VERSION', '7') < '6.1.0'
 

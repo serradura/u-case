@@ -219,6 +219,9 @@ Success(result: { slug: slug })
       - [Global default — `config.default_transaction_class { … }`](#global-default--configdefault_transaction_class---)
       - [Internal-step flows under transactions](#internal-step-flows-under-transactions)
       - [Behavior notes](#behavior-notes)
+- [Testing with test doubles](#testing-with-test-doubles)
+  - [Return-value stubbing — `Micro::Case::Success.new` / `Micro::Case::Failure.new`](#return-value-stubbing--microcasesuccessnew--microcasefailurenew)
+  - [Block-form stubbing — `Micro::Case::Success.to_yield` / `Micro::Case::Failure.to_yield`](#block-form-stubbing--microcasesuccessto_yield--microcasefailureto_yield)
 - [Configuration](#configuration)
 - [Performance](#performance)
   - [Running the benchmarks](#running-the-benchmarks)
@@ -1412,6 +1415,69 @@ The two approaches compose. If `CreateUserWithProfileInline` (using inline `tran
 - **Nested transactions join the outer one.** ActiveRecord joins them by default (no `requires_new: true`). A failure anywhere in the chain rolls back **everything** written inside the outermost transaction.
 - **A non-transactional outer commits the inner.** If the outer flow is not transactional and the inner transactional flow succeeds, the inner's writes commit at the end of the inner step. A failure in a later (non-transactional) step **does not** undo those writes.
 - **Plain `Micro::Cases.flow(transaction: true, ...)` re-raises exceptions.** The transaction still rolls back, but the caller has to rescue. Use `Micro::Cases.safe_flow(transaction: true, ...)` (or the class-level form with `Micro::Case::Safe`) to capture the exception as a `:exception` failure result.
+
+[⬆️ Back to Top](#table-of-contents-)
+
+## Testing with test doubles
+
+When the system under test depends on a use case as a collaborator — a controller, another use case, or a background worker — you often want to **fabricate** the collaborator's `Micro::Case::Result` instead of letting the real use case run. `u-case` ships native factories for that:
+
+```ruby
+Micro::Case::Success.new(data: {}, type: :ok,    use_case: <default>) # => Micro::Case::Result (success)
+Micro::Case::Failure.new(data: {}, type: :error, use_case: <default>) # => Micro::Case::Result (failure)
+
+Micro::Case::Success.to_yield(...) # => Micro::Case::Result::Wrapper
+Micro::Case::Failure.to_yield(...) # => Micro::Case::Result::Wrapper
+```
+
+These factories are **opt-in** — the gem does not auto-require them. Load them from your test/spec helper:
+
+```ruby
+# spec/spec_helper.rb  OR  test/test_helper.rb
+require 'micro/case/with_test_doubles'
+```
+
+The returned objects are indistinguishable from the ones a real use case would produce. `result.class == Micro::Case::Result` (not a subclass), pattern matching, `result.success?` / `failure?`, `result[:key]`, `result.type`, `result.use_case` and `result.transitions` all behave exactly as in production. Calls flow through the same `Result#__set__` path, so bad inputs raise the same curated exceptions (`Error::InvalidResultType` for a non-symbol `type:`, `Error::InvalidUseCase` for a non-`Micro::Case` `use_case:`, `Error::InvalidResult` for `data: nil`) — and no-op under `config.disable_runtime_checks = true`.
+
+### Return-value stubbing — `Micro::Case::Success.new` / `Micro::Case::Failure.new`
+
+Use this shape when the system under test consumes the collaborator via its **return value**:
+
+```ruby
+# RSpec
+allow(affiliate_email_service).to receive(:call)
+  .and_return(Micro::Case::Success.new(data: { email: 'a@b.c' }))
+```
+
+```ruby
+# Minitest + Mocha
+affiliate_email_service
+  .stubs(:call)
+  .returns(Micro::Case::Success.new(data: { email: 'a@b.c' }))
+```
+
+### Block-form stubbing — `Micro::Case::Success.to_yield` / `Micro::Case::Failure.to_yield`
+
+Use this shape when the system under test consumes the collaborator via the **block form** — `service.call(...) { |on| on.success { ... }; on.failure { ... } }`:
+
+```ruby
+# RSpec
+expect(tapfiliate_get_referral_link).to receive(:call)
+  .and_yield(Micro::Case::Failure.to_yield(type: :err))
+```
+
+```ruby
+# Minitest + Mocha
+tapfiliate_get_referral_link
+  .stubs(:call)
+  .yields(Micro::Case::Failure.to_yield(type: :err))
+```
+
+`.to_yield` returns a `Micro::Case::Result::Wrapper` in the initial state — the same wrapper instance type `Micro::Case.call(input) { |on| ... }` yields internally. The block under test then drives it normally via `.success` / `.failure` / `.unknown`.
+
+A runnable example lives under [`examples/test_doubles/`](examples/test_doubles), with paired RSpec and Minitest+Mocha suites covering both shapes.
+
+> **Note on bareword `Success` / `Failure` inside `call!`.** When `with_test_doubles` is loaded, `Micro::Case::Success` and `Micro::Case::Failure` exist as constants directly under `Micro::Case`. Inside a `Micro::Case` subclass, a literal bareword `Success` or `Failure` (no args, no parens) would resolve to the *constant*, not the producer-side helper method. In practice every realistic call site has arguments (`Success(:ok)`, `Success result: {...}`, `Failure :foo`), and Ruby parses those as method calls regardless — so this only matters for the contrived case of a method body whose final expression is the bare token `Success` or `Failure`. If you need that shape, write `Success()` / `Failure()` (empty parens).
 
 [⬆️ Back to Top](#table-of-contents-)
 

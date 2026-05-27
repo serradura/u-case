@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This gem was originally published as `u-service` (versions 0.1.0 – 1.0.0) and renamed to `u-case` starting with `u-case 1.0.0` on 2019-09-15.
 
+## [Unreleased]
+### Added
+- `Micro::Case::Success.new(data:, type:, use_case:)` and `Micro::Case::Failure.new(data:, type:, use_case:)` for fabricating result instances in tests without running a real use case (closes #6). `Success.to_yield(...)` and `Failure.to_yield(...)` return a `Micro::Case::Result::Wrapper` for stubbing block-form `Micro::Case.call(input) { |on| ... }` consumers (e.g. with RSpec's `and_yield` or Mocha's `yields`). Defaults: `data: {}`, `type: :ok` for `Success` / `type: :error` for `Failure`, and a lazily-memoised anonymous `Micro::Case` instance for `use_case:` (one allocation per process; passing an explicit `use_case:` still works). Constants are **modules**, not classes — `result.class == Micro::Case::Result` (no subclass surface), and the call routes through `Result#__set__` so `result_type!` / `result_data!` / `micro_case_instance!` participate normally, including the `disable_runtime_checks = true` no-op path. Strictly additive: no existing API moves or changes shape; user-land shims that reopen `Micro::Case::Result` with the same `Success` / `Failure` modules continue to work.
+- **Opt-in require.** The factories are NOT auto-required by the gem — `require 'u-case'` (or any of its constituent files) leaves the constants undefined. Add `require 'micro/case/with_test_doubles'` to your `spec/spec_helper.rb` or `test/test_helper.rb` to load them. Production load paths are unaffected.
+- `examples/test_doubles/` — runnable example with `Affiliates::FetchEmail` (collaborator), `Affiliates::SendInvite` (return-value consumer) and `Affiliates::DeliverReferral` (block-form consumer), plus paired RSpec and Minitest+Mocha suites demonstrating both `Micro::Case::Success.new` / `Micro::Case::Failure.new` (RSpec's `and_return`, Mocha's `returns`) and `.to_yield` (RSpec's `and_yield`, Mocha's `yields`).
+- READMEs (EN + pt-BR) document the new factories in a **Testing with test doubles** section, including the opt-in `require 'micro/case/with_test_doubles'` line and the two minimal stubbing examples.
+
 ## [5.7.1] - 2026-05-26
 ### Added
 - A `[!IMPORTANT]` GitHub alert at the top of both READMEs (EN + pt-BR) surfacing the **no-breaking-changes-to-the-API** policy (see [issue #131](https://github.com/serradura/u-case/issues/131#issuecomment-4531231882)) — the gem will remain a stable, backward-compatible foundation; redesigns belong in [`solid-process`](https://github.com/solid-process/solid-process). The alert also clarifies that major version bumps happen only when a Ruby or Rails version is dropped from the supported matrix (per SemVer dependency-floor semantics).
@@ -509,6 +516,7 @@ First release under the `u-case` name (renamed from `u-service`).
 - `Micro::Service::Result` with `Success`/`Failure` factories and helper methods for returning typed results from services.
 - Runtime dependency on `u-attributes` for service input declaration.
 
+[Unreleased]: https://github.com/serradura/u-case/compare/v5.7.1...HEAD
 [5.7.1]: https://github.com/serradura/u-case/compare/v5.7.0...v5.7.1
 [5.7.0]: https://github.com/serradura/u-case/compare/v5.6.0...v5.7.0
 [5.6.0]: https://github.com/serradura/u-case/compare/v5.5.0...v5.6.0
