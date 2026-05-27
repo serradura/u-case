@@ -139,7 +139,7 @@ See [Composing use cases](#composing-use-cases) and [Going further with `u-attri
 | Version    | Documentation                                           |
 | ---------- | ------------------------------------------------------- |
 | unreleased | https://github.com/serradura/u-case/blob/main/README.md |
-| 5.8.0      | https://github.com/serradura/u-case/blob/v5.x/README.md |
+| 5.7.1      | https://github.com/serradura/u-case/blob/v5.x/README.md |
 | 4.5.2      | https://github.com/serradura/u-case/blob/v4.x/README.md |
 
 ## A note on syntax <!-- omit in toc -->
@@ -243,7 +243,7 @@ Success(result: { slug: slug })
 | u-case     | branch | ruby     | activemodel    | u-attributes  |
 | ---------- | ------ | -------- | -------------- | ------------- |
 | unreleased | main   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0 |
-| 5.8.0      | v5.x   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0 |
+| 5.7.1      | v5.x   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0 |
 | 4.5.2      | v4.x   | >= 2.2.0 | >= 3.2, <= 8.1 | >= 2.7, < 3.0 |
 
 This library is tested (CI matrix) against:

@@ -125,7 +125,7 @@ Veja [Compondo casos de uso](#compondo-casos-de-uso) e [Indo além com `u-attrib
 | Versão     | Documentação                                                  |
 | ---------- | ------------------------------------------------------------- |
 | unreleased | https://github.com/serradura/u-case/blob/main/README.pt-BR.md |
-| 5.8.0      | https://github.com/serradura/u-case/blob/v5.x/README.pt-BR.md |
+| 5.7.1      | https://github.com/serradura/u-case/blob/v5.x/README.pt-BR.md |
 | 4.5.2      | https://github.com/serradura/u-case/blob/v4.x/README.pt-BR.md |
 
 ## Uma nota sobre sintaxe <!-- omit in toc -->
@@ -229,7 +229,7 @@ Success(result: { slug: slug })
 | u-case     | branch | ruby     | activemodel    | u-attributes  |
 | ---------- | ------ | -------- | -------------- | ------------- |
 | unreleased | main   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0 |
-| 5.8.0      | v5.x   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0 |
+| 5.7.1      | v5.x   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0 |
 | 4.5.2      | v4.x   | >= 2.2.0 | >= 3.2, <= 8.1 | >= 2.7, < 3.0 |
 
 Esta biblioteca é testada (matriz de CI) contra:
