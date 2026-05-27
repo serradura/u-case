@@ -7,6 +7,7 @@ if RUBY_VERSION < "3.1"
       gem "sqlite3", "~> 1.7"
       gem "minitest", "5.26.1"
       gem "activerecord", "~> 6.0.0", require: "active_record"
+      gem "activejob", "~> 6.0.0", require: "active_job"
     end
   end
 
@@ -18,6 +19,7 @@ if RUBY_VERSION < "3.1"
       gem "sqlite3", "~> 1.7"
       gem "minitest", "5.26.1"
       gem "activerecord", "~> 6.1.0", require: "active_record"
+      gem "activejob", "~> 6.1.0", require: "active_job"
     end
   end
 end
@@ -32,6 +34,7 @@ if RUBY_VERSION >= "2.7" && RUBY_VERSION < "3.4"
       gem "sqlite3", "~> 1.7"
       gem "minitest", "5.26.1"
       gem "activerecord", "~> 7.0.0", require: "active_record"
+      gem "activejob", "~> 7.0.0", require: "active_job"
     end
   end
 
@@ -44,6 +47,7 @@ if RUBY_VERSION >= "2.7" && RUBY_VERSION < "3.4"
       gem "sqlite3", "~> 1.7"
       gem "minitest", "5.26.1"
       gem "activerecord", "~> 7.1.0", require: "active_record"
+      gem "activejob", "~> 7.1.0", require: "active_job"
     end
   end
 end
@@ -54,6 +58,7 @@ if RUBY_VERSION >= "3.1" && RUBY_VERSION < "4.0"
       gem "sqlite3", "~> 2.8", ">= 2.8.1"
       gem "minitest", "~> 5.27"
       gem "activerecord", "~> 7.2.0", require: "active_record"
+      gem "activejob", "~> 7.2.0", require: "active_job"
     end
   end
 end
@@ -65,6 +70,7 @@ if RUBY_VERSION >= "3.2" && RUBY_VERSION < "4.0"
       gem "ostruct", "~> 0.6.3"
       gem "minitest", "~> 5.27"
       gem "activerecord", "~> 8.0.0", require: "active_record"
+      gem "activejob", "~> 8.0.0", require: "active_job"
     end
   end
 end
@@ -78,6 +84,7 @@ if RUBY_VERSION >= "3.3.0"
       gem "ostruct", "~> 0.6.3"
       gem "minitest", minitest_version
       gem "activerecord", "~> 8.1.0", require: "active_record"
+      gem "activejob", "~> 8.1.0", require: "active_job"
     end
   end
 
@@ -87,6 +94,7 @@ if RUBY_VERSION >= "3.3.0"
       gem "ostruct", "~> 0.6.3"
       gem "minitest", minitest_version
       gem "activerecord", github: "rails/rails", branch: "main", require: "active_record"
+      gem "activejob", github: "rails/rails", branch: "main", require: "active_job"
     end
   end
 end

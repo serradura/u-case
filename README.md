@@ -219,6 +219,12 @@ Success(result: { slug: slug })
       - [Global default — `config.default_transaction_class { … }`](#global-default--configdefault_transaction_class---)
       - [Internal-step flows under transactions](#internal-step-flows-under-transactions)
       - [Behavior notes](#behavior-notes)
+  - [Async with ActiveJob](#async-with-activejob)
+    - [DSL: `active_job do ... end`](#dsl-active_job-do--end)
+    - [Per-enqueue `job_options`](#per-enqueue-job_options)
+    - [Surviving renames — the registry](#surviving-renames--the-registry)
+    - [Bulk enqueue — `Micro::Case::ActiveJob.batch`](#bulk-enqueue--microcaseactivejobbatch)
+    - [Handling failures on the worker — `raise_on_failure`](#handling-failures-on-the-worker--raise_on_failure)
 - [Configuration](#configuration)
 - [Performance](#performance)
   - [Running the benchmarks](#running-the-benchmarks)
@@ -1415,6 +1421,183 @@ The two approaches compose. If `CreateUserWithProfileInline` (using inline `tran
 
 [⬆️ Back to Top](#table-of-contents-)
 
+### Async with ActiveJob
+
+`Micro::Case::ActiveJob` is an opt-in async runner: every use case gets `MyCase.async.call(input)` (and the alias `MyCase.later.call(input)`) that enqueues an ActiveJob behind the scenes. It's a separate, conditionally-loaded file — `activejob` is **not** a runtime dependency of the gem. Apps that never load ActiveJob pay nothing.
+
+Load it after your host has loaded ActiveJob (Rails apps get ActiveJob automatically):
+
+```ruby
+# config/initializers/u_case.rb (Rails)
+require 'micro/case/active_job'
+```
+
+Then any `Micro::Case` subclass can be enqueued:
+
+```ruby
+class Billing::ChargeCustomer < Micro::Case
+  attribute :customer_id
+
+  def call!
+    customer = Customer.find(customer_id)
+    # ... domain logic ...
+    Success(:charged, result: { customer: customer })
+  end
+end
+
+Billing::ChargeCustomer.async.call(customer_id: 42)   # enqueue
+Billing::ChargeCustomer.later.call(customer_id: 42)   # alias of `.async`
+```
+
+No DSL declaration is needed for day-one adoption: the runner auto-registers the use case under its class name on the first call. A per-use-case ActiveJob subclass is built lazily and named `<UseCase>::Job` so it can serialize across enqueue and dequeue.
+
+#### DSL: `active_job do ... end`
+
+For everything beyond "just enqueue" — declarative retry rules, default queue, around-perform hooks, a rename-stable identifier — declare the DSL inside the use case's class body. The block runs eagerly (at class-body load time) and configures the per-use-case job subclass:
+
+```ruby
+class Billing::ChargeCustomer < Micro::Case
+  active_job do
+    key 'billing/charge_customer'              # stable identifier — see "Surviving renames"
+
+    retry_on   ActiveRecord::Deadlocked, wait: 5.seconds, attempts: 3
+    discard_on Billing::CustomerNotFound
+
+    default_options queue: :billing, priority: 10
+
+    around_perform ->(job, block) {
+      MyTracer.in_span("u-case.#{job.arguments[0]}") { block.call }
+    }
+
+    # Rails 7.1+ — fires when the job has been discarded.
+    after_discard { |job, error| Sentry.capture_exception(error, extra: { job_id: job.job_id }) }
+
+    # Rails 7.2+ — :always | :never | :default.
+    after_transaction_commit :always
+  end
+
+  attribute :customer_id
+  def call!
+    # ...
+  end
+end
+```
+
+| DSL method                  | What it does                                                                                              |
+| --------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `key(string)`               | Stable registry key. Survives renames.                                                                    |
+| `retry_on(*ex, **opts, &b)` | Passthrough to ActiveJob's `retry_on` on the per-use-case job subclass.                                   |
+| `discard_on(*ex, &b)`       | Passthrough to ActiveJob's `discard_on`.                                                                  |
+| `after_discard(&b)`         | Rails 7.1+ — passthrough to `after_discard`. Older Rails: logs once and no-ops.                           |
+| `default_options(hash)`     | Per-use-case defaults for `:wait` / `:wait_until` / `:queue` / `:priority`. Merged into `job_options`.    |
+| `around_perform(callable)`  | Per-use-case `around_perform` hook installed on the job subclass.                                         |
+| `after_transaction_commit`  | Rails 7.2+ — sets `enqueue_after_transaction_commit` on the job subclass. Older Rails: logs and no-ops.   |
+
+Unknown DSL methods raise `NoMethodError` with the valid-method list, so typos fail loudly at class load:
+
+```ruby
+class Billing::ChargeCustomer < Micro::Case
+  active_job do
+    retry_no Foo                                # → NoMethodError: Unknown active_job DSL method: :retry_no.
+  end                                           #   Valid methods: :key, :retry_on, :discard_on, ...
+end
+```
+
+#### Per-enqueue `job_options`
+
+These are the only keys ActiveJob's `set(...)` accepts, and they can be passed per call to `async` / `later`. Explicit `job_options:` wins over the DSL's `default_options`:
+
+| `job_options` key | Maps to              |
+| ----------------- | -------------------- |
+| `:wait`           | `set(wait: ...)`      |
+| `:wait_until`     | `set(wait_until: ...)` |
+| `:queue`          | `set(queue: ...)`     |
+| `:priority`       | `set(priority: ...)`  |
+
+```ruby
+Billing::ChargeCustomer.async(job_options: { wait: 30.seconds }).call(customer_id: 42)
+Billing::ChargeCustomer.async(job_options: { queue: :urgent, priority: 1 }).call(customer_id: 42)
+```
+
+`Caller` composes in blocks via `to_proc`:
+
+```ruby
+ids.each(&Billing::ChargeCustomer.async)        # enqueues one job per id
+```
+
+#### Surviving renames — the registry
+
+The payload stored in Sidekiq / Resque / SQS is `[key, input, raise_on_failure]`. The key — not the Ruby constant name — is what the worker uses to look up the use case via `Micro::Case::ActiveJob::Registry`. So renaming the class between enqueue and pickup is safe **as long as the new class keeps the same `key`**:
+
+```ruby
+# Before the rename:
+class Billing::ChargeCustomer < Micro::Case
+  active_job { key 'billing/charge_customer' }
+  # ...
+end
+
+# After the rename — same key on the new class:
+class Billing::ChargeCustomerForInvoice < Micro::Case
+  active_job { key 'billing/charge_customer' }
+  # ...
+end
+```
+
+In-flight jobs resolve `'billing/charge_customer'` to the new class via the registry. No `NameError`, no manual queue scrubbing.
+
+If you adopted the runner without an explicit `key`, jobs are keyed by class name (`'Billing::ChargeCustomer'`). To recover from a rename done after enqueue, declare the **old class name** as the new class's key:
+
+```ruby
+class Billing::ChargeCustomerForInvoice < Micro::Case
+  active_job { key 'Billing::ChargeCustomer' } # the previous klass.name
+end
+```
+
+For shops that want to guarantee no surprise constantization, set:
+
+```ruby
+Micro::Case.config { |c| c.strict_registry = true }
+```
+
+Strict mode disables the `safe_constantize` fallback that normally lets unregistered-but-constantizable keys resolve.
+
+#### Bulk enqueue — `Micro::Case::ActiveJob.batch`
+
+```ruby
+Micro::Case::ActiveJob.batch([
+  [Billing::ChargeCustomer,   { customer_id: 1 }],
+  [Billing::ChargeCustomer,   { customer_id: 2 }],
+  [Billing::SendReceiptEmail, { customer_id: 1 }, true], # raise_on_failure: true
+])
+```
+
+On Rails 7.1+ this calls `ActiveJob.perform_all_later(...)` with pre-built job instances (a single round-trip to the queue backend). On older Rails it falls back to per-pair enqueue.
+
+#### Handling failures on the worker — `raise_on_failure`
+
+By default the worker silently returns the result on `Failure(...)` — fire-and-forget semantics. Pass `raise_on_failure: true` for jobs that must succeed:
+
+```ruby
+Billing::ChargeCustomer.async(raise_on_failure: true).call(customer_id: 42)
+```
+
+When the use case returns a failure, the worker raises `Micro::Case::ActiveJob::Error`, which ActiveJob then funnels through the configured `retry_on` / `discard_on` rules. The original result is exposed via `Error#result`:
+
+```ruby
+begin
+  # ... ActiveJob worker code ...
+rescue Micro::Case::ActiveJob::Error => e
+  Rails.logger.warn("u-case failure: type=#{e.result.type} data=#{e.result.data.inspect}")
+  raise
+end
+```
+
+Other documented exceptions:
+
+- `Micro::Case::ActiveJob::UnknownKey` — raised when a payload's key doesn't resolve in the registry (and isn't a constantizable class name, or strict mode is on). The message names the offending key.
+
+[⬆️ Back to Top](#table-of-contents-)
+
 ## Configuration
 
 `Micro::Case.config` exposes the gem's toggles. Set them once — typically in a Rails initializer:
@@ -1450,6 +1633,12 @@ Micro::Case.config do |config|
   # The default is `-> { ::ActiveRecord::Base }`. Override to use a per-app
   # abstract record like ApplicationRecord.
   config.default_transaction_class { ApplicationRecord }
+
+  # When `micro/case/active_job` is loaded: disable the `safe_constantize`
+  # fallback for Micro::Case::ActiveJob::Registry misses. With strict mode on,
+  # an unregistered key always raises Micro::Case::ActiveJob::UnknownKey.
+  # Default is false (friendlier for early adoption).
+  config.strict_registry = false
 end
 ```
 
