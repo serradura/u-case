@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This gem was originally published as `u-service` (versions 0.1.0 – 1.0.0) and renamed to `u-case` starting with `u-case 1.0.0` on 2019-09-15.
 
+## [Unreleased]
+### Added
+- Block-form pattern-match-shaped DSL at the call site: `Micro::Case::Result::Wrapper#success` / `#failure` now accept multiple types (`*types`) and match if `result.type` is any of them — a strict superset of the prior single-optional-`type` form. In addition, 2-arity blocks passed to `#success` / `#failure` / `#unknown` now receive `(data, type)` instead of the full `Result`; 1-arity blocks (and 0/-1/-2) continue to receive the `Result` exactly as before. Together these unlock the motivating call site `MyCase.call(input) { |on| on.success(:ok, :created) { |data, type| ... }; on.failure { |data, type| ... } }` without introducing any new public constants or any new exceptions on previously-silent paths (closes #4). Exhaustiveness (raise when no branch matched and no `unknown` declared) is intentionally deferred to a follow-up gated by an opt-in, to preserve the current silent-`Kind::Undefined` fallback. `Micro::Case::Result#on_success` / `#on_failure` chain hooks are unchanged.
+
 ## [5.7.1] - 2026-05-26
 ### Added
 - A `[!IMPORTANT]` GitHub alert at the top of both READMEs (EN + pt-BR) surfacing the **no-breaking-changes-to-the-API** policy (see [issue #131](https://github.com/serradura/u-case/issues/131#issuecomment-4531231882)) — the gem will remain a stable, backward-compatible foundation; redesigns belong in [`solid-process`](https://github.com/solid-process/solid-process). The alert also clarifies that major version bumps happen only when a Ruby or Rails version is dropped from the supported matrix (per SemVer dependency-floor semantics).

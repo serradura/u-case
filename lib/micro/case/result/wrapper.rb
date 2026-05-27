@@ -13,23 +13,31 @@ module Micro
           @__is_unknown = true
         end
 
-        def failure(type = nil)
+        def failure(*types, &block)
           return if @result.success? || !undefined_output?
 
-          set_output(yield(@result)) if result_type?(type)
+          set_output(call_block(block)) if result_type?(types)
         end
 
-        def success(type = nil)
+        def success(*types, &block)
           return if @result.failure? || !undefined_output?
 
-          set_output(yield(@result)) if result_type?(type)
+          set_output(call_block(block)) if result_type?(types)
         end
 
-        def unknown
-          @output = yield(@result) if @__is_unknown && undefined_output?
+        def unknown(&block)
+          @output = call_block(block) if @__is_unknown && undefined_output?
         end
 
         private
+
+          def call_block(block)
+            if block.arity == 2
+              block.call(@result.data, @result.type)
+            else
+              block.call(@result)
+            end
+          end
 
           def set_output(value)
             @__is_unknown = false
@@ -41,8 +49,8 @@ module Micro
             ::Kind::Undefined == @output
           end
 
-          def result_type?(type)
-            type.nil? || @result.type == type
+          def result_type?(types)
+            types.empty? || types.any?(@result.type)
           end
       end
     end
