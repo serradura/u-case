@@ -1253,6 +1253,21 @@ Quando `with:` é omitido, o helper cai para a macro de classe (`transaction wit
 >
 > **Retrocompatibilidade:** a forma posicional pré-5.6.0 `transaction(:activerecord) { ... }` continua funcionando como alias de `transaction { ... }`; qualquer outro valor posicional levanta `ArgumentError`.
 
+Se seu caso de uso declara `attribute :transaction` (um objeto de domínio — digamos, um registro `PaymentTransaction` — que não tem nada a ver com banco de dados), o reader do atributo vai sombrear o helper `#transaction`. `#rollback_on_failure` é um alias de `#transaction` provido para esse caso — mesma assinatura, mesma ordem de resolução, mesma compatibilidade retroativa — mas o nome dele é verboso o bastante para nunca colidir realisticamente com um atributo:
+
+```ruby
+class RefundPayment < Micro::Case
+  attribute :transaction # um objeto de domínio, não o helper
+
+  def call!
+    rollback_on_failure {
+      payment = Payment.create!(transaction: transaction)
+      Success(:refunded, result: { payment: payment })
+    }
+  end
+end
+```
+
 ##### `transaction with: …` — declarando o padrão para um caso
 
 Uma macro de classe permite que um caso declare qual classe ActiveRecord deve dona das transações dele, então nem o helper inline nem nenhum flow que envolve o caso precisam soletrar isso. A declaração é herdada:
