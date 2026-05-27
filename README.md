@@ -139,7 +139,7 @@ See [Composing use cases](#composing-use-cases) and [Going further with `u-attri
 | Version    | Documentation                                           |
 | ---------- | ------------------------------------------------------- |
 | unreleased | https://github.com/serradura/u-case/blob/main/README.md |
-| 5.7.1      | https://github.com/serradura/u-case/blob/v5.x/README.md |
+| 5.8.0      | https://github.com/serradura/u-case/blob/v5.x/README.md |
 | 4.5.2      | https://github.com/serradura/u-case/blob/v4.x/README.md |
 
 ## A note on syntax <!-- omit in toc -->
@@ -219,6 +219,9 @@ Success(result: { slug: slug })
       - [Global default — `config.default_transaction_class { … }`](#global-default--configdefault_transaction_class---)
       - [Internal-step flows under transactions](#internal-step-flows-under-transactions)
       - [Behavior notes](#behavior-notes)
+- [Testing with test doubles](#testing-with-test-doubles)
+  - [Return-value stubbing — `Result::Success.new` / `Result::Failure.new`](#return-value-stubbing--resultsuccessnew--resultfailurenew)
+  - [Block-form stubbing — `Result::Success.to_yield` / `Result::Failure.to_yield`](#block-form-stubbing--resultsuccessto_yield--resultfailureto_yield)
 - [Configuration](#configuration)
 - [Performance](#performance)
   - [Running the benchmarks](#running-the-benchmarks)
@@ -240,7 +243,7 @@ Success(result: { slug: slug })
 | u-case     | branch | ruby     | activemodel    | u-attributes  |
 | ---------- | ------ | -------- | -------------- | ------------- |
 | unreleased | main   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0 |
-| 5.7.1      | v5.x   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0 |
+| 5.8.0      | v5.x   | >= 2.7   | >= 6.0         | >= 2.8, < 4.0 |
 | 4.5.2      | v4.x   | >= 2.2.0 | >= 3.2, <= 8.1 | >= 2.7, < 3.0 |
 
 This library is tested (CI matrix) against:
@@ -1412,6 +1415,67 @@ The two approaches compose. If `CreateUserWithProfileInline` (using inline `tran
 - **Nested transactions join the outer one.** ActiveRecord joins them by default (no `requires_new: true`). A failure anywhere in the chain rolls back **everything** written inside the outermost transaction.
 - **A non-transactional outer commits the inner.** If the outer flow is not transactional and the inner transactional flow succeeds, the inner's writes commit at the end of the inner step. A failure in a later (non-transactional) step **does not** undo those writes.
 - **Plain `Micro::Cases.flow(transaction: true, ...)` re-raises exceptions.** The transaction still rolls back, but the caller has to rescue. Use `Micro::Cases.safe_flow(transaction: true, ...)` (or the class-level form with `Micro::Case::Safe`) to capture the exception as a `:exception` failure result.
+
+[⬆️ Back to Top](#table-of-contents-)
+
+## Testing with test doubles
+
+When the system under test depends on a use case as a collaborator — a controller, another use case, or a background worker — you often want to **fabricate** the collaborator's `Micro::Case::Result` instead of letting the real use case run. `u-case` ships native factories for that:
+
+```ruby
+Micro::Case::Result::Success.new(data: {}, type: :ok,    use_case: <default>) # => Micro::Case::Result (success)
+Micro::Case::Result::Failure.new(data: {}, type: :error, use_case: <default>) # => Micro::Case::Result (failure)
+
+Micro::Case::Result::Success.to_yield(...) # => Micro::Case::Result::Wrapper
+Micro::Case::Result::Failure.to_yield(...) # => Micro::Case::Result::Wrapper
+```
+
+These factories are **opt-in** — the gem does not auto-require them. Load them from your test/spec helper:
+
+```ruby
+# spec/spec_helper.rb  OR  test/test_helper.rb
+require 'micro/case/with_test_doubles'
+```
+
+The returned objects are indistinguishable from the ones a real use case would produce. `result.class == Micro::Case::Result` (not a subclass), pattern matching, `result.success?` / `failure?`, `result[:key]`, `result.type`, `result.use_case` and `result.transitions` all behave exactly as in production. Calls flow through the same `Result#__set__` path, so bad inputs raise the same curated exceptions (`Error::InvalidResultType` for a non-symbol `type:`, `Error::InvalidUseCase` for a non-`Micro::Case` `use_case:`, `Error::InvalidResult` for `data: nil`) — and no-op under `config.disable_runtime_checks = true`.
+
+### Return-value stubbing — `Result::Success.new` / `Result::Failure.new`
+
+Use this shape when the system under test consumes the collaborator via its **return value**:
+
+```ruby
+# RSpec
+allow(affiliate_email_service).to receive(:call)
+  .and_return(Micro::Case::Result::Success.new(data: { email: 'a@b.c' }))
+```
+
+```ruby
+# Minitest + Mocha
+affiliate_email_service
+  .stubs(:call)
+  .returns(Micro::Case::Result::Success.new(data: { email: 'a@b.c' }))
+```
+
+### Block-form stubbing — `Result::Success.to_yield` / `Result::Failure.to_yield`
+
+Use this shape when the system under test consumes the collaborator via the **block form** — `service.call(...) { |on| on.success { ... }; on.failure { ... } }`:
+
+```ruby
+# RSpec
+expect(tapfiliate_get_referral_link).to receive(:call)
+  .and_yield(Micro::Case::Result::Failure.to_yield(type: :err))
+```
+
+```ruby
+# Minitest + Mocha
+tapfiliate_get_referral_link
+  .stubs(:call)
+  .yields(Micro::Case::Result::Failure.to_yield(type: :err))
+```
+
+`.to_yield` returns a `Micro::Case::Result::Wrapper` in the initial state — the same wrapper instance type `Micro::Case.call(input) { |on| ... }` yields internally. The block under test then drives it normally via `.success` / `.failure` / `.unknown`.
+
+A runnable example lives under [`examples/test_doubles/`](examples/test_doubles), with paired RSpec and Minitest+Mocha suites covering both shapes.
 
 [⬆️ Back to Top](#table-of-contents-)
 
