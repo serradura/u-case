@@ -357,6 +357,8 @@ module Micro
         result
       end
 
+      alias_method :rollback_on_failure, :transaction
+
     private_constant :MapFailureType, :INVALID_INVOCATION_OF_THE_THEN_METHOD
   end
 

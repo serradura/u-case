@@ -1267,6 +1267,21 @@ When `with:` is omitted, the helper falls back to the class macro (`transaction 
 >
 > **Backward compatibility:** the pre-5.6.0 positional form `transaction(:activerecord) { ... }` still works as an alias for `transaction { ... }`; any other positional value raises `ArgumentError`.
 
+If your use case declares `attribute :transaction` (a domain object — say, a `PaymentTransaction` record — that has nothing to do with the database), the attribute reader will shadow the `#transaction` helper. `#rollback_on_failure` is an alias of `#transaction` provided for that case — same signature, same resolution order, same back-compat shim — but its name is verbose enough to never realistically clash with an attribute:
+
+```ruby
+class RefundPayment < Micro::Case
+  attribute :transaction # a domain object, not the helper
+
+  def call!
+    rollback_on_failure {
+      payment = Payment.create!(transaction: transaction)
+      Success(:refunded, result: { payment: payment })
+    }
+  end
+end
+```
+
 ##### `transaction with: …` — declaring the default for a case
 
 A class macro lets a case declare which ActiveRecord class should own its transactions, so neither the inline helper nor any wrapping flow needs to spell it out. The declaration is inherited:

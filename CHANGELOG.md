@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This gem was originally published as `u-service` (versions 0.1.0 – 1.0.0) and renamed to `u-case` starting with `u-case 1.0.0` on 2019-09-15.
 
+## [Unreleased]
+### Added
+- `Micro::Case#rollback_on_failure` — alias of `#transaction`, intended for use cases that declare `attribute :transaction` (a domain object, nothing to do with the database) and would otherwise have the helper shadowed by the attribute reader. Same signature, same resolution order (call-site `with:` > class macro > global default), same `transaction(:activerecord)` back-compat shim — `alias_method :rollback_on_failure, :transaction` makes the equivalence a property of the language rather than two implementations to keep in sync. The name matches the sibling gem [`solid-process`](https://github.com/solid-process/solid-process)'s `rollback_on_failure` so the two APIs read alike.
+
 ## [5.7.1] - 2026-05-26
 ### Added
 - A `[!IMPORTANT]` GitHub alert at the top of both READMEs (EN + pt-BR) surfacing the **no-breaking-changes-to-the-API** policy (see [issue #131](https://github.com/serradura/u-case/issues/131#issuecomment-4531231882)) — the gem will remain a stable, backward-compatible foundation; redesigns belong in [`solid-process`](https://github.com/solid-process/solid-process). The alert also clarifies that major version bumps happen only when a Ruby or Rails version is dropped from the supported matrix (per SemVer dependency-floor semantics).
@@ -509,6 +513,7 @@ First release under the `u-case` name (renamed from `u-service`).
 - `Micro::Service::Result` with `Success`/`Failure` factories and helper methods for returning typed results from services.
 - Runtime dependency on `u-attributes` for service input declaration.
 
+[Unreleased]: https://github.com/serradura/u-case/compare/v5.7.1...HEAD
 [5.7.1]: https://github.com/serradura/u-case/compare/v5.7.0...v5.7.1
 [5.7.0]: https://github.com/serradura/u-case/compare/v5.6.0...v5.7.0
 [5.6.0]: https://github.com/serradura/u-case/compare/v5.5.0...v5.6.0
