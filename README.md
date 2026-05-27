@@ -220,6 +220,9 @@ Success(result: { slug: slug })
       - [Internal-step flows under transactions](#internal-step-flows-under-transactions)
       - [Behavior notes](#behavior-notes)
 - [Configuration](#configuration)
+- [Observability](#observability)
+  - [Subscriber recipes](#subscriber-recipes)
+  - [Subscriber cost warning](#subscriber-cost-warning)
 - [Performance](#performance)
   - [Running the benchmarks](#running-the-benchmarks)
   - [Disabling runtime checks](#disabling-runtime-checks)
@@ -1454,6 +1457,83 @@ end
 ```
 
 All internal checks live in `Micro::Case::Check::Enabled` (the default). Toggling `disable_runtime_checks = true` swaps `Micro::Case.check` to `Micro::Case::Check::Disabled`, whose methods are no-ops — the validations themselves stop running on each call.
+
+[⬆️ Back to Top](#table-of-contents-)
+
+## Observability
+
+`u-case` can natively publish an `ActiveSupport::Notifications` event for every transition — the same chokepoint that already feeds `result.transitions`. Subscribers (Rails.logger, Rack::MiniProfiler, OpenTelemetry, StatsD, custom metrics) stay your responsibility — the gem only emits.
+
+`activesupport` is **not** a runtime dependency. The hook only activates when `ActiveSupport::Notifications` is already loaded in the host app (Rails apps get it automatically; non-Rails apps can `require 'active_support/notifications'`). Without it, the publish call is redefined to a no-op and the transition hot path stays branch-free.
+
+Opt in (off by default) in an initializer:
+
+```ruby
+Micro::Case.config do |config|
+  # Requires transitions to be enabled (the default) AND
+  # ActiveSupport::Notifications to be loaded. Raises
+  # Micro::Case::Error::NotificationsUnavailable otherwise.
+  config.notifications = true
+
+  # Override the default event name 'transition.micro_case' if you want
+  # it under a different AS::Notifications namespace.
+  # config.notifications_event_name = 'use_case.my_app'
+end
+```
+
+Every transition fires one `transition.micro_case` event with this payload:
+
+```ruby
+{
+  use_case_class:        Class,    # the use case that produced the transition
+  attributes:            Hash,     # symbolized use-case attributes (input)
+  result_type:           Symbol,   # result.type
+  result_kind:           Symbol,   # :success | :failure
+  result_data:           Hash,     # result.data (frozen)
+  accessible_attributes: Array     # result.accessible_attributes at this step
+}
+```
+
+`result.transitions.size` equals the number of events fired for that call — same chokepoint, just an extra publish.
+
+### Subscriber recipes
+
+**Rack::MiniProfiler step (development tracing):**
+
+```ruby
+# config/initializers/u_case.rb
+if Rails.env.development?
+  Micro::Case.config { |c| c.notifications = true }
+
+  ActiveSupport::Notifications.subscribe('transition.micro_case') do |*args|
+    event   = ActiveSupport::Notifications::Event.new(*args)
+    payload = event.payload
+    label   = "Micro::Case: #{payload[:use_case_class]} -> #{payload[:result_kind]}(:#{payload[:result_type]})"
+
+    Rack::MiniProfiler.step(label) { Rails.logger.debug(label) }
+  end
+end
+```
+
+**Structured `Rails.logger` trace:**
+
+```ruby
+ActiveSupport::Notifications.subscribe('transition.micro_case') do |*args|
+  event   = ActiveSupport::Notifications::Event.new(*args)
+  payload = event.payload
+
+  Rails.logger.info({
+    use_case:    payload[:use_case_class].name,
+    result:      "#{payload[:result_kind]}(:#{payload[:result_type]})",
+    data:        payload[:result_data],
+    duration_ms: event.duration.round(2)
+  }.to_json)
+end
+```
+
+### Subscriber cost warning
+
+> `ActiveSupport::Notifications` is synchronous. Anything a subscriber does runs on the same thread as the use case, between the mapper call and the caller. Keep subscribers cheap — log, increment a counter, or push to a queue. Heavy work (HTTP calls, DB writes, JSON encoding of large payloads) belongs in a background job, not in the subscriber.
 
 [⬆️ Back to Top](#table-of-contents-)
 

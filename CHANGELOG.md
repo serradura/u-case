@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This gem was originally published as `u-service` (versions 0.1.0 – 1.0.0) and renamed to `u-case` starting with `u-case 1.0.0` on 2019-09-15.
 
+## [Unreleased]
+### Added
+- Native `ActiveSupport::Notifications` instrumentation hook for transitions (closes #5). Opt-in via `Micro::Case::Config.instance.notifications = true`. When both transitions and the new flag are enabled, every `Micro::Case::Result#__set_transition` publishes a single `transition.micro_case` event whose payload exposes `:use_case_class`, `:attributes`, `:result_type`, `:result_kind` (`:success` | `:failure`), `:result_data`, and `:accessible_attributes`. The hook is additive — `Micro::Case::Result::Transitions::MapEverything`, `result.transitions`, and `Result.new(custom_mapper)` are unchanged.
+- `Micro::Case::Result::Notifications` module (`lib/micro/case/result/notifications.rb`) that detects `::ActiveSupport::Notifications` at require time via `Notifications::Available`. When unavailable, `publish` is redefined to a no-op so the transition hot path stays branch-free. `activesupport` is **not** a runtime dependency — host apps that have loaded it (Rails, or a manual `require 'active_support/notifications'`) get the integration for free; everyone else stays a no-op.
+- `Micro::Case::Config#notifications` / `#notifications=` accessors (default `false`, mirrors the existing `Kind::Boolean[value]` setter style). Setting `notifications = true` while `ActiveSupport::Notifications` is not loaded raises the new `Micro::Case::Error::NotificationsUnavailable` so misconfiguration fails loudly at boot rather than silently dropping events.
+- `Micro::Case::Config#notifications_event_name` / `#notifications_event_name=` accessors (default `'transition.micro_case'`) so apps can rename the published event to fit their own AS::Notifications namespace.
+- READMEs (EN + pt-BR) gain a top-level **Observability** section documenting the opt-in toggle, the payload schema, the Rack::MiniProfiler-step and `Rails.logger` subscriber recipes, and the synchronous-subscriber cost warning (AS::Notifications subscribers run on the same thread as the use case — keep them cheap).
+
 ## [5.7.1] - 2026-05-26
 ### Added
 - A `[!IMPORTANT]` GitHub alert at the top of both READMEs (EN + pt-BR) surfacing the **no-breaking-changes-to-the-API** policy (see [issue #131](https://github.com/serradura/u-case/issues/131#issuecomment-4531231882)) — the gem will remain a stable, backward-compatible foundation; redesigns belong in [`solid-process`](https://github.com/solid-process/solid-process). The alert also clarifies that major version bumps happen only when a Ruby or Rails version is dropped from the supported matrix (per SemVer dependency-floor semantics).
@@ -509,6 +517,7 @@ First release under the `u-case` name (renamed from `u-service`).
 - `Micro::Service::Result` with `Success`/`Failure` factories and helper methods for returning typed results from services.
 - Runtime dependency on `u-attributes` for service input declaration.
 
+[Unreleased]: https://github.com/serradura/u-case/compare/v5.7.1...HEAD
 [5.7.1]: https://github.com/serradura/u-case/compare/v5.7.0...v5.7.1
 [5.7.0]: https://github.com/serradura/u-case/compare/v5.6.0...v5.7.0
 [5.6.0]: https://github.com/serradura/u-case/compare/v5.5.0...v5.6.0

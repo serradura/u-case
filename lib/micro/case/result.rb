@@ -7,6 +7,7 @@ module Micro
     class Result
       require 'micro/case/result/wrapper'
       require 'micro/case/result/transitions'
+      require 'micro/case/result/notifications'
 
       INVALID_INVOCATION_OF_THE_THEN_METHOD =
         Error::InvalidInvocationOfTheThenMethod.new("#{self.name}#")
@@ -295,6 +296,8 @@ module Micro
 
         def __set_transition(use_case_attributes)
           @__transitions << @__transitions_mapper.call(self, use_case_attributes)
+
+          Notifications.publish(self, use_case_attributes)
         end
 
       private_constant :FetchData, :INVALID_INVOCATION_OF_THE_THEN_METHOD

@@ -60,6 +60,16 @@ module Micro
         end
       end
 
+      class NotificationsUnavailable < StandardError
+        def initialize
+          super(
+            "Can't enable Micro::Case notifications: ActiveSupport::Notifications " \
+            "is not loaded. Add `require 'active_support/notifications'` (or load " \
+            "Rails / activesupport) before setting `config.notifications = true`."
+          )
+        end
+      end
+
       class UnexpectedResultType < TypeError
         def initialize(use_case_class, kind, type, declared_types)
           declared_list = declared_types.map { |t| ":#{t}" }.join(', ')

@@ -16,6 +16,18 @@ end
 
 $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 
+# Loaded before `u-case` so Micro::Case::Result::Notifications::Available
+# is set to `true` whenever activesupport ships with the bundle (Rails
+# appraisals). On the default bundle this require fails silently and the
+# notifications hook stays a no-op — mirroring the host-app expectation
+# spelled out in lib/micro/case/result/notifications.rb.
+begin
+  require 'active_support'
+  require 'active_support/isolated_execution_state'
+  require 'active_support/notifications'
+rescue LoadError
+end
+
 require 'u-case'
 
 Micro::Case.config do |config|
