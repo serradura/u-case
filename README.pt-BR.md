@@ -206,6 +206,9 @@ Success(result: { slug: slug })
       - [Flows com steps internos sob transações](#flows-com-steps-internos-sob-transações)
       - [Observações de comportamento](#observações-de-comportamento)
 - [Configuração](#configuração)
+- [Observabilidade](#observabilidade)
+  - [Receitas de subscriber](#receitas-de-subscriber)
+  - [Aviso sobre o custo dos subscribers](#aviso-sobre-o-custo-dos-subscribers)
 - [Performance](#performance)
   - [Executando os benchmarks](#executando-os-benchmarks)
   - [Desabilitando os checks em runtime](#desabilitando-os-checks-em-runtime)
@@ -1441,6 +1444,83 @@ end
 ```
 
 Todos os checks internos vivem em `Micro::Case::Check::Enabled` (o padrão). Ativar `disable_runtime_checks = true` troca `Micro::Case.check` para `Micro::Case::Check::Disabled`, cujos métodos são no-ops — as validações em si param de rodar a cada chamada.
+
+[⬆️ Voltar ao topo](#índice-)
+
+## Observabilidade
+
+O `u-case` pode publicar nativamente um evento de `ActiveSupport::Notifications` para cada transition — o mesmo ponto único que já alimenta `result.transitions`. Os subscribers (Rails.logger, Rack::MiniProfiler, OpenTelemetry, StatsD, métricas customizadas) continuam sendo sua responsabilidade — a gem apenas emite.
+
+`activesupport` **não** é uma dependência de runtime. O hook só ativa quando `ActiveSupport::Notifications` já está carregado na aplicação host (apps Rails ganham isso automaticamente; apps não-Rails podem fazer `require 'active_support/notifications'`). Sem ele, a chamada de publish é redefinida como no-op e o hot path das transitions permanece sem branch.
+
+Habilite (desligado por padrão) em um initializer:
+
+```ruby
+Micro::Case.config do |config|
+  # Requer transitions habilitadas (o padrão) E
+  # ActiveSupport::Notifications carregado. Caso contrário, levanta
+  # Micro::Case::Error::NotificationsUnavailable.
+  config.notifications = true
+
+  # Sobrescreva o nome de evento padrão 'transition.micro_case' caso queira
+  # publicar em outro namespace de AS::Notifications.
+  # config.notifications_event_name = 'use_case.my_app'
+end
+```
+
+Cada transition dispara um evento `transition.micro_case` com este payload:
+
+```ruby
+{
+  use_case_class:        Class,    # o caso de uso que produziu a transition
+  attributes:            Hash,     # atributos do caso de uso (entrada, symbolizados)
+  result_type:           Symbol,   # result.type
+  result_kind:           Symbol,   # :success | :failure
+  result_data:           Hash,     # result.data (frozen)
+  accessible_attributes: Array     # result.accessible_attributes neste step
+}
+```
+
+`result.transitions.size` é igual ao número de eventos disparados na chamada — mesmo ponto único, só com um publish a mais.
+
+### Receitas de subscriber
+
+**Step do Rack::MiniProfiler (tracing em desenvolvimento):**
+
+```ruby
+# config/initializers/u_case.rb
+if Rails.env.development?
+  Micro::Case.config { |c| c.notifications = true }
+
+  ActiveSupport::Notifications.subscribe('transition.micro_case') do |*args|
+    event   = ActiveSupport::Notifications::Event.new(*args)
+    payload = event.payload
+    label   = "Micro::Case: #{payload[:use_case_class]} -> #{payload[:result_kind]}(:#{payload[:result_type]})"
+
+    Rack::MiniProfiler.step(label) { Rails.logger.debug(label) }
+  end
+end
+```
+
+**Trace estruturado no `Rails.logger`:**
+
+```ruby
+ActiveSupport::Notifications.subscribe('transition.micro_case') do |*args|
+  event   = ActiveSupport::Notifications::Event.new(*args)
+  payload = event.payload
+
+  Rails.logger.info({
+    use_case:    payload[:use_case_class].name,
+    result:      "#{payload[:result_kind]}(:#{payload[:result_type]})",
+    data:        payload[:result_data],
+    duration_ms: event.duration.round(2)
+  }.to_json)
+end
+```
+
+### Aviso sobre o custo dos subscribers
+
+> `ActiveSupport::Notifications` é síncrono. Qualquer coisa que um subscriber faça roda na mesma thread do caso de uso, entre a chamada do mapper e o chamador. Mantenha os subscribers baratos — logue, incremente um contador ou enfileire um job. Trabalho pesado (chamadas HTTP, escrita em DB, encoding de payloads grandes em JSON) pertence a um background job, não ao subscriber.
 
 [⬆️ Voltar ao topo](#índice-)
 

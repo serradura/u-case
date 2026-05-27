@@ -53,6 +53,30 @@ module Micro
         @activemodel_validation_errors_failure = :invalid_attributes
       end
 
+      def notifications=(value)
+        enabled = Kind::Boolean[value]
+
+        raise ::Micro::Case::Error::NotificationsUnavailable if enabled && !::Micro::Case::Result::Notifications::Available
+
+        @notifications = enabled
+
+        ::Micro::Case::Result::Notifications.enabled = enabled
+      end
+
+      def notifications
+        return @notifications if defined?(@notifications)
+
+        @notifications = false
+      end
+
+      def notifications_event_name=(value)
+        ::Micro::Case::Result::Notifications.event_name = Kind::String[value]
+      end
+
+      def notifications_event_name
+        ::Micro::Case::Result::Notifications.event_name
+      end
+
       DEFAULT_TRANSACTION_CLASS_CALLBACK = -> { ::ActiveRecord::Base }.freeze
 
       def default_transaction_class=(callable)
