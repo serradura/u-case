@@ -188,6 +188,20 @@ module Micro
         failure? ? self : __call_use_case(arg)
       end
 
+      def then_expose(type_or_keys, keys = nil)
+        return self if failure?
+
+        resolved_type, resolved_keys = __resolve_then_expose_args(type_or_keys, keys)
+
+        available = @__accessible_attributes.merge(@__accumulated_data)
+
+        data_to_expose = __fetch_values_to_expose(available, resolved_keys)
+
+        __set__(true, data_to_expose, resolved_type, use_case)
+      end
+
+      alias then_return then_expose
+
       def transitions
         @__transitions.dup
       end
@@ -234,6 +248,33 @@ module Micro
       end
 
       private
+
+        def __resolve_then_expose_args(type_or_keys, keys)
+          if keys.nil?
+            unless type_or_keys.is_a?(::Array) && !type_or_keys.empty? && type_or_keys.all? { |k| k.is_a?(::Symbol) }
+              raise ::ArgumentError, 'keys must be a non-empty Array of Symbols'
+            end
+
+            [:data_exposed, type_or_keys]
+          else
+            raise ::ArgumentError, 'type must be a Symbol' unless type_or_keys.is_a?(::Symbol)
+
+            normalized = keys.is_a?(::Array) ? keys : [keys]
+
+            unless !normalized.empty? && normalized.all? { |k| k.is_a?(::Symbol) }
+              raise ::ArgumentError, 'keys must be a non-empty Array of Symbols'
+            end
+
+            [type_or_keys, normalized]
+          end
+        end
+
+        def __fetch_values_to_expose(available, keys)
+          fetched = available.fetch_values(*keys)
+          keys.zip(fetched).to_h
+        rescue ::KeyError => e
+          raise Error::InvalidResultExposure.new(e.message, available.keys)
+        end
 
         def __update_accessible_attributes(attributes)
           @__accessible_attributes.merge!(attributes)

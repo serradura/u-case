@@ -193,6 +193,7 @@ Success(result: { slug: slug })
     - [Pattern matching](#pattern-matching)
     - [Decomposition](#decomposition)
     - [Dynamic continuations with `Result#then`](#dynamic-continuations-with-resultthen)
+    - [Projecting and re-tagging with `Result#then_expose`](#projecting-and-re-tagging-with-resultthen_expose)
   - [Validating attributes](#validating-attributes)
     - [`accept:` and `reject:` (default)](#accept-and-reject-default)
     - [ActiveModel integration (opt-in)](#activemodel-integration-opt-in)
@@ -739,6 +740,77 @@ Todo::FindAllForUser
 ```
 
 > `Result#then` also accepts a `Symbol`, a `Method` object, or a `Lambda` — see [Internal steps](#internal-steps--resultthen-chains).
+
+[⬆️ Back to Top](#table-of-contents-)
+
+#### Projecting and re-tagging with `Result#then_expose`
+
+`Result#then_expose` (alias `#then_return`) is the **boundary projection** primitive — it lets you hand a result back to a controller / worker / outer flow as a small, named subset of the accumulated data, re-tagged with a domain-meaningful `type`. On a `Failure` result it is a no-op (returns `self` unchanged), so the projection never runs on the error path.
+
+```ruby
+class CreateUser < Micro::Case
+  attributes :email, :password
+
+  def call!
+    user  = User.create!(email:, password:)
+    token = TokenIssuer.call(user)
+
+    Success result: { user:, token:, mailer_id: schedule_welcome_email(user) }
+  end
+end
+
+class FindReferrer < Micro::Case
+  attribute :email
+
+  def call!
+    Success result: { referrer: Referrer.find_by(email:) }
+  end
+end
+
+flow = Micro::Cases.flow([FindReferrer, CreateUser])
+
+# Without then_expose — the caller sees the kitchen-sink data from the last step
+# plus everything earlier steps accumulated:
+flow.call(email: 'a@b', password: 'p').data
+# => { email: 'a@b', referrer: …, user: …, token: …, mailer_id: … }
+
+# With then_expose — the caller sees only the boundary it cares about,
+# tagged with a domain-meaningful type:
+flow.call(email: 'a@b', password: 'p').then_expose(:user_created, [:user, :token])
+# => #<Success type=:user_created data={ user: …, token: … }>
+
+# On the failure path — then_expose is a no-op:
+flow.call(email: '', password: '').then_expose(:user_created, [:user, :token])
+# => #<Failure type=:invalid_attributes data={ invalid_attributes: … }>   # unchanged
+```
+
+Three call shapes:
+
+```ruby
+result.then_expose(:user_created, [:user, :token]) # type + Array of keys
+result.then_expose(:user_created, :user)           # type + single Symbol key (normalized to [:user])
+result.then_expose([:user, :token])                # Array-only — type defaults to :data_exposed
+```
+
+A bare Symbol (`then_expose(:user)`) is rejected with `ArgumentError` — it would be ambiguous between "type with no keys" and "key with no type". Use `then_expose([:user])` or `then_expose(:my_type, :user)` instead.
+
+`then_return` is a literal alias of `then_expose` — pick whichever reads better at the call site:
+
+```ruby
+flow.call(...).then_return(:user_created, [:user, :token])  # identical behavior
+```
+
+Key lookup runs against the **merged map** `accessible_attributes + accumulated_data` (accumulated data wins on collisions), so attributes seen by earlier steps in the flow are exposable even when they don't appear in the immediate predecessor's `data`. The exposed slice is merged back into the accumulated data, so subsequent `then`-chained use cases still see the keys.
+
+A missing key raises `Micro::Case::Error::InvalidResultExposure` (a subclass of `::KeyError`, so existing `rescue KeyError` clauses keep working) with a message that lists the keys that **were** available:
+
+```ruby
+flow.call(email: 'a@b', password: 'p').then_expose(:user_created, [:user, :missing])
+# => Micro::Case::Error::InvalidResultExposure: key not found: :missing.
+#    Available to expose: :email, :password, :referrer, :user, :token, :mailer_id
+```
+
+> **`then_expose` does not validate the new `type`/keys against the producing use case's `results { ... }` contract.** The exposed shape is the seam's decision, not the producer's declaration — the contract check runs only when the use case itself calls `Success(...)` / `Failure(...)` inside `call!`. If you need contract enforcement on a chained shape, build it with `Success(...)` inside `call!` instead.
 
 [⬆️ Back to Top](#table-of-contents-)
 

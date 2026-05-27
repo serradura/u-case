@@ -179,6 +179,7 @@ Success(result: { slug: slug })
     - [Pattern matching](#pattern-matching)
     - [Decomposição](#decomposição)
     - [Continuações dinâmicas com `Result#then`](#continuações-dinâmicas-com-resultthen)
+    - [Projetando e re-rotulando com `Result#then_expose`](#projetando-e-re-rotulando-com-resultthen_expose)
   - [Validando atributos](#validando-atributos)
     - [`accept:` e `reject:` (padrão)](#accept-e-reject-padrão)
     - [Integração com ActiveModel (opt-in)](#integração-com-activemodel-opt-in)
@@ -725,6 +726,77 @@ Todo::FindAllForUser
 ```
 
 > `Result#then` também aceita um `Symbol`, um objeto `Method`, ou uma `Lambda` — veja [Steps internos](#steps-internos--cadeias-com-resultthen).
+
+[⬆️ Voltar ao topo](#índice-)
+
+#### Projetando e re-rotulando com `Result#then_expose`
+
+`Result#then_expose` (alias `#then_return`) é a primitiva de **projeção de fronteira** — ela permite entregar um resultado de volta a um controller / worker / flow externo como um subconjunto pequeno e nomeado dos dados acumulados, re-rotulado com um `type` significativo do domínio. Em um resultado de `Failure` é um no-op (retorna `self` inalterado), então a projeção nunca executa no caminho de erro.
+
+```ruby
+class CreateUser < Micro::Case
+  attributes :email, :password
+
+  def call!
+    user  = User.create!(email:, password:)
+    token = TokenIssuer.call(user)
+
+    Success result: { user:, token:, mailer_id: schedule_welcome_email(user) }
+  end
+end
+
+class FindReferrer < Micro::Case
+  attribute :email
+
+  def call!
+    Success result: { referrer: Referrer.find_by(email:) }
+  end
+end
+
+flow = Micro::Cases.flow([FindReferrer, CreateUser])
+
+# Sem then_expose — o chamador vê os dados "pia da cozinha" do último step,
+# mais tudo que os steps anteriores acumularam:
+flow.call(email: 'a@b', password: 'p').data
+# => { email: 'a@b', referrer: …, user: …, token: …, mailer_id: … }
+
+# Com then_expose — o chamador vê apenas a fronteira que lhe interessa,
+# rotulada com um type significativo do domínio:
+flow.call(email: 'a@b', password: 'p').then_expose(:user_created, [:user, :token])
+# => #<Success type=:user_created data={ user: …, token: … }>
+
+# No caminho de falha — then_expose é um no-op:
+flow.call(email: '', password: '').then_expose(:user_created, [:user, :token])
+# => #<Failure type=:invalid_attributes data={ invalid_attributes: … }>   # inalterado
+```
+
+Três formas de chamada:
+
+```ruby
+result.then_expose(:user_created, [:user, :token]) # type + Array de chaves
+result.then_expose(:user_created, :user)           # type + Symbol único (normalizado para [:user])
+result.then_expose([:user, :token])                # Apenas Array — o type assume :data_exposed por padrão
+```
+
+Um Symbol isolado (`then_expose(:user)`) é rejeitado com `ArgumentError` — seria ambíguo entre "type sem chaves" e "chave sem type". Use `then_expose([:user])` ou `then_expose(:my_type, :user)`.
+
+`then_return` é um alias literal de `then_expose` — escolha o que ler melhor no ponto de chamada:
+
+```ruby
+flow.call(...).then_return(:user_created, [:user, :token])  # comportamento idêntico
+```
+
+A busca por chave roda contra o **mapa mesclado** `accessible_attributes + accumulated_data` (dados acumulados vencem em colisões), então atributos vistos por steps anteriores no flow são exponíveis mesmo quando não aparecem no `data` do predecessor imediato. O recorte exposto é mesclado de volta nos dados acumulados, então casos de uso subsequentes encadeados com `then` continuam vendo as chaves.
+
+Uma chave ausente levanta `Micro::Case::Error::InvalidResultExposure` (subclasse de `::KeyError`, então cláusulas `rescue KeyError` existentes continuam funcionando) com uma mensagem que lista as chaves que **estavam** disponíveis:
+
+```ruby
+flow.call(email: 'a@b', password: 'p').then_expose(:user_created, [:user, :missing])
+# => Micro::Case::Error::InvalidResultExposure: key not found: :missing.
+#    Available to expose: :email, :password, :referrer, :user, :token, :mailer_id
+```
+
+> **`then_expose` não valida o novo `type`/chaves contra o contrato `results { ... }` do caso de uso produtor.** A forma exposta é decisão da costura, não declaração do produtor — o check do contrato roda apenas quando o caso de uso em si chama `Success(...)` / `Failure(...)` dentro do `call!`. Se você precisa de validação do contrato em uma forma encadeada, construa-a com `Success(...)` dentro do `call!`.
 
 [⬆️ Voltar ao topo](#índice-)
 
