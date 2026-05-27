@@ -1,7 +1,7 @@
 # μ-case — test doubles example
 
 This example shows how to use `u-case`'s native test-double factories —
-`Micro::Case::Result::Success.new`, `Micro::Case::Result::Failure.new`,
+`Micro::Case::Success.new`, `Micro::Case::Failure.new`,
 and their `.to_yield` companions — to fabricate result instances in tests
 **without running a real use case**.
 
@@ -35,7 +35,7 @@ it through an attribute, which is what lets the tests swap it for a stub.
 
 ## Two stubbing shapes
 
-### 1. Return-value stubbing — `Result::Success.new` / `Result::Failure.new`
+### 1. Return-value stubbing — `Micro::Case::Success.new` / `Micro::Case::Failure.new`
 
 When the consumer reads the collaborator's return value directly
 (`result = service.call(...); result.success?`):
@@ -44,7 +44,7 @@ When the consumer reads the collaborator's return value directly
 # RSpec
 allow(fetch_email_service).to receive(:call)
   .with(id: 1)
-  .and_return(Micro::Case::Result::Success.new(data: { email: 'a@b.c' }))
+  .and_return(Micro::Case::Success.new(data: { email: 'a@b.c' }))
 ```
 
 ```ruby
@@ -52,7 +52,7 @@ allow(fetch_email_service).to receive(:call)
 fetch_email_service
   .stubs(:call)
   .with(id: 1)
-  .returns(Micro::Case::Result::Success.new(data: { email: 'a@b.c' }))
+  .returns(Micro::Case::Success.new(data: { email: 'a@b.c' }))
 ```
 
 The fabricated result is a plain `Micro::Case::Result` instance —
@@ -60,7 +60,7 @@ The fabricated result is a plain `Micro::Case::Result` instance —
 matching, `result[:email]`, `result.type`, and `result.use_case` all
 behave exactly like a result returned by a real use case.
 
-### 2. Block-form stubbing — `Result::Success.to_yield` / `Result::Failure.to_yield`
+### 2. Block-form stubbing — `Micro::Case::Success.to_yield` / `Micro::Case::Failure.to_yield`
 
 When the consumer uses the block form
 (`service.call(...) { |on| on.success { ... }; on.failure { ... } }`):
@@ -69,7 +69,7 @@ When the consumer uses the block form
 # RSpec
 allow(fetch_email_service).to receive(:call)
   .with(id: 1)
-  .and_yield(Micro::Case::Result::Success.to_yield(data: { email: 'a@b.c' }))
+  .and_yield(Micro::Case::Success.to_yield(data: { email: 'a@b.c' }))
 ```
 
 ```ruby
@@ -77,7 +77,7 @@ allow(fetch_email_service).to receive(:call)
 fetch_email_service
   .stubs(:call)
   .with(id: 1)
-  .yields(Micro::Case::Result::Success.to_yield(data: { email: 'a@b.c' }))
+  .yields(Micro::Case::Success.to_yield(data: { email: 'a@b.c' }))
 ```
 
 `.to_yield` returns a `Micro::Case::Result::Wrapper` in the initial

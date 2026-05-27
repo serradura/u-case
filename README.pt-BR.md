@@ -206,8 +206,8 @@ Success(result: { slug: slug })
       - [Flows com steps internos sob transações](#flows-com-steps-internos-sob-transações)
       - [Observações de comportamento](#observações-de-comportamento)
 - [Testando com test doubles](#testando-com-test-doubles)
-  - [Stub por valor de retorno — `Result::Success.new` / `Result::Failure.new`](#stub-por-valor-de-retorno--resultsuccessnew--resultfailurenew)
-  - [Stub na forma com bloco — `Result::Success.to_yield` / `Result::Failure.to_yield`](#stub-na-forma-com-bloco--resultsuccessto_yield--resultfailureto_yield)
+  - [Stub por valor de retorno — `Micro::Case::Success.new` / `Micro::Case::Failure.new`](#stub-por-valor-de-retorno--microcasesuccessnew--microcasefailurenew)
+  - [Stub na forma com bloco — `Micro::Case::Success.to_yield` / `Micro::Case::Failure.to_yield`](#stub-na-forma-com-bloco--microcasesuccessto_yield--microcasefailureto_yield)
 - [Configuração](#configuração)
 - [Performance](#performance)
   - [Executando os benchmarks](#executando-os-benchmarks)
@@ -1409,11 +1409,11 @@ As duas abordagens compõem. Se `CreateUserWithProfileInline` (usando `transacti
 Quando o sistema sob teste depende de um caso de uso como colaborador — um controller, outro caso de uso ou um worker em background — frequentemente queremos **fabricar** o `Micro::Case::Result` do colaborador em vez de deixar o caso de uso real executar. `u-case` oferece factories nativas para isso:
 
 ```ruby
-Micro::Case::Result::Success.new(data: {}, type: :ok,    use_case: <padrão>) # => Micro::Case::Result (sucesso)
-Micro::Case::Result::Failure.new(data: {}, type: :error, use_case: <padrão>) # => Micro::Case::Result (falha)
+Micro::Case::Success.new(data: {}, type: :ok,    use_case: <padrão>) # => Micro::Case::Result (sucesso)
+Micro::Case::Failure.new(data: {}, type: :error, use_case: <padrão>) # => Micro::Case::Result (falha)
 
-Micro::Case::Result::Success.to_yield(...) # => Micro::Case::Result::Wrapper
-Micro::Case::Result::Failure.to_yield(...) # => Micro::Case::Result::Wrapper
+Micro::Case::Success.to_yield(...) # => Micro::Case::Result::Wrapper
+Micro::Case::Failure.to_yield(...) # => Micro::Case::Result::Wrapper
 ```
 
 Essas factories são **opt-in** — a gem não as carrega automaticamente. Carregue-as a partir do seu helper de teste/spec:
@@ -1425,43 +1425,45 @@ require 'micro/case/with_test_doubles'
 
 Os objetos retornados são indistinguíveis dos que um caso de uso real produziria. `result.class == Micro::Case::Result` (não é uma subclasse), pattern matching, `result.success?` / `failure?`, `result[:chave]`, `result.type`, `result.use_case` e `result.transitions` se comportam exatamente como em produção. As chamadas passam pelo mesmo caminho de `Result#__set__`, então entradas inválidas levantam as mesmas exceções (`Error::InvalidResultType` para um `type:` que não é símbolo, `Error::InvalidUseCase` para um `use_case:` que não é `Micro::Case`, `Error::InvalidResult` para `data: nil`) — e viram no-op sob `config.disable_runtime_checks = true`.
 
-### Stub por valor de retorno — `Result::Success.new` / `Result::Failure.new`
+### Stub por valor de retorno — `Micro::Case::Success.new` / `Micro::Case::Failure.new`
 
 Use essa forma quando o sistema sob teste consome o colaborador pelo **valor de retorno**:
 
 ```ruby
 # RSpec
 allow(affiliate_email_service).to receive(:call)
-  .and_return(Micro::Case::Result::Success.new(data: { email: 'a@b.c' }))
+  .and_return(Micro::Case::Success.new(data: { email: 'a@b.c' }))
 ```
 
 ```ruby
 # Minitest + Mocha
 affiliate_email_service
   .stubs(:call)
-  .returns(Micro::Case::Result::Success.new(data: { email: 'a@b.c' }))
+  .returns(Micro::Case::Success.new(data: { email: 'a@b.c' }))
 ```
 
-### Stub na forma com bloco — `Result::Success.to_yield` / `Result::Failure.to_yield`
+### Stub na forma com bloco — `Micro::Case::Success.to_yield` / `Micro::Case::Failure.to_yield`
 
 Use essa forma quando o sistema sob teste consome o colaborador pela **forma com bloco** — `service.call(...) { |on| on.success { ... }; on.failure { ... } }`:
 
 ```ruby
 # RSpec
 expect(tapfiliate_get_referral_link).to receive(:call)
-  .and_yield(Micro::Case::Result::Failure.to_yield(type: :err))
+  .and_yield(Micro::Case::Failure.to_yield(type: :err))
 ```
 
 ```ruby
 # Minitest + Mocha
 tapfiliate_get_referral_link
   .stubs(:call)
-  .yields(Micro::Case::Result::Failure.to_yield(type: :err))
+  .yields(Micro::Case::Failure.to_yield(type: :err))
 ```
 
 `.to_yield` retorna um `Micro::Case::Result::Wrapper` no estado inicial — o mesmo tipo de wrapper que `Micro::Case.call(input) { |on| ... }` yielda internamente. O bloco sob teste então o dirige normalmente via `.success` / `.failure` / `.unknown`.
 
 Um exemplo executável vive em [`examples/test_doubles/`](examples/test_doubles), com suites pareadas em RSpec e Minitest+Mocha cobrindo as duas formas.
+
+> **Nota sobre o bareword `Success` / `Failure` dentro do `call!`.** Quando `with_test_doubles` está carregado, `Micro::Case::Success` e `Micro::Case::Failure` existem como constantes diretamente sob `Micro::Case`. Dentro de uma subclasse de `Micro::Case`, um bareword literal `Success` ou `Failure` (sem argumentos, sem parênteses) resolveria para a *constante*, não para o método helper de produção. Na prática todo call site realista tem argumentos (`Success(:ok)`, `Success result: {...}`, `Failure :foo`), e o Ruby parseia esses como chamadas de método independentemente — então isso só importa no caso artificial de um método cuja última expressão é o token nu `Success` ou `Failure`. Se você precisar dessa forma, escreva `Success()` / `Failure()` (parênteses vazios).
 
 [⬆️ Voltar ao topo](#índice-)
 

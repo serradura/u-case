@@ -2,8 +2,8 @@
 
 require 'spec_helper'
 
-# Return-value stubbing with `Micro::Case::Result::Success.new` /
-# `Result::Failure.new` — the test fakes the collaborator's return value
+# Return-value stubbing with `Micro::Case::Success.new` /
+# `Micro::Case::Failure.new` — the test fakes the collaborator's return value
 # and the SUT consumes it as if it had come from a real `FetchEmail` call.
 
 RSpec.describe Affiliates::SendInvite do
@@ -12,7 +12,7 @@ RSpec.describe Affiliates::SendInvite do
       class_double('Affiliates::FetchEmail').tap do |dbl|
         allow(dbl).to receive(:call)
           .with(id: 1)
-          .and_return(Micro::Case::Result::Success.new(data: { email: 'a@b.c' }))
+          .and_return(Micro::Case::Success.new(data: { email: 'a@b.c' }))
       end
     end
 
@@ -30,7 +30,7 @@ RSpec.describe Affiliates::SendInvite do
       class_double('Affiliates::FetchEmail').tap do |dbl|
         allow(dbl).to receive(:call)
           .with(id: 999)
-          .and_return(Micro::Case::Result::Failure.new(type: :not_found, data: { id: 999 }))
+          .and_return(Micro::Case::Failure.new(type: :not_found, data: { id: 999 }))
       end
     end
 
@@ -45,7 +45,7 @@ RSpec.describe Affiliates::SendInvite do
 
   describe 'the fabricated result' do
     it 'is a plain Micro::Case::Result, not a subclass' do
-      result = Micro::Case::Result::Success.new
+      result = Micro::Case::Success.new
 
       expect(result.class).to eq(Micro::Case::Result)
       expect(result).to be_success
@@ -54,7 +54,7 @@ RSpec.describe Affiliates::SendInvite do
     end
 
     it 'carries a real Micro::Case as its use_case' do
-      result = Micro::Case::Result::Failure.new
+      result = Micro::Case::Failure.new
 
       expect(result).to be_failure
       expect(result.type).to eq(:error)

@@ -2,8 +2,8 @@
 
 require_relative 'test_helper'
 
-# Return-value stubbing with `Micro::Case::Result::Success.new` /
-# `Result::Failure.new` — the test fakes the collaborator's return value
+# Return-value stubbing with `Micro::Case::Success.new` /
+# `Micro::Case::Failure.new` — the test fakes the collaborator's return value
 # using Mocha's `stubs(...).returns(...)`.
 
 class SendInviteTest < Minitest::Test
@@ -13,7 +13,7 @@ class SendInviteTest < Minitest::Test
     fetch_email_service
       .stubs(:call)
       .with(id: 1)
-      .returns(Micro::Case::Result::Success.new(data: { email: 'a@b.c' }))
+      .returns(Micro::Case::Success.new(data: { email: 'a@b.c' }))
 
     result = Affiliates::SendInvite.call(id: 1, fetch_email_service: fetch_email_service)
 
@@ -28,7 +28,7 @@ class SendInviteTest < Minitest::Test
     fetch_email_service
       .stubs(:call)
       .with(id: 999)
-      .returns(Micro::Case::Result::Failure.new(type: :not_found, data: { id: 999 }))
+      .returns(Micro::Case::Failure.new(type: :not_found, data: { id: 999 }))
 
     result = Affiliates::SendInvite.call(id: 999, fetch_email_service: fetch_email_service)
 
@@ -38,7 +38,7 @@ class SendInviteTest < Minitest::Test
   end
 
   def test_fabricated_success_result_is_a_plain_micro_case_result
-    result = Micro::Case::Result::Success.new
+    result = Micro::Case::Success.new
 
     assert_equal(Micro::Case::Result, result.class)
     assert_predicate(result, :success?)
@@ -47,7 +47,7 @@ class SendInviteTest < Minitest::Test
   end
 
   def test_fabricated_failure_result_carries_a_real_micro_case_as_use_case
-    result = Micro::Case::Result::Failure.new
+    result = Micro::Case::Failure.new
 
     assert_predicate(result, :failure?)
     assert_equal(:error, result.type)

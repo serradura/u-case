@@ -20,8 +20,8 @@ require 'u-case'
 #
 # Both consumers receive the collaborator through an attribute, which makes
 # them trivially fakeable in tests via RSpec stubs or Mocha expectations.
-# That's the seam that `Micro::Case::Result::Success.new` /
-# `Micro::Case::Result::Failure.new` / `.to_yield` are built for.
+# That's the seam that `Micro::Case::Success.new` /
+# `Micro::Case::Failure.new` / `.to_yield` are built for.
 
 module Affiliates
   class FetchEmail < Micro::Case

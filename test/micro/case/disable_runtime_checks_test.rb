@@ -307,8 +307,8 @@ class Micro::Case::DisableRuntimeChecksTest < Minitest::Test
 
     # `result_type!` would normally raise Error::InvalidResultType for a non-symbol type.
     # With checks off the string passes through and the result is built normally.
-    success_with_string_type = Micro::Case::Result::Success.new(type: 'ok')
-    failure_with_string_type = Micro::Case::Result::Failure.new(type: 'error')
+    success_with_string_type = Micro::Case::Success.new(type: 'ok')
+    failure_with_string_type = Micro::Case::Failure.new(type: 'error')
 
     assert_predicate(success_with_string_type, :success?)
     assert_equal('ok', success_with_string_type.type)
@@ -325,7 +325,7 @@ class Micro::Case::DisableRuntimeChecksTest < Minitest::Test
     # use_case. With checks off the curated error isn't raised — the bad value flows downstream
     # to `__set__`'s `@use_case.attributes` call, where Ruby's own NoMethodError surfaces.
     err = assert_raises(StandardError) do
-      Micro::Case::Result::Success.new(use_case: Object.new)
+      Micro::Case::Success.new(use_case: Object.new)
     end
 
     refute_kind_of(Micro::Case::Error::InvalidUseCase, err)
@@ -333,11 +333,11 @@ class Micro::Case::DisableRuntimeChecksTest < Minitest::Test
 
   def test_enabled_raises_for_the_test_double_factories_validations
     assert_raises(Micro::Case::Error::InvalidResultType) do
-      Micro::Case::Result::Success.new(type: 'ok')
+      Micro::Case::Success.new(type: 'ok')
     end
 
     assert_raises(Micro::Case::Error::InvalidUseCase) do
-      Micro::Case::Result::Failure.new(use_case: Object.new)
+      Micro::Case::Failure.new(use_case: Object.new)
     end
   end
 end
