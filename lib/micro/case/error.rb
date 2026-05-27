@@ -83,6 +83,13 @@ module Micro
         end
       end
 
+      class InvalidResultExposure < ::KeyError
+        def initialize(original_message, available_keys)
+          available = available_keys.map(&:inspect).join(', ')
+          super("#{original_message}. Available to expose: #{available}")
+        end
+      end
+
       def self.by_wrong_usage?(exception)
         case exception
         when Kind::Error, ArgumentError, InvalidResult, UnexpectedResult, UnexpectedResultType then true
