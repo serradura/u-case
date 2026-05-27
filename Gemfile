@@ -11,6 +11,9 @@ group :test do
   gem "simplecov", "~> 0.22.0", require: false
   gem "minitest", (RUBY_VERSION >= "4.0") ? "~> 6.0" : "~> 5.27" if RUBY_VERSION >= "3.1"
   gem "ostruct", "~> 0.6.3" if RUBY_VERSION >= "3.5"
+  # ActiveJob is an optional, host-provided dependency of u-case. We include
+  # it here so the gem's own test suite can exercise lib/micro/case/active_job.
+  gem "activejob", require: false
 end
 
 group :development, :test do

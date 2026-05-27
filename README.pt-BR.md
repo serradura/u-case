@@ -205,6 +205,12 @@ Success(result: { slug: slug })
       - [Padrão global — `config.default_transaction_class { … }`](#padrão-global--configdefault_transaction_class---)
       - [Flows com steps internos sob transações](#flows-com-steps-internos-sob-transações)
       - [Observações de comportamento](#observações-de-comportamento)
+  - [Async com ActiveJob](#async-com-activejob)
+    - [DSL: `active_job do ... end`](#dsl-active_job-do--end)
+    - [`job_options` por enfileiramento](#job_options-por-enfileiramento)
+    - [Sobrevivendo a renomeações — o registro](#sobrevivendo-a-renomeações--o-registro)
+    - [Enfileiramento em lote — `Micro::Case::ActiveJob.batch`](#enfileiramento-em-lote--microcaseactivejobbatch)
+    - [Lidando com falhas no worker — `raise_on_failure`](#lidando-com-falhas-no-worker--raise_on_failure)
 - [Configuração](#configuração)
 - [Performance](#performance)
   - [Executando os benchmarks](#executando-os-benchmarks)
@@ -1401,6 +1407,183 @@ As duas abordagens compõem. Se `CreateUserWithProfileInline` (usando `transacti
 
 [⬆️ Voltar ao topo](#índice-)
 
+### Async com ActiveJob
+
+`Micro::Case::ActiveJob` é um runner assíncrono opt-in: todo caso de uso ganha `MyCase.async.call(input)` (e o alias `MyCase.later.call(input)`) que enfileira um ActiveJob por baixo dos panos. É um arquivo separado, carregado condicionalmente — `activejob` **não** é dependência de runtime da gem. Aplicações que nunca carregam ActiveJob não pagam nada.
+
+Carregue após sua aplicação ter carregado o ActiveJob (apps Rails carregam ActiveJob automaticamente):
+
+```ruby
+# config/initializers/u_case.rb (Rails)
+require 'micro/case/active_job'
+```
+
+Aí qualquer subclasse de `Micro::Case` pode ser enfileirada:
+
+```ruby
+class Billing::ChargeCustomer < Micro::Case
+  attribute :customer_id
+
+  def call!
+    customer = Customer.find(customer_id)
+    # ... lógica de domínio ...
+    Success(:charged, result: { customer: customer })
+  end
+end
+
+Billing::ChargeCustomer.async.call(customer_id: 42)   # enfileira
+Billing::ChargeCustomer.later.call(customer_id: 42)   # alias de `.async`
+```
+
+Nenhuma declaração de DSL é necessária para adoção no dia zero: o runner registra automaticamente o caso de uso sob o nome da sua classe na primeira chamada. Uma subclasse do ActiveJob é construída por uso, sob demanda, e nomeada `<UseCase>::Job` para que possa ser serializada entre enfileiramento e dequeue.
+
+#### DSL: `active_job do ... end`
+
+Para tudo além de "só enfileirar" — regras de retry declarativas, queue padrão, hooks `around_perform`, um identificador estável a renomeações — declare a DSL dentro do corpo da classe do caso de uso. O bloco roda imediatamente (no tempo de carga do corpo da classe) e configura a subclasse de job para aquele caso:
+
+```ruby
+class Billing::ChargeCustomer < Micro::Case
+  active_job do
+    key 'billing/charge_customer'              # identificador estável — veja "Sobrevivendo a renomeações"
+
+    retry_on   ActiveRecord::Deadlocked, wait: 5.seconds, attempts: 3
+    discard_on Billing::CustomerNotFound
+
+    default_options queue: :billing, priority: 10
+
+    around_perform ->(job, block) {
+      MyTracer.in_span("u-case.#{job.arguments[0]}") { block.call }
+    }
+
+    # Rails 7.1+ — dispara quando o job foi descartado.
+    after_discard { |job, error| Sentry.capture_exception(error, extra: { job_id: job.job_id }) }
+
+    # Rails 7.2+ — :always | :never | :default.
+    after_transaction_commit :always
+  end
+
+  attribute :customer_id
+  def call!
+    # ...
+  end
+end
+```
+
+| Método DSL                  | O que faz                                                                                                  |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `key(string)`               | Chave estável no registro. Sobrevive a renomeações.                                                        |
+| `retry_on(*ex, **opts, &b)` | Passthrough para `retry_on` do ActiveJob na subclasse de job do caso.                                      |
+| `discard_on(*ex, &b)`       | Passthrough para `discard_on` do ActiveJob.                                                                |
+| `after_discard(&b)`         | Rails 7.1+ — passthrough para `after_discard`. Rails mais antigo: loga uma vez e vira no-op.               |
+| `default_options(hash)`     | Padrões por caso para `:wait` / `:wait_until` / `:queue` / `:priority`. Mesclados com `job_options`.       |
+| `around_perform(callable)`  | Hook `around_perform` por caso instalado na subclasse de job.                                              |
+| `after_transaction_commit`  | Rails 7.2+ — define `enqueue_after_transaction_commit` na subclasse de job. Rails mais antigo: loga + no-op. |
+
+Métodos desconhecidos na DSL levantam `NoMethodError` com a lista de métodos válidos, então erros de digitação falham alto no load da classe:
+
+```ruby
+class Billing::ChargeCustomer < Micro::Case
+  active_job do
+    retry_no Foo                                # → NoMethodError: Unknown active_job DSL method: :retry_no.
+  end                                           #   Valid methods: :key, :retry_on, :discard_on, ...
+end
+```
+
+#### `job_options` por enfileiramento
+
+Essas são as únicas chaves que `set(...)` do ActiveJob aceita, e podem ser passadas por chamada para `async` / `later`. `job_options:` explícito vence sobre `default_options` da DSL:
+
+| Chave `job_options` | Mapeia para            |
+| ------------------- | ---------------------- |
+| `:wait`             | `set(wait: ...)`       |
+| `:wait_until`       | `set(wait_until: ...)` |
+| `:queue`            | `set(queue: ...)`      |
+| `:priority`         | `set(priority: ...)`   |
+
+```ruby
+Billing::ChargeCustomer.async(job_options: { wait: 30.seconds }).call(customer_id: 42)
+Billing::ChargeCustomer.async(job_options: { queue: :urgent, priority: 1 }).call(customer_id: 42)
+```
+
+`Caller` compõe em blocos via `to_proc`:
+
+```ruby
+ids.each(&Billing::ChargeCustomer.async)        # enfileira um job por id
+```
+
+#### Sobrevivendo a renomeações — o registro
+
+O payload armazenado em Sidekiq / Resque / SQS é `[key, input, raise_on_failure]`. A chave — e não o nome da constante Ruby — é o que o worker usa para procurar o caso de uso via `Micro::Case::ActiveJob::Registry`. Então renomear a classe entre enfileirar e processar é seguro **desde que a nova classe mantenha a mesma `key`**:
+
+```ruby
+# Antes da renomeação:
+class Billing::ChargeCustomer < Micro::Case
+  active_job { key 'billing/charge_customer' }
+  # ...
+end
+
+# Depois da renomeação — mesma key na nova classe:
+class Billing::ChargeCustomerForInvoice < Micro::Case
+  active_job { key 'billing/charge_customer' }
+  # ...
+end
+```
+
+Jobs em voo resolvem `'billing/charge_customer'` para a nova classe via o registro. Sem `NameError`, sem limpeza manual da fila.
+
+Se você adotou o runner sem uma `key` explícita, os jobs são chaveados pelo nome da classe (`'Billing::ChargeCustomer'`). Para se recuperar de uma renomeação feita após o enfileiramento, declare o **nome antigo da classe** como key da nova classe:
+
+```ruby
+class Billing::ChargeCustomerForInvoice < Micro::Case
+  active_job { key 'Billing::ChargeCustomer' } # o klass.name anterior
+end
+```
+
+Para times que querem garantir que nenhuma constantização surpresa aconteça:
+
+```ruby
+Micro::Case.config { |c| c.strict_registry = true }
+```
+
+Modo estrito desabilita o fallback `safe_constantize` que normalmente deixa chaves não registradas mas constantizáveis resolverem.
+
+#### Enfileiramento em lote — `Micro::Case::ActiveJob.batch`
+
+```ruby
+Micro::Case::ActiveJob.batch([
+  [Billing::ChargeCustomer,   { customer_id: 1 }],
+  [Billing::ChargeCustomer,   { customer_id: 2 }],
+  [Billing::SendReceiptEmail, { customer_id: 1 }, true], # raise_on_failure: true
+])
+```
+
+No Rails 7.1+ chama `ActiveJob.perform_all_later(...)` com instâncias de job pré-construídas (uma única ida e volta para o backend). No Rails mais antigo, faz fallback para enfileirar par a par.
+
+#### Lidando com falhas no worker — `raise_on_failure`
+
+Por padrão o worker retorna silenciosamente o resultado em `Failure(...)` — semântica fire-and-forget. Passe `raise_on_failure: true` para jobs que precisam ter sucesso:
+
+```ruby
+Billing::ChargeCustomer.async(raise_on_failure: true).call(customer_id: 42)
+```
+
+Quando o caso de uso retorna uma falha, o worker levanta `Micro::Case::ActiveJob::Error`, que o ActiveJob então direciona pelas regras `retry_on` / `discard_on` configuradas. O resultado original fica exposto via `Error#result`:
+
+```ruby
+begin
+  # ... código do worker ActiveJob ...
+rescue Micro::Case::ActiveJob::Error => e
+  Rails.logger.warn("falha de u-case: type=#{e.result.type} data=#{e.result.data.inspect}")
+  raise
+end
+```
+
+Outras exceções documentadas:
+
+- `Micro::Case::ActiveJob::UnknownKey` — levantada quando a key de um payload não resolve no registro (e não é nome de constante constantizável, ou o modo estrito está ativo). A mensagem nomeia a chave problemática.
+
+[⬆️ Voltar ao topo](#índice-)
+
 ## Configuração
 
 `Micro::Case.config` expõe as toggles da gem. Configure uma vez — tipicamente em um initializer do Rails:
@@ -1437,6 +1620,13 @@ Micro::Case.config do |config|
   # O padrão é `-> { ::ActiveRecord::Base }`. Sobrescreva para usar um record
   # abstrato por aplicação como ApplicationRecord.
   config.default_transaction_class { ApplicationRecord }
+
+  # Quando `micro/case/active_job` está carregado: desabilita o fallback de
+  # `safe_constantize` para misses do Micro::Case::ActiveJob::Registry. Com o
+  # modo estrito ativo, uma chave não registrada sempre levanta
+  # Micro::Case::ActiveJob::UnknownKey. Padrão é false (mais amigável para
+  # adoção inicial).
+  config.strict_registry = false
 end
 ```
 

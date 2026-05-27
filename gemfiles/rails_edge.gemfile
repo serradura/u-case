@@ -6,14 +6,19 @@ gem "rake", "~> 13.0"
 
 group :test do
   gem "simplecov", "~> 0.22.0", require: false
-  gem "sqlite3", "~> 2.9"
-  gem "ostruct", "~> 0.6.3"
   gem "minitest", "~> 6.0"
+  gem "ostruct", "~> 0.6.3"
+  gem "activejob", branch: "main", require: "active_job", git: "https://github.com/rails/rails"
+  gem "sqlite3", "~> 2.9"
   gem "activerecord", branch: "main", require: "active_record", git: "https://github.com/rails/rails"
 end
 
 group :development, :test do
   gem "awesome_print"
+end
+
+group :development do
+  gem "ruby-lsp", require: false
 end
 
 gemspec path: "../"

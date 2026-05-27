@@ -152,6 +152,110 @@ module Micro
 
           raise Error::MissingResultKeys.new(use_case_class, kind, type, missing) unless missing.empty?
         end
+
+        # --- Micro::Case::ActiveJob checks ----------------------------------
+
+        ACTIVE_JOB_JOB_OPTION_KEYS = %i[wait wait_until queue priority].freeze
+        ACTIVE_JOB_TRANSACTION_COMMIT_VALUES = %i[always never default].freeze
+
+        def active_job_key!(value)
+          return if value.is_a?(String) && !value.empty?
+
+          raise ArgumentError,
+            "active_job `key` must be a non-empty String, got #{value.inspect}"
+        end
+
+        def active_job_retry_on!(exceptions)
+          raise ArgumentError, 'active_job `retry_on` requires at least one exception class' if exceptions.empty?
+
+          exceptions.each do |ex|
+            raise ArgumentError,
+              "active_job `retry_on` expects exception classes, got #{ex.inspect}" \
+                unless ex.is_a?(Class) && ex <= Exception
+          end
+        end
+
+        def active_job_discard_on!(exceptions)
+          raise ArgumentError, 'active_job `discard_on` requires at least one exception class' if exceptions.empty?
+
+          exceptions.each do |ex|
+            raise ArgumentError,
+              "active_job `discard_on` expects exception classes, got #{ex.inspect}" \
+                unless ex.is_a?(Class) && ex <= Exception
+          end
+        end
+
+        def active_job_after_discard!(handler)
+          return if handler.respond_to?(:call)
+
+          raise ArgumentError,
+            'active_job `after_discard` requires a block or callable (proc/lambda)'
+        end
+
+        def active_job_around_perform!(handler)
+          return if handler.respond_to?(:call)
+
+          raise ArgumentError,
+            'active_job `around_perform` requires a block or callable (proc/lambda)'
+        end
+
+        def active_job_default_options!(hash)
+          raise ArgumentError,
+            "active_job `default_options` requires a Hash, got #{hash.inspect}" unless hash.is_a?(Hash)
+
+          extra = hash.keys - ACTIVE_JOB_JOB_OPTION_KEYS
+          return if extra.empty?
+
+          raise ArgumentError,
+            "active_job `default_options` unsupported key(s) #{extra.inspect} " \
+            "(accepted: #{ACTIVE_JOB_JOB_OPTION_KEYS.inspect})"
+        end
+
+        def active_job_after_transaction_commit!(setting)
+          return if ACTIVE_JOB_TRANSACTION_COMMIT_VALUES.include?(setting)
+
+          raise ArgumentError,
+            "active_job `after_transaction_commit` accepts #{ACTIVE_JOB_TRANSACTION_COMMIT_VALUES.inspect}, " \
+            "got #{setting.inspect}"
+        end
+
+        def active_job_job_options!(hash)
+          raise ArgumentError,
+            "async `job_options:` requires a Hash, got #{hash.inspect}" unless hash.is_a?(Hash)
+
+          extra = hash.keys - ACTIVE_JOB_JOB_OPTION_KEYS
+          return if extra.empty?
+
+          raise ArgumentError,
+            "async `job_options:` unsupported key(s) #{extra.inspect} " \
+            "(accepted: #{ACTIVE_JOB_JOB_OPTION_KEYS.inspect})"
+        end
+
+        def active_job_batch_pairs!(pairs)
+          raise ArgumentError, "batch expects an Array of pairs, got #{pairs.inspect}" unless pairs.is_a?(Array)
+
+          pairs.each_with_index do |pair, idx|
+            unless pair.is_a?(Array) && (pair.size == 2 || pair.size == 3)
+              raise ArgumentError,
+                "batch pair at index #{idx} must be [Klass, input] or [Klass, input, raise_on_failure], got #{pair.inspect}"
+            end
+
+            klass = pair[0]
+            unless klass.is_a?(Class) && klass < ::Micro::Case
+              raise ArgumentError,
+                "batch pair at index #{idx}: first element must be a Micro::Case subclass, got #{klass.inspect}"
+            end
+          end
+        end
+
+        def active_job_registry_no_duplicate!(key, existing_klass, new_klass)
+          return if existing_klass.nil? || existing_klass == new_klass
+
+          raise ArgumentError,
+            "Micro::Case::ActiveJob::Registry already has key #{key.inspect} " \
+            "registered to #{existing_klass.name.inspect} " \
+            "(cannot re-register to #{new_klass.name.inspect})"
+        end
       end
 
       module Disabled
@@ -180,6 +284,19 @@ module Micro
         def transaction_owner!(_klass); end
         def transaction_class_callback!(_callable); end
         def results_contract!(_use_case_class, _kind, _type, _value); end
+
+        # --- Micro::Case::ActiveJob checks (no-ops) -------------------------
+
+        def active_job_key!(_value); end
+        def active_job_retry_on!(_exceptions); end
+        def active_job_discard_on!(_exceptions); end
+        def active_job_after_discard!(_handler); end
+        def active_job_around_perform!(_handler); end
+        def active_job_default_options!(_hash); end
+        def active_job_after_transaction_commit!(_setting); end
+        def active_job_job_options!(_hash); end
+        def active_job_batch_pairs!(_pairs); end
+        def active_job_registry_no_duplicate!(_key, _existing_klass, _new_klass); end
       end
     end
   end

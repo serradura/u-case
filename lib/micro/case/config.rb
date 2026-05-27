@@ -35,6 +35,16 @@ module Micro
         @disable_runtime_checks = false
       end
 
+      def strict_registry=(value)
+        @strict_registry = Kind::Boolean[value]
+      end
+
+      def strict_registry
+        return @strict_registry if defined?(@strict_registry)
+
+        @strict_registry = false
+      end
+
       def enable_activemodel_validation=(value)
         return unless Kind::Boolean[value]
 
